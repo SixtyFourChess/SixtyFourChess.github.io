@@ -7,6 +7,7 @@
 // Every move is checked with chess.js here, and the clocks are kept here, so nobody can cheat
 // by editing the page.
 import { Chess } from './chess.js';
+import { Chess960 } from './chess960.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -17,6 +18,7 @@ const json = (data, status = 200) => new Response(JSON.stringify(data), { status
 
 // the same time controls the app offers: [seconds, increment]
 const TCS = [[0, 0], [60, 0], [180, 2], [300, 0], [600, 0], [900, 10], [1800, 0]];
+const validVariant = v => v === '960' ? '960' : 'std';
 const validTc = tc => Array.isArray(tc) && TCS.some(t => t[0] === tc[0] && t[1] === tc[1]) ? [tc[0], tc[1]] : [600, 0];
 
 const CODE_CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // no 0/O or 1/I/L mix-ups
@@ -49,7 +51,7 @@ export default {
     if (path === '/api/new' && request.method === 'POST') {
       let body = {};
       try { body = await request.json(); } catch (e) { /* defaults */ }
-      const code = await createGame(env, { tc: validTc(body.tc), reserved: null });
+      const code = await createGame(env, { tc: validTc(body.tc), variant: validVariant(body.variant), reserved: null });
       return json({ code });
     }
 
@@ -106,7 +108,20 @@ export class Game {
   async load() { if (this.g === undefined) this.g = (await this.ctx.storage.get('g')) || null; return this.g; }
   async save() { this.g.touched = Date.now(); await this.ctx.storage.put('g', this.g); await this.schedule(); }
 
-  chessOf(g) { const c = new Chess(); for (const u of g.moves) c.move({ from: u.slice(0, 2), to: u.slice(2, 4), promotion: u[4] || undefined }); return c; }
+  // Fischer random gets a new random starting position every game
+  newStart(g) {
+    if (g.variant === '960') { g.n960 = Chess960.random(); g.startFen = Chess960.startFen(g.n960); }
+    else { g.n960 = null; g.startFen = null; }
+  }
+  // rebuilding a game from its moves is slow, so keep the current one in memory
+  chessOf(g) {
+    const k = this.cache;
+    if (k && k.round === g.round && k.code === g.code && k.chess.history().length === g.moves.length) return k.chess;
+    const c = g.startFen ? new Chess960(g.startFen) : new Chess();
+    for (const u of g.moves) c.move({ from: u.slice(0, 2), to: u.slice(2, 4), promotion: u[4] || undefined });
+    this.cache = { round: g.round, code: g.code, chess: c };
+    return c;
+  }
 
   async fetch(request) {
     const url = new URL(request.url);
@@ -115,10 +130,11 @@ export class Game {
       const o = await request.json();
       const base = o.tc[0] * 1000;
       this.g = {
-        code: o.code, tc: o.tc, reserved: o.reserved || null, round: 1,
+        code: o.code, tc: o.tc, variant: validVariant(o.variant), reserved: o.reserved || null, round: 1,
         seats: { w: null, b: null }, moves: [], over: null, drawOffer: null, rematch: { w: false, b: false },
         clock: { w: base, b: base, running: null, since: 0 }, gone: { w: null, b: null }, created: Date.now()
       };
+      this.newStart(this.g);
       if (o.reserved) for (const c of ['w', 'b']) this.g.seats[c] = { token: o.reserved[c].token, name: cleanName(o.reserved[c].name), info: o.reserved[c].info || '' };
       await this.save();
       return new Response('ok');
@@ -217,7 +233,7 @@ export class Game {
     const g = this.g, now = Date.now();
     const pl = c => g.seats[c] ? { name: g.seats[c].name, online: this.online(c), info: g.seats[c].info || '', away: !!g.gone[c] } : null;
     return {
-      t: 'state', code: g.code, you: color, round: g.round, tc: g.tc, players: { w: pl('w'), b: pl('b') },
+      t: 'state', code: g.code, you: color, round: g.round, tc: g.tc, variant: g.variant || 'std', startFen: g.startFen || null, n960: g.n960 ?? null, players: { w: pl('w'), b: pl('b') },
       moves: g.moves, over: g.over, drawOffer: g.drawOffer, rematch: g.rematch,
       clock: { ...this.clockNow(g, now) }, abandonMs: ABANDON_MS
     };
@@ -283,6 +299,7 @@ export class Game {
         g.gone = { w: g.gone.b, b: g.gone.w };
         g.moves = []; g.over = null; g.drawOffer = null; g.rematch = { w: false, b: false }; g.round++;
         g.clock = { w: base, b: base, running: null, since: 0 };
+        this.newStart(g);
       }
     } else if (m.t === 'cancelRematch') {
       g.rematch[color] = false;
@@ -352,7 +369,7 @@ export class Lobby {
       if (!token) return;
       // the same person searching from two tabs only keeps the newest search
       for (const o of this.waiting()) if (o !== ws && o.deserializeAttachment().token === token) { const oa = o.deserializeAttachment(); oa.searching = false; o.serializeAttachment(oa); try { o.send('{"t":"cancelled"}'); } catch (e) { } }
-      Object.assign(a, { searching: true, token, name: cleanName(m.name), tc: validTc(m.tc).join('+'), since: Date.now() });
+      Object.assign(a, { searching: true, token, name: cleanName(m.name), tc: validTc(m.tc).join('+') + '|' + validVariant(m.variant), since: Date.now() });
       ws.serializeAttachment(a);
       ws.send(JSON.stringify({ t: 'searching', waiting: this.waiting().length - 1 }));
       await this.match();
@@ -382,10 +399,11 @@ export class Lobby {
         used.add(x.ws); used.add(best.ws);
         for (const p of [x, best]) { p.a.searching = false; p.ws.serializeAttachment(p.a); }
         const [w, b] = Math.random() < 0.5 ? [x, best] : [best, x];
-        const tc = w.a.tc.split('+').map(Number);
+        const [tcStr, variant] = w.a.tc.split('|');
+        const tc = tcStr.split('+').map(Number);
         try {
           const code = await createGame(this.env, {
-            tc,
+            tc, variant,
             reserved: {
               w: { token: w.a.token, name: w.a.name, info: placeHint(b.a, w.a, bestD) },
               b: { token: b.a.token, name: b.a.name, info: placeHint(w.a, b.a, bestD) }

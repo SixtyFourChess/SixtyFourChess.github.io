@@ -498,6 +498,14 @@ textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 0; }
             <button type="button" data-vs="friend">Friend, same device</button>
           </div>
         </div>
+        <div class="block">
+          <span class="sec-label">Variant</span>
+          <div class="seg" id="varSeg">
+            <button type="button" data-v="std">Standard</button>
+            <button type="button" data-v="960" title="The back pieces start in a random order. Castling: move your king onto your rook.">Fischer random</button>
+          </div>
+          <p class="small muted" id="varNote" hidden></p>
+        </div>
         <div class="block" id="friendBlock" hidden>
           <div class="name-row">
             <label class="me-row" for="nameW"><span class="sec-label">White</span><input id="nameW" type="text" autocomplete="off" spellcheck="false" maxlength="24" placeholder="Player 1"></label>
@@ -620,6 +628,7 @@ textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 0; }
           </div>
           <label class="me-row" for="oName"><span class="sec-label">Your name</span><input id="oName" type="text" autocomplete="off" spellcheck="false" maxlength="20" placeholder="Guest"></label>
           <div class="block"><span class="sec-label">Time control</span><div class="chips" id="oTc"></div></div>
+          <div class="block"><span class="sec-label">Variant</span><div class="seg" id="oVar"><button type="button" data-v="std">Standard</button><button type="button" data-v="960">Fischer random</button></div></div>
           <button class="btn primary wide" id="oFind" type="button">Find a player near me</button>
           <div class="o-or">or play a friend</div>
           <div class="block">
@@ -731,6 +740,188 @@ const VAL = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
 const NAME = { p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen', k: 'king' };
 const SIDE = { w: 'White', b: 'Black' };
 const pieceKey = p => p.color + p.type.toUpperCase();
+// Fischer random (Chess960) on top of chess.js 0.10.3, with the same API the app uses.
+// Castling is written as the king moving onto its own rook (from: king square, to: rook square).
+// FEN castling rights use rook files (Shredder-FEN, e.g. "HAha"), so a FEN alone says it is a 960 game.
+function makeChess960(Chess) {
+  const FILES = 'abcdefgh';
+  const fileIdx = sq => FILES.indexOf(sq[0]);
+  function toMap(pl) {
+    const m = {}, rows = pl.split('/');
+    for (let r = 0; r < 8; r++) { let f = 0; for (const ch of rows[r] || '') { if (ch >= '1' && ch <= '8') f += +ch; else { m[FILES[f] + (8 - r)] = ch; f++; } } }
+    return m;
+  }
+  function fromMap(m) {
+    let s = '';
+    for (let r = 8; r >= 1; r--) {
+      let e = 0;
+      for (let f = 0; f < 8; f++) { const p = m[FILES[f] + r]; if (p) { if (e) { s += e; e = 0; } s += p; } else e++; }
+      if (e) s += e;
+      if (r > 1) s += '/';
+    }
+    return s;
+  }
+  const kingFile = (m, c) => { const rk = c === 'w' ? 1 : 8; for (let f = 0; f < 8; f++) if (m[FILES[f] + rk] === (c === 'w' ? 'K' : 'k')) return f; return -1; };
+  function parseRights(str, m) {
+    const R = { w: { k: null, q: null }, b: { k: null, q: null } };
+    if (!str || str === '-') return R;
+    for (const ch of str) {
+      const c = ch === ch.toUpperCase() ? 'w' : 'b', rk = c === 'w' ? 1 : 8, rook = c === 'w' ? 'R' : 'r', kf = kingFile(m, c);
+      if (kf < 0) continue;
+      const u = ch.toUpperCase();
+      if (u === 'K') { for (let f = 7; f > kf; f--) if (m[FILES[f] + rk] === rook) { R[c].k = FILES[f]; break; } }
+      else if (u === 'Q') { for (let f = 0; f < kf; f++) if (m[FILES[f] + rk] === rook) { R[c].q = FILES[f]; break; } }
+      else if (u >= 'A' && u <= 'H') { const f = u.charCodeAt(0) - 65; if (m[FILES[f] + rk] === rook) R[c][f > kf ? 'k' : 'q'] = FILES[f]; }
+    }
+    return R;
+  }
+  const rightsStr = R => (R.w.k ? R.w.k.toUpperCase() : '') + (R.w.q ? R.w.q.toUpperCase() : '') + (R.b.k || '') + (R.b.q || '') || '-';
+
+  class Chess960 {
+    constructor(fen) { this._hist = []; this._load(fen || 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w HAha - 0 1'); }
+    _load(fen) {
+      const f = String(fen).trim().split(/\s+/);
+      this._pl = f[0]; this._turn = f[1] === 'b' ? 'b' : 'w';
+      this._rights = parseRights(f[2], toMap(f[0]));
+      this._ep = f[3] || '-'; this._half = +f[4] || 0; this._full = +f[5] || 1;
+    }
+    _stdFen() { return [this._pl, this._turn, '-', this._ep, this._half, this._full].join(' '); }
+    _std() { return new Chess(this._stdFen()); }
+    fen() { return [this._pl, this._turn, rightsStr(this._rights), this._ep, this._half, this._full].join(' '); }
+    _key() { return [this._pl, this._turn, rightsStr(this._rights), this._ep].join(' '); }
+    turn() { return this._turn; }
+    board() { return this._std().board(); }
+    get(sq) { return this._std().get(sq); }
+    in_check() { return this._std().in_check(); }
+    insufficient_material() { return this._std().insufficient_material(); }
+    in_checkmate() { return this.in_check() && this.moves().length === 0; }
+    in_stalemate() { return !this.in_check() && this.moves().length === 0; }
+    in_threefold_repetition() {
+      const k = this._key();
+      let n = 1;
+      for (const h of this._hist) if (h.key === k) n++;
+      return n >= 3;
+    }
+    in_draw() { return this._half >= 100 || this.in_stalemate() || this.insufficient_material() || this.in_threefold_repetition(); }
+    game_over() { return this.in_checkmate() || this.in_draw(); }
+    history(o = {}) { return this._hist.map(h => o.verbose ? Object.assign({}, h.move) : h.move.san); }
+    remove(sq) { const m = toMap(this._pl), p = m[sq]; if (!p) return null; delete m[sq]; this._pl = fromMap(m); this._rights = parseRights(rightsStr(this._rights), m); return { type: p.toLowerCase(), color: p === p.toUpperCase() ? 'w' : 'b' }; }
+    // legal castling moves for the side to move
+    _castles() {
+      const us = this._turn, rk = us === 'w' ? 1 : 8, m = toMap(this._pl), out = [];
+      const kf = kingFile(m, us);
+      if (kf < 0 || this.in_check()) return out;
+      const kSq = FILES[kf] + rk, them = us === 'w' ? 'b' : 'w';
+      for (const side of ['k', 'q']) {
+        const rf = this._rights[us][side];
+        if (!rf) continue;
+        const rSq = rf + rk;
+        if (m[rSq] !== (us === 'w' ? 'R' : 'r')) continue;
+        const kDest = (side === 'k' ? 'g' : 'c') + rk, rDest = (side === 'k' ? 'f' : 'd') + rk;
+        const span = (a, b) => { const lo = Math.min(a, b), hi = Math.max(a, b), r = []; for (let f = lo; f <= hi; f++) r.push(FILES[f] + rk); return r; };
+        const need = new Set([...span(kf, fileIdx(kDest)), ...span(fileIdx(rSq), fileIdx(rDest))]);
+        let ok = true;
+        for (const s of need) if (m[s] && s !== kSq && s !== rSq) { ok = false; break; }
+        if (!ok) continue;
+        // the king may not pass through or land on an attacked square
+        const step = fileIdx(kDest) > kf ? 1 : -1;
+        for (let f = kf + step; ok && f !== fileIdx(kDest) + step && fileIdx(kDest) !== kf; f += step) {
+          const t = Object.assign({}, m); delete t[kSq]; if (FILES[f] + rk === rSq) delete t[rSq];
+          t[FILES[f] + rk] = us === 'w' ? 'K' : 'k';
+          if (new Chess(fromMap(t) + ' ' + us + ' - - 0 1').in_check()) ok = false;
+        }
+        if (!ok) continue;
+        const fin = Object.assign({}, m); delete fin[kSq]; delete fin[rSq];
+        fin[kDest] = us === 'w' ? 'K' : 'k'; fin[rDest] = us === 'w' ? 'R' : 'r';
+        if (new Chess(fromMap(fin) + ' ' + us + ' - - 0 1').in_check()) continue;
+        const after = new Chess(fromMap(fin) + ' ' + them + ' - - 0 1');
+        const san = (side === 'k' ? 'O-O' : 'O-O-O') + (after.in_checkmate() ? '#' : after.in_check() ? '+' : '');
+        out.push({ color: us, from: kSq, to: rSq, flags: side, piece: 'k', san, castle: { side, kDest, rDest, pl: fromMap(fin) } });
+      }
+      return out;
+    }
+    moves(o = {}) {
+      const c = this._std();
+      let list = o.square ? c.moves({ square: o.square, verbose: true }) : c.moves({ verbose: true });
+      let cs = this._castles();
+      if (o.square) cs = cs.filter(x => x.from === o.square);
+      if (o.square && o.verbose) { // let the player also drop the king on g1/c1 when that square isn't a normal king move
+        for (const x of cs.slice()) if (x.castle.kDest !== x.from && x.castle.kDest !== x.to && !list.some(y => y.to === x.castle.kDest)) cs.push(Object.assign({}, x, { to: x.castle.kDest, alias: true }));
+      }
+      list = list.concat(cs.map(x => { const y = Object.assign({}, x); delete y.castle; return y; }));
+      return o.verbose ? list : list.filter(x => !x.alias).map(x => x.san);
+    }
+    move(mv) {
+      const us = this._turn, them = us === 'w' ? 'b' : 'w', before = this.fen(), key = this._key();
+      // only work out castling when the move could be one (it's the slow part)
+      const kSq = (() => { const m = toMap(this._pl), f = kingFile(m, us); return f < 0 ? null : FILES[f] + (us === 'w' ? 1 : 8); })();
+      const maybe = typeof mv === 'string' ? /^[O0]-[O0]/.test(mv) : !!(mv && mv.from && mv.from === kSq);
+      const cs = maybe ? this._castles() : [];
+      let castle = null;
+      if (typeof mv === 'string') {
+        const s = mv.replace(/0/g, 'O').replace(/[+#!?]+$/, '');
+        if (s === 'O-O') castle = cs.find(x => x.castle.side === 'k');
+        else if (s === 'O-O-O') castle = cs.find(x => x.castle.side === 'q');
+        if ((s === 'O-O' || s === 'O-O-O') && !castle) return null;
+      } else if (mv && mv.from) {
+        castle = cs.find(x => x.from === mv.from && x.to === mv.to) || null;
+        if (!castle) {
+          const alias = cs.find(x => x.from === mv.from && x.castle.kDest === mv.to);
+          if (alias && !this._std().moves({ square: mv.from, verbose: true }).some(y => y.to === mv.to)) castle = alias;
+        }
+      }
+      let out;
+      if (castle) {
+        this._pl = castle.castle.pl;
+        this._rights[us] = { k: null, q: null };
+        this._ep = '-'; this._half++; if (us === 'b') this._full++;
+        this._turn = them;
+        out = Object.assign({}, castle); delete out.castle;
+      } else {
+        const c = this._std();
+        const m = c.move(mv, { sloppy: true });
+        if (!m) return null;
+        const f = c.fen().split(' ');
+        this._pl = f[0]; this._turn = f[1]; this._ep = f[3]; this._half = +f[4]; this._full = +f[5];
+        const R = this._rights, rk = us === 'w' ? '1' : '8', ork = us === 'w' ? '8' : '1';
+        if (m.piece === 'k') R[us] = { k: null, q: null };
+        for (const side of ['k', 'q']) {
+          if (R[us][side] && m.from === R[us][side] + rk) R[us][side] = null;
+          if (R[them][side] && m.to === R[them][side] + ork) R[them][side] = null;
+        }
+        out = m;
+      }
+      this._hist.push({ fen: before, key, move: out });
+      return Object.assign({}, out);
+    }
+    undo() { const h = this._hist.pop(); if (!h) return null; this._load(h.fen); return Object.assign({}, h.move); }
+  }
+
+  // position number 0..959 (Scharnagl numbering; 518 is the normal starting position)
+  Chess960.startFen = n => {
+    n = ((n % 960) + 960) % 960;
+    const r = Array(8).fill(null);
+    let q = n;
+    r[(q % 4) * 2 + 1] = 'B'; q = Math.floor(q / 4);
+    r[(q % 4) * 2] = 'B'; q = Math.floor(q / 4);
+    const empty = () => r.map((x, i) => x ? -1 : i).filter(i => i >= 0);
+    r[empty()[q % 6]] = 'Q'; q = Math.floor(q / 6);
+    const KN = [[0, 1], [0, 2], [0, 3], [0, 4], [1, 2], [1, 3], [1, 4], [2, 3], [2, 4], [3, 4]][q];
+    const e = empty(); r[e[KN[0]]] = 'N'; r[e[KN[1]]] = 'N';
+    const rest = empty(); r[rest[0]] = 'R'; r[rest[1]] = 'K'; r[rest[2]] = 'R';
+    const back = r.join('');
+    const rights = (FILES[rest[2]] + FILES[rest[0]]).toUpperCase() + FILES[rest[2]] + FILES[rest[0]];
+    return `${back.toLowerCase()}/pppppppp/8/8/8/8/PPPPPPPP/${back} w ${rights} - 0 1`;
+  };
+  Chess960.random = () => Math.floor(Math.random() * 960);
+  // a FEN whose castling rights name rook files belongs to a 960 game
+  Chess960.isFen = fen => /[A-Ha-h]/.test(String(fen || '').trim().split(/\s+/)[2] || '');
+  return Chess960;
+}
+
+let Chess960 = null; // built once chess.js has loaded
+// 960 games write castling rights as rook files (e.g. HAha), so the FEN says which rules to use
+const mkChess = fen => (fen && Chess960 && Chess960.isFen(fen)) ? new Chess960(fen) : (fen === undefined ? new Chess() : new Chess(fen));
 const toUci = m => m.from + m.to + (m.promotion || '');
 const uciObj = u => ({ from: u.slice(0, 2), to: u.slice(2, 4), promotion: u.length > 4 ? u[4] : undefined });
 const fenTurn = fen => fen.split(' ')[1];
@@ -1211,6 +1402,8 @@ class Engine {
         }
       };
       if (multipv !== this.mpv) { this.w.postMessage('setoption name MultiPV value ' + multipv); this.mpv = multipv; }
+      const v960 = !!(Chess960 && Chess960.isFen(fen));
+      if (v960 !== !!this.v960) { this.w.postMessage('setoption name UCI_Chess960 value ' + v960); this.v960 = v960; }
       this.w.postMessage('position fen ' + fen);
       this.w.postMessage('go depth ' + depth + (movetime ? ' movetime ' + movetime : ''));
     });
@@ -2022,7 +2215,7 @@ function saveLP() { store.set('s64.ladder', LP); }
 const unlockedMax = () => Math.min(LP.beaten, NPCS.length - 1);
 let SEQ = 10; // unique generation counter shared by both games
 const FREE = { // free play against an adjustable bot
-  mode: 'free', saveKey: 's64.play', vs: store.get('s64.vs', 'bot') === 'friend' ? 'friend' : 'bot',
+  mode: 'free', saveKey: 's64.play', variant: store.get('s64.variant', 'std') === '960' ? '960' : 'std', startFen: null, n960: null, vs: store.get('s64.vs', 'bot') === 'friend' ? 'friend' : 'bot',
   names: Object.assign({ w: '', b: '' }, store.get('s64.names', {}) || {}), autoFlip: store.get('s64.autoFlip', true),
   tc: store.get('s64.tc', null), clk: null, chess: null, userColor: 'w', colorPref: store.get('s64.colorPref', 'w'), elo: store.get('s64.elo', 1200),
   orientation: 'w', over: null, thinking: false, job: null, hint: null, hintJob: null, hintBusy: false, lastMove: null, gen: 1
@@ -2131,13 +2324,15 @@ function lastMoveOf(chess) {
 function gameData(G) {
   return {
     clk: G.clk ? Object.assign({}, G.clk) : null,
-    moves: G.chess ? G.chess.history({ verbose: true }).map(toUci) : [], userColor: G.userColor, over: G.over, orientation: G.orientation,
+    moves: G.chess ? G.chess.history({ verbose: true }).map(toUci) : [], startFen: G.startFen || null, n960: G.n960 == null ? null : G.n960, userColor: G.userColor, over: G.over, orientation: G.orientation,
     npc: G.npc, phase: G.phase, sayText: G.sayText, mood: G.mood, newUnlock: G.newUnlock
   };
 }
 function savePlay() { if (P.mode === 'custom') { saveCustom(); return; } store.set(P.saveKey, gameData(P)); }
 function restorePlay(data) {
-  P.chess = new Chess();
+  P.startFen = P === FREE && data && data.startFen && Chess960.isFen(data.startFen) ? data.startFen : null;
+  P.n960 = P.startFen && data.n960 != null ? data.n960 : null;
+  P.chess = P.startFen ? new Chess960(P.startFen) : new Chess();
   if (data && Array.isArray(data.moves)) {
     for (const u of data.moves) if (!P.chess.move(uciObj(u))) break;
     P.userColor = data.userColor === 'b' ? 'b' : 'w';
@@ -2172,7 +2367,9 @@ function newGame() {
   P.gen = ++SEQ;
   if (P.job) P.job.cancel();
   if (P.hintJob) P.hintJob.cancel();
-  P.chess = new Chess();
+  if (P === FREE && FREE.variant === '960') { FREE.n960 = Chess960.random(); FREE.startFen = Chess960.startFen(FREE.n960); }
+  else if (P === FREE) { FREE.n960 = null; FREE.startFen = null; }
+  P.chess = P.startFen ? new Chess960(P.startFen) : new Chess();
   P.userColor = P.colorPref === 'r' ? (Math.random() < .5 ? 'w' : 'b') : P.colorPref;
   P.orientation = P.vs === 'friend' ? 'w' : P.userColor;
   if (P === FREE) resetClock();
@@ -2281,16 +2478,17 @@ function resignPlay() {
   P.over = { result: loser === 'w' ? '0-1' : '1-0', text: P.vs === 'friend' ? `${pName(loser)} resigned. ${pName(loser === 'w' ? 'b' : 'w')} wins.` : 'You resigned.', resigned: true };
   gameEnded(); savePlay(); renderPlay();
 }
+function castleTip() { return P === FREE && FREE.startFen ? ` <span class="muted">Fischer random #${FREE.n960}. To castle, move your king onto your rook.</span>` : ''; }
 function playStatus() {
   const c = P.chess;
   if (P.over) return { html: esc(P.over.text), over: true };
   if (P.vs === 'friend' && P.clk && P.clk.paused) return { html: 'Clock paused. Press Resume clock to keep playing.' };
-  if (P.vs === 'friend') return { html: `${esc(pName(c.turn()))} to move (${SIDE[c.turn()]})` + (c.in_check() ? ', in check!' : '.') + (P.hint ? ' Hint shown in blue.' : '') };
+  if (P.vs === 'friend') return { html: `${esc(pName(c.turn()))} to move (${SIDE[c.turn()]})` + (c.in_check() ? ', in check!' : '.') + (P.hint ? ' Hint shown in blue.' : '') + (c.history().length === 0 ? castleTip() : '') };
   if (!engine.ready && !engine.failed && c.turn() !== P.userColor) return { html: 'Loading the engine…', spin: true };
   if (P.thinking) return { html: `${esc(botName())} is thinking…`, spin: true };
   if (P.hintBusy) return { html: 'Looking for a hint…', spin: true };
   if (c.turn() === P.userColor) {
-    const base = c.history().length === 0 ? `You have ${SIDE[P.userColor]}. Make your first move.` : 'Your move.';
+    const base = c.history().length === 0 ? `You have ${SIDE[P.userColor]}. Make your first move.` + castleTip() : 'Your move.';
     return { html: base + (c.in_check() ? ' You are in check.' : '') + (P.hint ? ' Hint shown in blue.' : '') };
   }
   return { html: 'Waiting for the bot…' };
@@ -2347,6 +2545,7 @@ function renderPlay(anim) {
   $('#strengthBlock').hidden = friend; $('#colorBlock').hidden = friend; $('#friendBlock').hidden = !friend;
   $('#drawBtn').hidden = !friend; $('#drawBtn').disabled = !!P.over || !sans.length;
   $$('#vsSeg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.vs === P.vs)));
+  $$('#varSeg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === FREE.variant)));
   $$('#tcChips .chip').forEach(b => { const t = TCS[+b.dataset.tc]; b.setAttribute('aria-pressed', String(FREE.tc && FREE.tc.base ? t[0] === FREE.tc.base && t[1] === FREE.tc.inc : !t[0])); });
   const ck = FREE.clk, pend = friend && !P.over && P.chess.history().length && ((FREE.tc && FREE.tc.base ? FREE.tc.base + '|' + FREE.tc.inc : '') !== (ck ? ck.base + '|' + ck.inc : ''));
   $('#tcNote').hidden = !pend;
@@ -2373,7 +2572,7 @@ function reviewPlayedGame(hl) {
     (G.userColor === 'w' ? `[BlackElo "${botR}"]\n` : `[WhiteElo "${botR}"]\n`) + `[Result "${res}"]\n\n`;
   let body = '';
   sans.forEach((s, i) => { body += (i % 2 === 0 ? `${i / 2 + 1}. ` : '') + s + ' '; });
-  const pgn = (G.vs === 'friend' ? friendHead(res) : head) + body + res;
+  const pgn = (G.vs === 'friend' ? friendHead(res) : head).replace(/\n\n$/, '\n' + variantHead(G) + '\n') + body + res;
   $('#pgnIn').value = pgn;
   $('#exampleNote').textContent = ladder ? `Your game against ${npc.name}.` : G.vs === 'friend' ? `${pName('w')} vs ${pName('b')}` : 'Your game against the bot.';
   const orientation = G.userColor;
@@ -2399,7 +2598,8 @@ function parseGame(text) {
   const tokens = t.split(/\s+/).filter(x => x && x !== 'e.p.');
   const startFen = headers.FEN ? headers.FEN.trim() : START_FEN;
   let c;
-  try { c = new Chess(startFen); } catch (e) { c = null; }
+  const is960 = /960|fischer|freestyle/i.test(headers.Variant || '');
+  try { c = is960 ? new Chess960(startFen) : mkChess(startFen); } catch (e) { c = null; }
   if (!c || c.fen().split(' ')[0] !== startFen.split(' ')[0]) throw new Error('The [FEN] header is not a valid position.');
   const positions = [makePos(c)];
   const moves = [];
@@ -2418,7 +2618,7 @@ function parseGame(text) {
     positions.push(makePos(c));
     if (moves.length > 600) break;
   }
-  return { headers, startFen: positions[0].fen, moves, positions, cls: [], book: [] };
+  return { headers, startFen: positions[0].fen, moves, positions, cls: [], book: [], v960: c instanceof Chess960 };
 }
 function makePos(c) {
   const fen = c.fen();
@@ -2503,10 +2703,10 @@ function summarize(g) {
    REVIEW: coach text
    ============================================================ */
 function sanOf(fen, uci) {
-  try { const c = new Chess(fen); const m = c.move(uciObj(uci)); return m ? m.san : uci; } catch (e) { return uci; }
+  try { const c = mkChess(fen); const m = c.move(uciObj(uci)); return m ? m.san : uci; } catch (e) { return uci; }
 }
 function pvMoves(fen, pv, n) {
-  const c = new Chess(fen), out = [];
+  const c = mkChess(fen), out = [];
   for (const u of (pv || []).slice(0, n)) { const m = c.move(uciObj(u)); if (!m) break; out.push(m.san); }
   return out;
 }
@@ -2527,7 +2727,7 @@ function moveLabel(g, i) {
   return (fenTurn(fen) === 'w' ? `${no}. ` : `${no}… `) + g.moves[i].san;
 }
 function materialSwing(fen, pv, plies, color) {
-  const c = new Chess(fen);
+  const c = mkChess(fen);
   const before = materialFor(fen, color);
   for (const u of (pv || []).slice(0, plies)) { if (!c.move(uciObj(u))) break; }
   return before - materialFor(c.fen(), color); // positive = color lost material
@@ -2700,7 +2900,7 @@ function goPly(p) {
   renderReview(anim);
   if (changed && anim) {
     const mv = R.game.moves[p - 1];
-    if (mv) { const c = new Chess(R.game.positions[p].fen); moveSound(mv, c); }
+    if (mv) { const c = mkChess(R.game.positions[p].fen); moveSound(mv, c); }
   }
 }
 function step(dir) {
@@ -2722,7 +2922,7 @@ function onReviewMove(from, to, promo) {
   if (R.retry) {
     const rt = R.retry;
     if (rt.state !== 'try') return false;
-    const c = new Chess(g.positions[rt.i].fen);
+    const c = mkChess(g.positions[rt.i].fen);
     const m = c.move({ from, to, promotion: promo || 'q' });
     if (!m) return false;
     gradeRetry(rt, m, c);
@@ -2730,7 +2930,7 @@ function onReviewMove(from, to, promo) {
   }
   let ex = R.explore;
   const baseFen = ex ? ex.fens[ex.cursor] : g.positions[R.ply].fen;
-  const c = new Chess(baseFen);
+  const c = mkChess(baseFen);
   const m = c.move({ from, to, promotion: promo || 'q' });
   if (!m) return false;
   moveSound(m, c);
@@ -2746,7 +2946,7 @@ function showLine(i) {
   const g = R.game, A = g.positions[i];
   const pv = A.lines[0] ? A.lines[0].pv.slice(0, 12) : [];
   if (!pv.length) return;
-  const c = new Chess(A.fen);
+  const c = mkChess(A.fen);
   const ex = { base: i, fens: [A.fen], sans: [], moves: [], cursor: 0 };
   for (const u of pv) { const m = c.move(uciObj(u)); if (!m) break; ex.fens.push(c.fen()); ex.sans.push(m.san); ex.moves.push({ from: m.from, to: m.to }); }
   R.retry = null; R.explore = ex; ex.cursor = 1;
@@ -2755,7 +2955,7 @@ function showLine(i) {
 }
 function exPos(fen) {
   const cached = evalCache.get(fen);
-  const c = new Chess(fen);
+  const c = mkChess(fen);
   return { fen, turn: c.turn(), terminal: c.in_checkmate() ? 'checkmate' : c.in_stalemate() ? 'stalemate' : null, lines: cached ? cached.lines : [] };
 }
 function liveEval() {
@@ -2764,7 +2964,7 @@ function liveEval() {
   const fen = ex.fens[ex.cursor];
   if (evalCache.has(fen)) return;
   if (R.liveJob) R.liveJob.cancel();
-  const c = new Chess(fen);
+  const c = mkChess(fen);
   if (c.game_over()) return;
   const job = engine.run(fen, { depth: 16, movetime: 1500, multipv: 1 });
   R.liveJob = job;
@@ -2861,7 +3061,7 @@ function renderReview(anim) {
     return;
   }
   const g = R.game, v = reviewView();
-  const chess = new Chess(v.fen);
+  const chess = mkChess(v.fen);
   board.orientation = R.orientation;
   board.set(chess, { lastMove: v.lastMove, animate: anim, arrows: v.arrows, badge: v.badge });
   setEvalBar(true, evalOf(v.evalPos), R.orientation);
@@ -3127,6 +3327,9 @@ function renderClocks() {
 }
 const pName = c => (FREE.names[c] || '').trim() || (c === 'w' ? 'Player 1' : 'Player 2');
 const pgnName = c => pName(c).replace(/"/g, "'").replace(/]/g, ')');
+function variantHead(G) {
+  return G && G.startFen && Chess960.isFen(G.startFen) ? `[Variant "Chess960"]\n[SetUp "1"]\n[FEN "${G.startFen}"]\n` : '';
+}
 function friendHead(res) {
   return `[Event "Sixty-Four: friend game"]\n[Date "${new Date().toISOString().slice(0, 10).replace(/-/g, '.')}"]\n[White "${pgnName('w')}"]\n[Black "${pgnName('b')}"]\n[Result "${res}"]\n\n`;
 }
@@ -3543,7 +3746,7 @@ function playMoment() {
     R.ply = m.i + 1;
     h.pending = false; h.text = nr.text; h.speech = nr.speech; h.mood = nr.mood;
     renderReview(true);
-    moveSound(g.moves[m.i], new Chess(g.positions[m.i + 1].fen));
+    moveSound(g.moves[m.i], mkChess(g.positions[m.i + 1].fen));
     narrate(key);
   }, HL.every ? 350 : 800);
 }
@@ -3671,7 +3874,7 @@ function fixCastling(m, cast) {
 }
 const buildFen = (m, turn, cast, ep, half, full) => `${mapToBoard(m)} ${turn} ${fixCastling(m, cast)} ${ep || '-'} ${half} ${full}`;
 function attacked(m, col) { // is col's king attacked in this position?
-  try { return new Chess(buildFen(m, col, '-', '-', 0, 1)).in_check(); } catch (e) { return false; }
+  try { return mkChess(buildFen(m, col, '-', '-', 0, 1)).in_check(); } catch (e) { return false; }
 }
 // Hook: the starting position for a rule. `sides` lists who gets the rule ('w', 'b' or both).
 // oneSide rules: only you get them against Stockfish; against a friend, White gets them
@@ -3743,7 +3946,7 @@ function customDoMove(G, from, to, promo) {
     }
   } else {
     if (!customAllowStd(from)) return null;
-    const c = new Chess(fen0);
+    const c = mkChess(fen0);
     mv = c.move({ from, to, promotion: promo || 'q' });
     if (!mv) return null;
     const parts = c.fen().split(' ');
@@ -3758,7 +3961,7 @@ function customDoMove(G, from, to, promo) {
   if (fx.again && !attacked(m, opp)) { turn = col; G.frenzy = fx.again; } else G.frenzy = null;
   const changed = fx.moves.length || fx.gone.length || fx.shots.length || fx.spawn.length || fx.convert.length || turn === col;
   const fenFinal = changed ? buildFen(m, turn, cast, '-', half, full) : fenMid;
-  const c2 = new Chess(fenFinal);
+  const c2 = mkChess(fenFinal);
   san += (c2.in_checkmate() ? '#' : c2.in_check() ? '+' : '') + (pw && !pw.shot ? '✦' : '');
   G.chess = c2;
   G.lastMove = { from, to };
@@ -3936,7 +4139,7 @@ function customCheckOver(G) {
 }
 function restoreFromLog(G) {
   const last = G.log[G.log.length - 1];
-  G.chess = new Chess(last ? last.fen : G.startFen);
+  G.chess = mkChess(last ? last.fen : G.startFen);
   G.lastMove = last ? { from: last.from, to: last.to } : null;
   G.tags = JSON.parse(JSON.stringify(last && last.tags ? last.tags : G.startTags || {}));
   G.frenzy = last ? last.frenzy || null : null;
@@ -3955,7 +4158,7 @@ function restoreCustom() {
       G.over = d.over || null;
     } catch (e) { G.phase = 'lobby'; G.log = []; }
   }
-  if (!G.chess) G.chess = new Chess(G.startFen);
+  if (!G.chess) G.chess = mkChess(G.startFen);
 }
 function customMovable() {
   const G = CUSTOM;
@@ -4045,7 +4248,7 @@ function customShow(G, res, anim, done) {
   const n = fx.moves.length + fx.gone.length + fx.shots.length + fx.spawn.length + fx.convert.length + (fx.hatch ? 1 : 0);
   if (!n || G !== P || S.tab !== 'custom') { if (G === P && S.tab === 'custom') renderCustom(anim); setTimeout(done, 0); return; }
   board.orientation = G.orientation;
-  board.set(new Chess(res.fenMid), { lastMove: G.lastMove, animate: anim && !res.shot, labels: null });
+  board.set(mkChess(res.fenMid), { lastMove: G.lastMove, animate: anim && !res.shot, labels: null });
   const t0 = performance.now(), wait = anim && !res.shot ? 330 : 60;
   board.fxUntil = performance.now() + 4000;
   const go = async () => {
@@ -4127,7 +4330,7 @@ function customStart() {
   G.orientation = G.vs === 'friend' ? 'w' : G.userColor;
   G.opt = optOf(ruleOf(G.rule), sel.opt);
   G.startFen = startFenFor(G.rule, G.vs, G.userColor, G.opt);
-  Object.assign(G, { chess: new Chess(G.startFen), log: [], over: null, lastMove: null, phase: 'game', thinking: false, animating: false, gen: ++SEQ, tags: {}, frenzy: null });
+  Object.assign(G, { chess: mkChess(G.startFen), log: [], over: null, lastMove: null, phase: 'game', thinking: false, animating: false, gen: ++SEQ, tags: {}, frenzy: null });
   const rr = ruleOf(G.rule);
   if (rr.init) rr.init(G, poweredSides(G), G.opt);
   G.startTags = JSON.parse(JSON.stringify(G.tags));
@@ -4186,7 +4389,7 @@ function renderCustom(anim) {
   $('#cEloBlock').hidden = sel.vs !== 'bot';
   $('#cColorBlock').hidden = sel.vs !== 'bot';
   if (!inGame) {
-    const user = sel.vs === 'bot' && sel.color === 'b' ? 'b' : 'w', fen = startFenFor(sel.rule, sel.vs, user, sel.opt), c = new Chess(fen);
+    const user = sel.vs === 'bot' && sel.color === 'b' ? 'b' : 'w', fen = startFenFor(sel.rule, sel.vs, user, sel.opt), c = mkChess(fen);
     G.lobbyFen = fen;
     board.orientation = user;
     board.set(c, {});
@@ -4227,7 +4430,7 @@ const ONLINE = {
   thinking: false, job: null, hintJob: null,
   ws: null, lobbyWs: null, code: null, st: null, recvAt: 0, msg: '', msgErr: false, searchSince: 0, waiting: 0,
   name: store.get('s64.oname', store.get('s64.me', '') || ''), tcIdx: clamp(store.get('s64.otc2', 2) | 0, 0, OTCS.length - 1),
-  colorPref: store.get('s64.ocolor', 'r'), retry: 0, retryTimer: null, ping: null, flash: null
+  colorPref: store.get('s64.ocolor', 'r'), variant: store.get('s64.ovar', 'std') === '960' ? '960' : 'std', retry: 0, retryTimer: null, ping: null, flash: null
 };
 function onlineServer() { return String(store.get('s64.server', '') || ONLINE_SERVER_DEFAULT || '').replace(/\/+$/, ''); }
 function onlineToken() {
@@ -4341,7 +4544,7 @@ function onlineState(st) {
   if (st.moves.length > (G.pendingPly ?? -1)) G.pendingPly = null;
   let anim = false, last = null;
   if (fresh || (local.length > st.moves.length && !pending) || !same) {
-    G.chess = new Chess();
+    G.chess = st.startFen ? mkChess(st.startFen) : new Chess();
     for (const u of st.moves) G.chess.move(uciObj(u));
     if (fresh) G.orientation = st.you;
     G.lastMove = lastMoveOf(G.chess);
@@ -4410,7 +4613,7 @@ function onlineFind() {
   let ws;
   try { ws = new WebSocket(oWs('/ws/lobby')); } catch (e) { G.phase = 'lobby'; onlineSetMsg("Couldn't reach the online server.", true); return; }
   G.lobbyWs = ws;
-  ws.onopen = () => ws.send(JSON.stringify({ t: 'search', token: onlineToken(), name: oName(), tc: OTCS[G.tcIdx].slice(0, 2) }));
+  ws.onopen = () => ws.send(JSON.stringify({ t: 'search', token: onlineToken(), name: oName(), tc: OTCS[G.tcIdx].slice(0, 2), variant: G.variant }));
   ws.onmessage = ev => {
     let m; try { m = JSON.parse(ev.data); } catch (e) { return; }
     if (m.t === 'searching') { G.waiting = m.waiting | 0; if (S.tab === 'online') renderPlay(); }
@@ -4434,7 +4637,7 @@ async function onlineCreate() {
   onlineLeave();
   G.phase = 'connecting'; renderPlay();
   try {
-    const r = await fetch(onlineServer() + '/api/new', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tc: OTCS[G.tcIdx].slice(0, 2) }) });
+    const r = await fetch(onlineServer() + '/api/new', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tc: OTCS[G.tcIdx].slice(0, 2), variant: G.variant }) });
     const j = await r.json();
     if (!j.code) throw new Error('no code');
     onlineConnect(j.code, G.colorPref);
@@ -4450,7 +4653,7 @@ function onlineReview() {
   if (!st || G.chess.history().length < 2) return;
   const res = st.over ? st.over.result : '*';
   const nm = c => (st.players[c] ? st.players[c].name : '?').replace(/"/g, "'").replace(/]/g, ')');
-  const head = `[Event "Sixty-Four online"]\n[Date "${new Date().toISOString().slice(0, 10).replace(/-/g, '.')}"]\n[White "${nm('w')}"]\n[Black "${nm('b')}"]\n[Result "${res}"]\n\n`;
+  const head = `[Event "Sixty-Four online"]\n[Date "${new Date().toISOString().slice(0, 10).replace(/-/g, '.')}"]\n[White "${nm('w')}"]\n[Black "${nm('b')}"]\n[Result "${res}"]\n` + variantHead({ startFen: st.startFen }) + '\n';
   let body = '';
   G.chess.history().forEach((s, i) => { body += (i % 2 === 0 ? `${i / 2 + 1}. ` : '') + s + ' '; });
   const pgn = head + body + res;
@@ -4468,14 +4671,14 @@ function renderOnlineWait() {
     const sec = (performance.now() - G.searchSince) / 1000;
     el.innerHTML = `<span class="sec-label">Finding a player</span><div class="o-radar" aria-hidden="true"></div>` +
       `<p class="o-big">Looking ${sec > 30 ? 'everywhere' : 'within ' + radiusLabel(sec) + ' of you'}…</p>` +
-      `<p class="tip" style="text-align:center">${esc(otcName(OTCS[G.tcIdx]))} · ${G.waiting ? `${G.waiting} other ${G.waiting === 1 ? 'player is' : 'players are'} searching right now` : 'Nobody else is searching yet. Send the site to a friend!'}</p>`;
+      `<p class="tip" style="text-align:center">${esc(otcName(OTCS[G.tcIdx]))}${G.variant === '960' ? ', Fischer random' : ''} · ${G.waiting ? `${G.waiting} other ${G.waiting === 1 ? 'player is' : 'players are'} searching right now` : 'Nobody else is searching yet. Send the site to a friend!'}</p>`;
   } else if (G.phase === 'connecting') {
     el.innerHTML = `<div class="status"><span class="spin" aria-hidden="true"></span><span>Connecting…</span></div>`;
   } else if (G.phase === 'wait' && G.st) {
     const link = location.origin + location.pathname + '?join=' + G.st.code;
     el.innerHTML = `<span class="sec-label">Send this code to your friend</span><div class="o-code" id="oCodeBig">${esc(G.st.code)}</div>` +
       `<div class="btn-row"><button class="btn" type="button" id="oCopyCode">Copy code</button><button class="btn" type="button" id="oCopyLink">Copy invite link</button></div>` +
-      `<div class="status"><span class="spin" aria-hidden="true"></span><span>Waiting for your friend to join… You play ${G.st.you === 'w' ? 'White' : 'Black'}, ${esc(otcName(G.st.tc))}.</span></div>`;
+      `<div class="status"><span class="spin" aria-hidden="true"></span><span>Waiting for your friend to join… You play ${G.st.you === 'w' ? 'White' : 'Black'}, ${esc(otcName(G.st.tc))}${G.st.variant === '960' ? ', Fischer random' : ''}.</span></div>`;
     const copy = (txt, b) => { (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => { b.textContent = 'Copied!'; setTimeout(() => { b.textContent = b.id === 'oCopyCode' ? 'Copy code' : 'Copy invite link'; }, 1400); }).catch(() => { b.textContent = txt; }); };
     $('#oCopyCode').onclick = e => copy(G.st.code, e.currentTarget);
     $('#oCopyLink').onclick = e => copy(link, e.currentTarget);
@@ -4507,6 +4710,7 @@ function renderOnline(anim) {
     if (document.activeElement !== $('#oName')) $('#oName').value = G.name;
     $$('#oTc .chip').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.tc === G.tcIdx)));
     $$('#oColor button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.c === G.colorPref)));
+    $$('#oVar button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === G.variant)));
     ['#oFind', '#oCreate', '#oJoin'].forEach(id => { $(id).disabled = !server; });
     const ls = $('#oLobbyStatus');
     const msg = !server ? 'Online play needs the Sixty-Four server. It is not connected on this copy of the app yet.' : G.msg;
@@ -4523,6 +4727,7 @@ function renderOnline(anim) {
     else if (!opp.online) { html = `${esc(opp.name)} disconnected. If they don't come back within a minute, ${c.history().length < 2 ? 'the game is cancelled' : 'you win'}.`; spin = true; }
     else if (st.drawOffer === oOpp()) html = `${esc(opp.name)} offers a draw.`;
     else if (myTurn) html = (c.history().length < 2 ? `You have ${G.userColor === 'w' ? 'White' : 'Black'}. Your move.` : 'Your move.') + (c.in_check() ? ' You are in check!' : '');
+    if (!G.over && st.variant === '960' && c.history().length < 2) html += ` <span class="muted">Fischer random #${st.n960}. To castle, move your king onto your rook.</span>`;
     else html = `Waiting for ${esc(opp.name)}…`;
     if (G.msg && G.msgErr && !G.over) html += ` <span class="muted">(${esc(G.msg)})</span>`;
     const se = $('#oStatus');
@@ -4550,6 +4755,7 @@ function renderOnline(anim) {
 function wireOnline() {
   $('#oTc').innerHTML = OTCS.map((t, i) => `<button type="button" class="chip" data-tc="${i}" title="${esc(t[3] || t[2])}">${esc(t[2])}${t[3] ? ` <span class="muted">${esc(t[3])}</span>` : ''}</button>`).join('');
   $('#oTc').addEventListener('click', e => { const b = e.target.closest('[data-tc]'); if (!b) return; ONLINE.tcIdx = +b.dataset.tc; store.set('s64.otc2', ONLINE.tcIdx); renderPlay(); });
+  $('#oVar').addEventListener('click', e => { const b = e.target.closest('[data-v]'); if (!b) return; ONLINE.variant = b.dataset.v; store.set('s64.ovar', ONLINE.variant); renderPlay(); });
   $('#oColor').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; ONLINE.colorPref = b.dataset.c; store.set('s64.ocolor', ONLINE.colorPref); renderPlay(); });
   $('#oName').addEventListener('input', e => { ONLINE.name = e.target.value.slice(0, 20); store.set('s64.oname', ONLINE.name); });
   $('#oFind').addEventListener('click', onlineFind);
@@ -4672,6 +4878,12 @@ function wire() {
   $('#cLeave').addEventListener('click', () => { pauseBot(CUSTOM); CUSTOM.phase = 'lobby'; saveCustom(); renderPlay(); });
 
   // two players on one device
+  $('#varSeg').addEventListener('click', e => {
+    const b = e.target.closest('button');
+    if (!b || b.dataset.v === FREE.variant) return;
+    FREE.variant = b.dataset.v; store.set('s64.variant', FREE.variant);
+    if (P === FREE) newGame();
+  });
   $('#vsSeg').addEventListener('click', e => {
     const b = e.target.closest('button');
     if (!b || b.dataset.vs === FREE.vs) return;
@@ -4858,6 +5070,7 @@ const EXAMPLE_PGN = `[Event "Paris Opera"]
 
 function start(data) {
   data = data || {};
+  Chess960 = makeChess960(Chess);
   buildBook();
   wire();
   renderSoundBtn(); renderEnginePill(); renderDepth();

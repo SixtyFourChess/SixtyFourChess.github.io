@@ -3048,7 +3048,10 @@ function drawGraph() {
    LADDER (beat the NPCs)
    ============================================================ */
 // ---------- chess clock for two players on one device ----------
-const TCS = [[0, 0, 'No clock'], [60, 0, '1 min'], [180, 2, '3 | 2'], [300, 0, '5 min'], [600, 0, '10 min'], [900, 10, '15 | 10'], [1800, 0, '30 min']];
+// time controls: [seconds, increment, name, detail] (used by friend mode and online)
+const TCS = [[60, 0, 'Bullet', '1 min'], [180, 2, 'Blitz', '3 | 2'], [600, 0, 'Rapid', '10 min'], [0, 0, 'No time', '']];
+// an old saved clock that is no longer on the list becomes Rapid
+if (FREE.tc && FREE.tc.base && !TCS.some(t => t[0] === FREE.tc.base && t[1] === FREE.tc.inc)) { FREE.tc = { base: 600, inc: 0 }; store.set('s64.tc', FREE.tc); }
 function resetClock() {
   const tc = FREE.tc;
   FREE.clk = FREE.vs === 'friend' && tc && tc.base ? { w: tc.base * 1000, b: tc.base * 1000, base: tc.base, inc: tc.inc || 0, running: null, paused: false, last: 0, started: false } : null;
@@ -4217,7 +4220,7 @@ function renderCustom(anim) {
 // (You can also test one without editing by opening the site with ?server=https://... once.)
 const ONLINE_SERVER_DEFAULT = 'https://sixtyfour-online.crossguardstudios.workers.dev';
 // online time controls: [seconds, increment, name, detail]
-const OTCS = [[60, 0, 'Bullet', '1 min'], [180, 2, 'Blitz', '3 | 2'], [600, 0, 'Rapid', '10 min'], [0, 0, 'No time', '']];
+const OTCS = TCS;
 const otcName = tc => { const t = OTCS.find(t => t[0] === tc[0] && t[1] === tc[1]); return t ? (t[3] ? `${t[2]} (${t[3]})` : t[2]) : ''; };
 const ONLINE = {
   mode: 'online', phase: 'lobby', chess: null, userColor: 'w', orientation: 'w', over: null, lastMove: null, gen: 0,
@@ -4685,7 +4688,7 @@ function wire() {
     if (FREE.autoFlip && FREE.vs === 'friend' && FREE.chess) { FREE.orientation = FREE.chess.turn(); savePlay(); }
     renderPlay();
   });
-  $('#tcChips').innerHTML = TCS.map(([b, i, l], k) => `<button type="button" class="chip" data-tc="${k}">${l}</button>`).join('');
+  $('#tcChips').innerHTML = TCS.map(([b, i, l, d], k) => `<button type="button" class="chip" data-tc="${k}">${l}${d ? ` <span class="muted">${d}</span>` : ''}</button>`).join('');
   $('#tcChips').addEventListener('click', e => {
     const b = e.target.closest('[data-tc]');
     if (!b) return;

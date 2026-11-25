@@ -377,6 +377,11 @@ textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 0; }
 .hl.power::after { background: rgba(140, 90, 255, .75); }
 .hl.powercap { background: radial-gradient(circle, transparent 60%, rgba(140, 90, 255, .75) 61%); }
 
+.pc.cloak { opacity: .34; animation: cloak 2.6s ease-in-out infinite; }
+@keyframes cloak { 50% { opacity: .58; } }
+.a51-pow { font-size: 12.5px; color: var(--muted); margin: 0; padding-left: 18px; display: grid; gap: 3px; }
+.a51-pow b { color: var(--ink); }
+
 /* ---------- move label icons ---------- */
 .badge:has(> img), .sq-badge:has(> img) { background: none; box-shadow: none; }
 .badge > img, .sq-badge > img { display: block; width: 100%; height: 100%; }
@@ -1699,7 +1704,8 @@ class Board {
       if (!p) continue;
       const sq = String.fromCharCode(97 + f) + (8 - row);
       const img = document.createElement('img');
-      img.className = 'pc'; img.src = PIECE_URL[pieceKey(p)]; img.alt = ''; img.draggable = false; img.dataset.sq = sq;
+      const sk = this.opts.skin ? this.opts.skin(sq, p) : null;
+      img.className = 'pc' + (sk && sk.cls ? ' ' + sk.cls : ''); img.src = sk ? sk.src : PIECE_URL[pieceKey(p)]; img.alt = ''; img.draggable = false; img.dataset.sq = sq;
       if (this.hideSq === sq && this.hideFen === this.chess.fen()) img.style.visibility = 'hidden';
       const { x, y } = this.xy(sq);
       img.style.left = x * 12.5 + '%'; img.style.top = y * 12.5 + '%';
@@ -1735,7 +1741,7 @@ class Board {
     }
     if (this.selected) {
       add(this.selected, 'sel');
-      for (const m of this.chess.moves({ square: this.selected, verbose: true })) add(m.to, (m.captured ? 'cap' : 'dot'));
+      if (!this.opts.allowStd || this.opts.allowStd(this.selected)) for (const m of this.chess.moves({ square: this.selected, verbose: true })) add(m.to, (m.captured ? 'cap' : 'dot'));
       if (this.opts.extraMoves) for (const m of this.opts.extraMoves(this.selected)) add(m.to, m.captured ? 'cap powercap' : 'dot power');
     }
     this.hls.innerHTML = h;
@@ -1759,7 +1765,7 @@ class Board {
     this.badges.innerHTML = `<div class="sq-badge cls-${this.badge.cls}" style="left:calc(${(x + 1) * 12.5}% - 5.9%);top:calc(${y * 12.5}% + .6%)">${CLS[this.badge.cls].glyph}</div>`;
   }
   select(sq) { this.selected = sq; this.renderHL(); }
-  isTarget(from, to) { return this.chess.moves({ square: from, verbose: true }).some(m => m.to === to) || (this.opts.extraMoves ? this.opts.extraMoves(from).some(m => m.to === to) : false); }
+  isTarget(from, to) { return ((!this.opts.allowStd || this.opts.allowStd(from)) && this.chess.moves({ square: from, verbose: true }).some(m => m.to === to)) || (this.opts.extraMoves ? this.opts.extraMoves(from).some(m => m.to === to) : false); }
   down(e) {
     if (!this.chess || this.promoOpen || e.button > 0 || performance.now() < (this.fxUntil || 0)) return;
     const color = this.opts.movable();
@@ -3536,15 +3542,20 @@ function hlAction(a) {
 
 /* ============================================================
    CUSTOM MODE: "Chess, but..."
-   Add your own rules to the RULES list below. A rule is an object like:
-     { id: 'myrule', short: 'Short name', card: 'One-line summary',
-       title: 'Chess, but ...', text: 'Full explanation shown during the game.',
-       both: false,            // true = the rule applies to both sides
-       icon: () => '<b>?</b>' } // HTML for the little icon in the list
-   Then make it do something in the hooks below:
-     startFenFor()  - change the starting position
-     applyEffects() - change the board after a move (move or remove pieces)
-     powerMoves()   - give pieces extra moves
+   Each entry in RULES is one custom mode. A rule is an object with:
+     id, short, card, title, text   - names and descriptions shown in the app
+     both: true                     - the rule applies to both sides (otherwise only to you
+                                      against Stockfish, or to both players against a friend)
+     icon()                         - HTML for the little icon in the list
+   and any of these optional hooks:
+     setup(sides)                   - return a starting FEN
+     init(G, sides)                 - set up per-piece state in G.tags (square -> object)
+     power(G, from, col, m, std)    - extra moves for a piece: [{ to, captured, move: true }]
+                                      or shots that stay in place: [{ to, captured, shot: 'name' }]
+     after(G, m, col, mv, fx)       - change the board after a move (m: square -> piece letter)
+     allowStd(G, from)              - return false to stop a piece making normal moves
+     skin(G, sq, p, sides, inGame)  - return { src, cls } to draw a piece differently
+     labels(G, m)                   - return { square: text } badges to show on pieces
    Every change must leave a legal chess position, so Stockfish can keep playing.
    ============================================================ */
 const RULES = [];
@@ -3554,11 +3565,10 @@ const CUSTOM = {
   mode: 'custom', saveKey: 's64.custom', chess: null, userColor: 'w', orientation: 'w', over: null, thinking: false,
   job: null, hint: null, hintJob: null, hintBusy: false, lastMove: null, gen: 3, animating: false,
   sel: { rule: store.get('s64.cRule', ''), vs: store.get('s64.cVs', 'bot'), elo: store.get('s64.cElo', 1500), color: store.get('s64.cColor', 'w') },
-  rule: 'none', vs: 'bot', elo: 1500, phase: 'lobby', startFen: START_FEN, log: []
+  rule: 'none', vs: 'bot', elo: 1500, phase: 'lobby', startFen: START_FEN, log: [], tags: {}, startTags: {}, frenzy: null
 };
 const isCol = (ch, col) => (ch === ch.toUpperCase()) === (col === 'w');
 const keyOf = ch => (ch === ch.toUpperCase() ? 'w' : 'b') + ch.toUpperCase();
-const powered = (G, col) => ruleOf(G.rule).both || G.vs === 'friend' || col === G.userColor;
 function fenToMap(fen) {
   const m = {};
   fen.split(' ')[0].split('/').forEach((row, i) => {
@@ -3595,35 +3605,74 @@ function attacked(m, col) { // is col's king attacked in this position?
   try { return new Chess(buildFen(m, col, '-', '-', 0, 1)).in_check(); } catch (e) { return false; }
 }
 // Hook: the starting position for a rule. `sides` lists who gets the rule ('w', 'b' or both).
+const powered = (G, col) => ruleOf(G.rule).both || G.vs === 'friend' || col === G.userColor;
+const poweredSides = G => ruleOf(G.rule).both || G.vs === 'friend' ? ['w', 'b'] : [G.userColor];
+const sqName = (f, r) => String.fromCharCode(97 + f) + r;
+const onBoard = (f, r) => f >= 0 && f <= 7 && r >= 1 && r <= 8;
+const sideOfPiece = ch => ch === ch.toUpperCase() ? 'w' : 'b';
 function startFenFor(rule, vs, userColor) {
-  const sides = vs === 'friend' ? ['w', 'b'] : [userColor];
-  void sides;
-  return START_FEN;
+  const r = ruleOf(rule);
+  return r.setup ? r.setup(vs === 'friend' || r.both ? ['w', 'b'] : [userColor]) : START_FEN;
 }
-// Hook: extra moves a piece may make under the current rule. Return [{ to, captured }].
-function powerMoves(G, from) { return []; }
-// Hook: change the board after a move. `m` maps squares to pieces (e.g. m.e4 = 'P'), `col` is the
-// side that just moved, `mv` is the move. Record what you change so it can be animated:
-// fx.moves.push({ from, to }) when a piece slides, fx.gone.push({ sq, key }) when one disappears.
-// Use attacked(m, col) to undo a change that would leave the mover's own king in check.
-function applyEffects(G, m, col, mv) {
-  const fx = { moves: [], gone: [] };
-  return fx;
+function powerMoves(G, from) {
+  const rule = ruleOf(G.rule);
+  if (!rule.power || !G.chess || G.over) return [];
+  if (G.frenzy && from !== G.frenzy) return [];
+  const col = G.chess.turn(), m = fenToMap(G.chess.fen());
+  if (!m[from] || sideOfPiece(m[from]) !== col || !powered(G, col)) return [];
+  const std = new Set(G.chess.moves({ square: from, verbose: true }).map(x => x.to)), seen = new Set();
+  return rule.power(G, from, col, m, std).filter(x => !std.has(x.to) && !seen.has(x.to) && seen.add(x.to));
+}
+function customAllowStd(from) {
+  const G = CUSTOM;
+  if (G.phase !== 'game') return true;
+  if (G.frenzy) return from === G.frenzy;
+  const rule = ruleOf(G.rule);
+  return !rule.allowStd || !G.chess || !powered(G, G.chess.turn()) || rule.allowStd(G, from);
+}
+function customSkin(sq, p) {
+  const G = CUSTOM, inGame = G.phase === 'game', rule = ruleOf(inGame ? G.rule : G.sel.rule);
+  if (!rule.skin) return null;
+  const vs = inGame ? G.vs : G.sel.vs, user = inGame ? G.userColor : (G.sel.color === 'b' ? 'b' : 'w');
+  const sides = rule.both || vs === 'friend' ? ['w', 'b'] : [user];
+  return rule.skin(G, sq, p, sides, inGame);
+}
+function customLabels(G) {
+  const rule = ruleOf(G.rule);
+  return rule.labels && G.chess ? rule.labels(G, fenToMap(G.chess.fen())) : null;
+}
+function moveTags(G, mv, col) {
+  const t = G.tags;
+  if (mv.captured) delete t[mv.flags && mv.flags.includes('e') ? mv.to[0] + mv.from[1] : mv.to];
+  if (t[mv.from]) { t[mv.to] = t[mv.from]; delete t[mv.from]; }
+  if (mv.flags && (mv.flags.includes('k') || mv.flags.includes('q'))) {
+    const r = col === 'w' ? '1' : '8', [rf, rt] = mv.flags.includes('k') ? ['h' + r, 'f' + r] : ['a' + r, 'd' + r];
+    if (t[rf]) { t[rt] = t[rf]; delete t[rf]; }
+  }
 }
 function customDoMove(G, from, to, promo) {
-  const col = G.chess.turn(), pw = powerMoves(G, from).find(x => x.to === to);
+  const rule = ruleOf(G.rule), col = G.chess.turn(), opp = col === 'w' ? 'b' : 'w';
+  const pw = powerMoves(G, from).find(x => x.to === to);
+  const fen0 = G.chess.fen(), p0 = fen0.split(' ');
+  const fx = { moves: [], gone: [], shots: [], spawn: [], convert: [], hatch: null, again: null };
   let m, turn, cast, ep, half, full, mv, san;
   if (pw) {
-    const fen = G.chess.fen(), parts = fen.split(' ');
-    m = fenToMap(fen);
+    m = fenToMap(fen0);
     const ch = m[from], cap = m[to];
-    delete m[from]; m[to] = ch;
-    turn = col === 'w' ? 'b' : 'w';
-    cast = parts[2]; ep = '-'; half = cap ? 0 : +parts[4] + 1; full = +parts[5] + (col === 'b' ? 1 : 0);
-    mv = { from, to, color: col, piece: ch.toLowerCase(), captured: cap ? cap.toLowerCase() : undefined, flags: cap ? 'c' : 'n', san: '' };
-    san = (ch.toLowerCase() === 'p' ? '' : ch.toUpperCase()) + (cap ? 'x' : '') + to;
+    turn = opp; cast = p0[2]; ep = '-'; full = +p0[5] + (col === 'b' ? 1 : 0);
+    if (pw.shot) {
+      half = 0;
+      mv = { from, to, color: col, piece: ch.toLowerCase(), captured: cap ? cap.toLowerCase() : undefined, flags: 'c', shot: pw.shot };
+      san = (ch.toLowerCase() === 'p' ? '' : ch.toUpperCase()) + (pw.mark || '*') + to;
+    } else {
+      delete m[from]; m[to] = ch;
+      half = cap ? 0 : +p0[4] + 1;
+      mv = { from, to, color: col, piece: ch.toLowerCase(), captured: cap ? cap.toLowerCase() : undefined, flags: cap ? 'c' : 'n' };
+      san = (ch.toLowerCase() === 'p' ? '' : ch.toUpperCase()) + (cap ? 'x' : '') + to;
+    }
   } else {
-    const c = new Chess(G.chess.fen());
+    if (!customAllowStd(from)) return null;
+    const c = new Chess(fen0);
     mv = c.move({ from, to, promotion: promo || 'q' });
     if (!mv) return null;
     const parts = c.fen().split(' ');
@@ -3631,15 +3680,159 @@ function customDoMove(G, from, to, promo) {
     san = mv.san.replace(/[+#]$/, '');
   }
   const fenMid = buildFen(m, turn, cast, ep, half, full);
-  const fx = applyEffects(G, m, col, mv);
-  const fenFinal = fx.moves.length || fx.gone.length ? buildFen(m, turn, cast, '-', half, full) : fenMid;
+  if (pw && pw.shot) { delete m[to]; delete G.tags[to]; fx.shots.push({ kind: pw.shot, from, to, path: pw.path }); }
+  else moveTags(G, mv, col);
+  if (rule.after && powered(G, col)) rule.after(G, m, col, mv, fx);
+  // a bonus move is only allowed if it leaves the other side out of check
+  if (fx.again && !attacked(m, opp)) { turn = col; G.frenzy = fx.again; } else G.frenzy = null;
+  const changed = fx.moves.length || fx.gone.length || fx.shots.length || fx.spawn.length || fx.convert.length || turn === col;
+  const fenFinal = changed ? buildFen(m, turn, cast, '-', half, full) : fenMid;
   const c2 = new Chess(fenFinal);
-  san += (c2.in_checkmate() ? '#' : c2.in_check() ? '+' : '') + (pw ? '✦' : '');
+  san += (c2.in_checkmate() ? '#' : c2.in_check() ? '+' : '') + (pw && !pw.shot ? '✦' : '');
   G.chess = c2;
   G.lastMove = { from, to };
-  G.log.push({ fen: fenFinal, san, from, to, color: col });
-  return { mv, fenMid, fx };
+  G.log.push({ fen: fenFinal, san, from, to, color: col, tags: JSON.parse(JSON.stringify(G.tags)), frenzy: G.frenzy });
+  return { mv, fenMid, fx, shot: !!(pw && pw.shot) };
 }
+
+/* ---------- Custom rule: the Area 51 Army ---------- */
+const A51_ART = {
+  clone: (B, S) => `<ellipse cx='22.5' cy='18' rx='10.5' ry='12' fill='${B}' stroke='${S}' stroke-width='1.5'/><path d='M17 7.5l-3-4.5M28 7.5l3-4.5' stroke='${S}' stroke-width='1.5'/><circle cx='14' cy='3' r='1.8' fill='${B}' stroke='${S}'/><circle cx='31' cy='3' r='1.8' fill='${B}' stroke='${S}'/><ellipse cx='18.3' cy='19.5' rx='3.4' ry='5.4' transform='rotate(-25 18.3 19.5)' fill='#101114'/><ellipse cx='26.7' cy='19.5' rx='3.4' ry='5.4' transform='rotate(25 26.7 19.5)' fill='#101114'/><circle cx='17.5' cy='17.6' r='1' fill='#fff'/><circle cx='25.9' cy='17.6' r='1' fill='#fff'/><path d='M15 37c0-6 3.4-8.5 7.5-8.5S30 31 30 37z' fill='${B}' stroke='${S}' stroke-width='1.5'/>`,
+  maw: (B, S) => `<path d='M8 33c0-11 6-21 16-21 7 0 12 4 13 9l-9 2.5 9 3c-.5 6.5-6 10.5-13 10.5-7 0-16-1-16-4z' fill='${B}' stroke='${S}' stroke-width='1.5'/><path d='M27.5 21l1.6 2.6 1.6-2.4 1.6 2.4 1.6-2.2M27.5 27.5l1.6-2.4 1.6 2.2 1.6-2.2 1.6 2' stroke='#fff' stroke-width='1.3' fill='none'/><circle cx='21.5' cy='18' r='2.6' fill='#ffd93b' stroke='${S}'/><path d='M21.5 16.2v3.6' stroke='#111' stroke-width='1.2'/><path d='M12 22l-3-2M13 26l-4-1' stroke='${S}' stroke-width='1.2'/>`,
+  watcher: (B, S) => `<path d='M19.5 27h6l2.5 10h-11z' fill='${B}' stroke='${S}' stroke-width='1.5'/><path d='M13 30c-3 1-4 4-3 7M32 30c3 1 4 4 3 7' stroke='${S}' stroke-width='1.5' fill='none'/><circle cx='22.5' cy='16.5' r='11.5' fill='#fff' stroke='${S}' stroke-width='1.6'/><circle cx='22.5' cy='16.5' r='6.3' fill='${B}'/><circle cx='22.5' cy='16.5' r='3.2' fill='#111'/><circle cx='20.3' cy='14.4' r='1.4' fill='#fff'/><path d='M13 9.5q3-3 4 0M28 9.5q1-3 4 0' stroke='#e04b4b' stroke-width='.9' fill='none'/>`,
+  ufo: (B, S) => `<path d='M16 30l-5 8h23l-5-8z' fill='#bff3ff' opacity='.4'/><path d='M13.5 22c0-6.5 4-10.5 9-10.5s9 4 9 10.5z' fill='#bff3ff' stroke='${S}' stroke-width='1.5'/><circle cx='22.5' cy='17' r='2.6' fill='${B}'/><ellipse cx='22.5' cy='24' rx='17.5' ry='6.2' fill='${B}' stroke='${S}' stroke-width='1.5'/><circle cx='12.5' cy='25' r='1.5' fill='#ffd93b'/><circle cx='22.5' cy='27' r='1.5' fill='#ffd93b'/><circle cx='32.5' cy='25' r='1.5' fill='#ffd93b'/>`,
+  egg: (B, S, k) => `<ellipse cx='22.5' cy='22' rx='11.5' ry='14.5' fill='${B}' stroke='${S}' stroke-width='1.6'/><circle cx='18' cy='15' r='2.2' fill='${S}' opacity='.3'/><circle cx='27' cy='22' r='2.6' fill='${S}' opacity='.3'/><circle cx='19' cy='28' r='1.8' fill='${S}' opacity='.3'/>` +
+    (k > 0 ? `<path d='M14 17l4 2-2 3 4 1' stroke='#101114' stroke-width='1.4' fill='none'/>` : '') +
+    (k > 1 ? `<path d='M31 14l-3 3 3 2-4 3' stroke='#101114' stroke-width='1.4' fill='none'/>` : '') +
+    (k > 2 ? `<path d='M15 29l4-2 2 3 3-3 3 2 3-2' stroke='#101114' stroke-width='1.4' fill='none'/>` : ''),
+  overlord: (B, S) => `<path d='M13 29c-3 4-2 7 1 9M18.5 30c-1.5 4-.5 6 2 8M26.5 30c1.5 4 .5 6-2 8M32 29c3 4 2 7-1 9' stroke='${B}' stroke-width='3.2' fill='none' stroke-linecap='round'/><path d='M8 19c0-9 6.5-15 14.5-15S37 10 37 19c0 5.5-3 9-6.5 10.5h-16C11 28 8 24.5 8 19z' fill='#f4a7c9' stroke='${S}' stroke-width='1.5'/><path d='M15 11c3.5 2 3.5 6.5 0 9M22.5 6.5c-2 3.5-2 7.5 1 10M30 11c-3.5 2-3.5 6.5 0 9' stroke='#b0537d' fill='none' stroke-width='1.3'/><ellipse cx='17.5' cy='25' rx='3' ry='2' fill='#ff3b3b'/><ellipse cx='27.5' cy='25' rx='3' ry='2' fill='#ff3b3b'/><path d='M14 2l3 3 2.5-4 3 4 3-4 2.5 4 3-3' stroke='#ffd93b' stroke-width='1.6' fill='none'/>`
+};
+const A51_CACHE = {};
+function a51Src(type, col, k) {
+  const key = type + col + (k || 0);
+  if (!A51_CACHE[key]) {
+    const B = col === 'w' ? '#8fe27a' : '#8a5ad8', S = col === 'w' ? '#1f3b1a' : '#1d1236';
+    const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 45 45'>${A51_ART[type](B, S, k || 0)}<rect x='11' y='37' width='23' height='4' rx='2' fill='${S}'/></svg>`;
+    A51_CACHE[key] = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  }
+  return A51_CACHE[key];
+}
+const A51 = {
+  id: 'area51', short: 'The Area 51 Army', card: 'Clones, the Maw, the Watcher, a UFO and the Egg',
+  title: 'Chess, but my pieces are the Area 51 Army',
+  text: 'Clones (pawns) leave a copy behind whenever they capture. The Maw (knights) swallows what it captures and can spit it back out as a missile. The Watcher (bishops) fires a laser that bounces off the walls. The UFO (rooks) is nearly invisible and abducts any enemy within 2 squares. The Egg (queen) cannot move and cracks every 2 moves. After 3 cracks it hatches into the Overlord: it moves like a queen and a knight, gets a bonus move after every capture, and mind-controls every enemy piece it lands next to. Purple dots show the powers.',
+  list: ['<b>Clones</b> (pawns): every capture leaves a copy behind.', '<b>The Maw</b> (knights): swallows what it captures, then spits it back out as a missile.', '<b>The Watcher</b> (bishops): a laser that bounces off the walls. Recharges in 3 moves.', '<b>The UFO</b> (rooks): nearly invisible, abducts any enemy within 2 squares. Recharges in 3 moves.', '<b>The Egg</b> (queen): cannot move, cracks every 2 moves. After 3 cracks it hatches into <b>the Overlord</b>: moves like a queen and a knight, gets a frenzy bonus move after a capture, and mind-controls every enemy piece it lands next to.', 'Purple dots show your alien powers.'],
+  icon: () => `<img src="${a51Src('ufo', 'w')}" alt="">`,
+  init(G, sides) {
+    for (const col of sides) G.tags[col === 'w' ? 'd1' : 'd8'] = { type: 'egg', cracks: 0, n: 0 };
+  },
+  allowStd(G, from) { const t = G.tags[from]; return !(t && t.type === 'egg'); },
+  power(G, from, col, m) {
+    const ch = m[from], ty = ch.toLowerCase(), tg = G.tags[from] || {}, out = [];
+    const f0 = from.charCodeAt(0) - 97, r0 = +from[1];
+    const enemy = sq => m[sq] && sideOfPiece(m[sq]) !== col && m[sq].toLowerCase() !== 'k';
+    const safeShot = sq => { const mm = Object.assign({}, m); delete mm[sq]; return !attacked(mm, col); };
+    const add = (sq, o) => out.push(Object.assign({ to: sq, captured: m[sq] ? m[sq].toLowerCase() : undefined }, o));
+    if (ty === 'n' && tg.ammo > 0) { // the Maw spits a missile along a straight line
+      for (const [df, dr] of KG) {
+        let f = f0, r = r0;
+        while (onBoard(f += df, r += dr)) { const sq = sqName(f, r); if (m[sq]) { if (enemy(sq) && safeShot(sq)) add(sq, { shot: 'missile', mark: '✸' }); break; } }
+      }
+    }
+    if (ty === 'b' && !tg.cd) { // the Watcher's laser bounces off the walls
+      for (const [d0, e0] of DIAG) {
+        let f = f0, r = r0, df = d0, dr = e0;
+        const path = [from];
+        for (let k = 0; k < 28; k++) {
+          let nf = f + df, nr = r + dr;
+          if (nf < 0 || nf > 7) { df = -df; nf = f + df; }
+          if (nr < 1 || nr > 8) { dr = -dr; nr = r + dr; }
+          f = nf; r = nr;
+          const sq = sqName(f, r);
+          path.push(sq);
+          if (sq === from) break;
+          if (m[sq]) { if (enemy(sq) && safeShot(sq)) add(sq, { shot: 'laser', mark: '⚡', path: path.slice() }); break; }
+        }
+      }
+    }
+    if (ty === 'r' && !tg.cd) { // the UFO abducts anything within 2 squares
+      for (let df = -2; df <= 2; df++) for (let dr = -2; dr <= 2; dr++) {
+        const f = f0 + df, r = r0 + dr;
+        if ((df || dr) && onBoard(f, r)) { const sq = sqName(f, r); if (enemy(sq) && safeShot(sq)) add(sq, { shot: 'beam', mark: '⊙' }); }
+      }
+    }
+    if (ty === 'q' && tg.type === 'overlord') { // the Overlord also jumps like a knight
+      for (const [df, dr] of KN) {
+        const f = f0 + df, r = r0 + dr;
+        if (!onBoard(f, r)) continue;
+        const sq = sqName(f, r);
+        if (m[sq] && !enemy(sq)) continue;
+        const mm = Object.assign({}, m);
+        delete mm[from]; mm[sq] = ch;
+        if (!attacked(mm, col)) add(sq, { move: true });
+      }
+    }
+    return out;
+  },
+  after(G, m, col, mv, fx) {
+    const t = G.tags;
+    if (mv.piece === 'p' && mv.captured && !mv.shot && !m[mv.from]) { m[mv.from] = col === 'w' ? 'P' : 'p'; fx.spawn.push({ sq: mv.from }); } // Clone copy
+    if (mv.piece === 'n' && mv.captured && !mv.shot) { const tg = t[mv.to] = t[mv.to] || {}; tg.ammo = Math.min(2, (tg.ammo || 0) + 1); } // the Maw swallows
+    if (mv.shot === 'missile') { const tg = t[mv.from]; if (tg) tg.ammo = Math.max(0, (tg.ammo || 0) - 1); }
+    if (mv.shot === 'laser' || mv.shot === 'beam') { (t[mv.from] = t[mv.from] || {}).cd = 4; }
+    for (const sq in t) if (t[sq].cd && m[sq] && sideOfPiece(m[sq]) === col) t[sq].cd--;
+    for (const sq in t) {
+      const tg = t[sq];
+      if (tg.type !== 'egg' || !m[sq] || sideOfPiece(m[sq]) !== col) continue;
+      tg.n = (tg.n || 0) + 1;
+      if (tg.n % 2 === 0) tg.cracks++;
+      if (tg.cracks >= 3) { tg.type = 'overlord'; fx.hatch = sq; }
+    }
+    const ov = !mv.shot && t[mv.to] && t[mv.to].type === 'overlord' && m[mv.to] ? mv.to : null;
+    if (ov) { // mind control everything it touches, then a frenzy bonus move after a capture
+      const f0 = ov.charCodeAt(0) - 97, r0 = +ov[1];
+      for (const [df, dr] of KG) {
+        const f = f0 + df, r = r0 + dr;
+        if (!onBoard(f, r)) continue;
+        const sq = sqName(f, r), ch = m[sq];
+        if (!ch || sideOfPiece(ch) === col || ch.toLowerCase() === 'k') continue;
+        m[sq] = col === 'w' ? ch.toUpperCase() : ch.toLowerCase();
+        delete t[sq];
+        fx.convert.push({ sq });
+      }
+      if (mv.captured && !G.frenzy) fx.again = ov;
+    }
+  },
+  skin(G, sq, p, sides, inGame) {
+    if (!sides.includes(p.color)) return null;
+    const tg = inGame ? G.tags[sq] : null;
+    switch (p.type) {
+      case 'p': return { src: a51Src('clone', p.color) };
+      case 'n': return { src: a51Src('maw', p.color) };
+      case 'b': return { src: a51Src('watcher', p.color) };
+      case 'r': return { src: a51Src('ufo', p.color), cls: 'cloak' };
+      case 'q':
+        if (tg && tg.type === 'overlord') return { src: a51Src('overlord', p.color) };
+        if (tg && tg.type === 'egg') return { src: a51Src('egg', p.color, tg.cracks) };
+        if (!inGame && sq === (p.color === 'w' ? 'd1' : 'd8')) return { src: a51Src('egg', p.color, 0) };
+        return null;
+      default: return null;
+    }
+  },
+  labels(G, m) {
+    const out = {};
+    for (const sq in G.tags) {
+      const tg = G.tags[sq];
+      if (!m[sq]) continue;
+      if (tg.type === 'egg') out[sq] = `${tg.cracks}/3`;
+      else if (tg.cd) out[sq] = String(tg.cd);
+      else if (tg.ammo) out[sq] = '×' + tg.ammo;
+    }
+    return out;
+  }
+};
+RULES.push(A51);
+
 const cName = (G, col) => G.vs === 'friend' ? pName(col) : col === G.userColor ? 'You' : 'Stockfish';
 function customCheckOver(G) {
   const c = G.chess;
@@ -3660,17 +3853,19 @@ function restoreFromLog(G) {
   const last = G.log[G.log.length - 1];
   G.chess = new Chess(last ? last.fen : G.startFen);
   G.lastMove = last ? { from: last.from, to: last.to } : null;
+  G.tags = JSON.parse(JSON.stringify(last && last.tags ? last.tags : G.startTags || {}));
+  G.frenzy = last ? last.frenzy || null : null;
   G.over = null;
 }
 function saveCustom() {
   const G = CUSTOM;
-  store.set('s64.custom', { rule: G.rule, vs: G.vs, elo: G.elo, userColor: G.userColor, orientation: G.orientation, startFen: G.startFen, log: G.log, over: G.over, phase: G.phase });
+  store.set('s64.custom', { rule: G.rule, vs: G.vs, elo: G.elo, userColor: G.userColor, orientation: G.orientation, startFen: G.startFen, startTags: G.startTags, log: G.log, over: G.over, phase: G.phase });
 }
 function restoreCustom() {
   const G = CUSTOM, d = store.get('s64.custom', null);
   if (d && Array.isArray(d.log) && d.startFen) {
     try {
-      Object.assign(G, { rule: ruleOf(d.rule).id, vs: d.vs === 'friend' ? 'friend' : 'bot', elo: +d.elo || 1500, userColor: d.userColor === 'b' ? 'b' : 'w', orientation: d.orientation === 'b' ? 'b' : 'w', startFen: d.startFen, log: d.log, phase: d.phase === 'game' ? 'game' : 'lobby' });
+      Object.assign(G, { rule: ruleOf(d.rule).id, vs: d.vs === 'friend' ? 'friend' : 'bot', elo: +d.elo || 1500, userColor: d.userColor === 'b' ? 'b' : 'w', orientation: d.orientation === 'b' ? 'b' : 'w', startFen: d.startFen, startTags: d.startTags || {}, log: d.log, phase: d.phase === 'game' ? 'game' : 'lobby' });
       restoreFromLog(G);
       G.over = d.over || null;
     } catch (e) { G.phase = 'lobby'; G.log = []; }
@@ -3704,33 +3899,101 @@ function afterCustomMove(G, res, anim) {
     if (!G.over && G.vs === 'bot' && G.chess.turn() !== G.userColor) customBot();
   });
 }
+function playShot(sh) {
+  return new Promise(resolve => {
+    const s = board.el.clientWidth / 8, ctr = sq => { const p = board.xy(sq); return [(p.x + 0.5) * s, (p.y + 0.5) * s]; };
+    const [x1, y1] = ctr(sh.from), [x2, y2] = ctr(sh.to), W = board.el.clientWidth;
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', `0 0 ${W} ${W}`);
+    svg.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none';
+    board.fx.appendChild(svg);
+    const tgt = board.pcs.querySelector(`[data-sq="${sh.to}"]`);
+    const boom = (color, r) => {
+      const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      c.setAttribute('cx', x2); c.setAttribute('cy', y2); c.setAttribute('r', r); c.setAttribute('fill', color);
+      svg.appendChild(c);
+      c.animate([{ transform: 'scale(.2)', opacity: 1 }, { transform: 'scale(1.6)', opacity: 0 }], { duration: 420, easing: 'ease-out' });
+      c.style.transformOrigin = `${x2}px ${y2}px`; c.style.transformBox = 'view-box';
+      if (tgt) tgt.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'scale(.3) rotate(120deg)' }], { duration: 380, fill: 'forwards' });
+    };
+    const finish = ms => setTimeout(() => { svg.remove(); resolve(); }, ms);
+    if (sh.kind === 'missile') {
+      sfx('swing');
+      const b = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      b.setAttribute('r', s * 0.14); b.setAttribute('fill', '#b6ff6a'); b.setAttribute('stroke', '#2f6b1a'); b.setAttribute('stroke-width', 2);
+      b.style.filter = 'drop-shadow(0 0 6px #b6ff6a)';
+      svg.appendChild(b);
+      const dur = Math.max(220, Math.hypot(x2 - x1, y2 - y1) / s * 70);
+      b.animate([{ transform: `translate(${x1}px, ${y1}px)` }, { transform: `translate(${(x1 + x2) / 2}px, ${(y1 + y2) / 2 - s * 0.6}px)`, offset: 0.5 }, { transform: `translate(${x2}px, ${y2}px)` }], { duration: dur, easing: 'linear', fill: 'forwards' });
+      setTimeout(() => { b.remove(); sfx('boom'); boom('#b6ff6a', s * 0.6); }, dur);
+      finish(dur + 420);
+    } else if (sh.kind === 'laser') {
+      sfx('zap');
+      const pts = (sh.path || [sh.from, sh.to]).map(ctr).map(p => p.join(',')).join(' ');
+      ['rgba(255,60,60,.45)', '#ffe3e3'].forEach((col, i) => {
+        const pl = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+        pl.setAttribute('points', pts); pl.setAttribute('fill', 'none'); pl.setAttribute('stroke', col);
+        pl.setAttribute('stroke-width', i ? s * 0.04 : s * 0.14); pl.setAttribute('stroke-linecap', 'round'); pl.setAttribute('stroke-linejoin', 'round');
+        pl.setAttribute('pathLength', '100'); pl.style.strokeDasharray = '100';
+        pl.style.filter = 'drop-shadow(0 0 6px #ff3b3b)';
+        svg.appendChild(pl);
+        pl.animate([{ strokeDashoffset: 100, opacity: 1 }, { strokeDashoffset: 0, opacity: 1, offset: 0.55 }, { strokeDashoffset: 0, opacity: 0 }], { duration: 650, fill: 'forwards' });
+      });
+      setTimeout(() => boom('#ff5a5a', s * 0.45), 360);
+      finish(760);
+    } else { // tractor beam
+      sfx('charge');
+      const w1 = s * 0.18, w2 = s * 0.55, a = Math.atan2(y2 - y1, x2 - x1), nx = -Math.sin(a), ny = Math.cos(a);
+      const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+      poly.setAttribute('points', [[x1 + nx * w1, y1 + ny * w1], [x2 + nx * w2, y2 + ny * w2], [x2 - nx * w2, y2 - ny * w2], [x1 - nx * w1, y1 - ny * w1]].map(p => p.join(',')).join(' '));
+      poly.setAttribute('fill', 'rgba(150,240,255,.45)');
+      poly.style.filter = 'drop-shadow(0 0 8px #7fe9ff)';
+      svg.appendChild(poly);
+      poly.animate([{ opacity: 0 }, { opacity: 1, offset: 0.25 }, { opacity: 1, offset: 0.8 }, { opacity: 0 }], { duration: 900, fill: 'forwards' });
+      if (tgt) tgt.animate([{ transform: 'none', opacity: 1 }, { transform: 'translateY(-8%) rotate(-10deg)', opacity: 1, offset: 0.3 }, { transform: `translate(${(x1 - x2) / s * 100}%, ${(y1 - y2) / s * 100}%) scale(.15) rotate(220deg)`, opacity: 0 }], { duration: 850, easing: 'ease-in', fill: 'forwards' });
+      finish(920);
+    }
+  });
+}
 function customShow(G, res, anim, done) {
-  const n = res.fx.moves.length + res.fx.gone.length;
+  const fx = res.fx;
+  const n = fx.moves.length + fx.gone.length + fx.shots.length + fx.spawn.length + fx.convert.length + (fx.hatch ? 1 : 0);
   if (!n || G !== P || S.tab !== 'custom') { if (G === P && S.tab === 'custom') renderCustom(anim); setTimeout(done, 0); return; }
   board.orientation = G.orientation;
-  board.set(new Chess(res.fenMid), { lastMove: G.lastMove, animate: anim, labels: null });
-  const t0 = performance.now(), wait = anim ? 330 : 120;
-  const go = () => {
-    if (G !== P || S.tab !== 'custom') { done(); return; }
+  board.set(new Chess(res.fenMid), { lastMove: G.lastMove, animate: anim && !res.shot, labels: null });
+  const t0 = performance.now(), wait = anim && !res.shot ? 330 : 60;
+  board.fxUntil = performance.now() + 4000;
+  const go = async () => {
+    if (G !== P || S.tab !== 'custom') { board.fxUntil = 0; done(); return; }
     if (board.hideSq || performance.now() - t0 < wait) { setTimeout(go, 60); return; } // let a battle animation finish first
+    board.fxUntil = performance.now() + 4000;
+    for (const sh of fx.shots) await playShot(sh);
+    if (G !== P || S.tab !== 'custom') { board.fxUntil = 0; done(); return; }
     renderCustom(false);
-    res.fx.moves.forEach(({ from, to }) => {
-      const el = board.pcs.querySelector(`[data-sq="${to}"]`);
-      if (!el) return;
-      const a = board.xy(from), b = board.xy(to), dx = (a.x - b.x) * 100, dy = (a.y - b.y) * 100;
-      if (false) el.animate([{ transform: `translate(${dx}%, ${dy}%)` }, { transform: 'none', offset: 0.78 }, { transform: `translate(0, ${dy > 0 ? 7 : -7}%)`, offset: 0.89 }, { transform: 'none' }], { duration: 430, easing: 'cubic-bezier(.5,0,.9,.6)' });
-      else el.animate([{ transform: `translate(${dx}%, ${dy}%)`, filter: 'drop-shadow(0 0 6px rgba(248,65,45,.9))' }, { transform: 'none', filter: 'none' }], { duration: 320, easing: 'cubic-bezier(.6,0,.4,1)' });
+    const el = sq => board.pcs.querySelector(`[data-sq="${sq}"]`);
+    fx.moves.forEach(({ from, to }) => {
+      const e = el(to);
+      if (!e) return;
+      const a = board.xy(from), b = board.xy(to);
+      e.animate([{ transform: `translate(${(a.x - b.x) * 100}%, ${(a.y - b.y) * 100}%)` }, { transform: 'none' }], { duration: 320, easing: 'cubic-bezier(.6,0,.4,1)' });
     });
-    res.fx.gone.forEach(({ sq, key }) => {
+    fx.gone.forEach(({ sq, key }) => {
       const p = board.xy(sq), g = document.createElement('img');
       g.src = PIECE_URL[key]; g.className = 'pc'; g.alt = '';
       g.style.left = p.x * 12.5 + '%'; g.style.top = p.y * 12.5 + '%';
       board.fx.appendChild(g);
-      g.animate([{ transform: 'scale(1)', opacity: 1, filter: 'none' }, { transform: 'scale(1.25) translateY(-10%)', opacity: 0.9, filter: 'brightness(2) drop-shadow(0 0 8px #b48cff)', offset: 0.3 }, { transform: 'scale(.2) translateY(-60%) rotate(90deg)', opacity: 0, filter: 'brightness(3)' }], { duration: 650, easing: 'ease-in' }).onfinish = () => g.remove();
+      g.animate([{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(.2) translateY(-60%) rotate(90deg)', opacity: 0 }], { duration: 600, easing: 'ease-in' }).onfinish = () => g.remove();
     });
-    sfx('charge');
-    board.fxUntil = performance.now() + 460;
-    setTimeout(() => { if (!board.hideSq) board.fxUntil = 0; done(); }, 470);
+    fx.spawn.forEach(({ sq }) => { const e = el(sq); if (e) e.animate([{ transform: 'scale(0)', filter: 'drop-shadow(0 0 12px #7dff6a) brightness(2)' }, { transform: 'scale(1.18)', offset: 0.6 }, { transform: 'none', filter: 'none' }], { duration: 480, easing: 'ease-out' }); });
+    fx.convert.forEach(({ sq }) => { const e = el(sq); if (e) e.animate([{ transform: 'scale(1.25) rotate(-12deg)', filter: 'brightness(2.4) drop-shadow(0 0 14px #c86bff)' }, { transform: 'none', filter: 'none' }], { duration: 760, easing: 'ease-out' }); });
+    if (fx.hatch) {
+      const e = el(fx.hatch);
+      if (e) e.animate([{ transform: 'scale(.6)', filter: 'brightness(3) drop-shadow(0 0 16px #ff6bd5)' }, { transform: 'scale(1.35) rotate(8deg)', offset: 0.5 }, { transform: 'none', filter: 'none' }], { duration: 900, easing: 'ease-out' });
+      try { board.el.animate([{ transform: 'translate(0,0)' }, { transform: 'translate(-6px,3px)' }, { transform: 'translate(6px,-3px)' }, { transform: 'translate(0,0)' }], { duration: 380, composite: 'add' }); } catch (e2) { /* ignore */ }
+    }
+    sfx(fx.hatch ? 'boom' : fx.convert.length ? 'zap' : fx.spawn.length ? 'shell' : 'charge');
+    board.fxUntil = performance.now() + 600;
+    setTimeout(() => { if (!board.hideSq) board.fxUntil = 0; done(); }, 620);
   };
   setTimeout(go, wait);
 }
@@ -3778,7 +4041,10 @@ function customStart() {
   G.userColor = G.vs === 'friend' ? 'w' : sel.color === 'r' ? (Math.random() < 0.5 ? 'w' : 'b') : sel.color === 'b' ? 'b' : 'w';
   G.orientation = G.vs === 'friend' ? 'w' : G.userColor;
   G.startFen = startFenFor(G.rule, G.vs, G.userColor);
-  Object.assign(G, { chess: new Chess(G.startFen), log: [], over: null, lastMove: null, phase: 'game', thinking: false, animating: false, gen: ++SEQ });
+  Object.assign(G, { chess: new Chess(G.startFen), log: [], over: null, lastMove: null, phase: 'game', thinking: false, animating: false, gen: ++SEQ, tags: {}, frenzy: null });
+  const rr = ruleOf(G.rule);
+  if (rr.init) rr.init(G, poweredSides(G));
+  G.startTags = JSON.parse(JSON.stringify(G.tags));
   saveCustom(); renderCustom(false);
   customBot();
 }
@@ -3807,6 +4073,7 @@ function customPlayers(G, vs, user) {
 function customStatus(G) {
   const c = G.chess;
   if (G.over) return { html: esc(G.over.text), over: true };
+  if (G.frenzy) return { html: `Frenzy! ${G.vs === 'friend' ? esc(pName(c.turn())) + '\'s' : 'Your'} Overlord moves again.` };
   if (G.vs === 'bot' && c.turn() !== G.userColor) {
     if (!engine.ready && !engine.failed) return { html: 'Loading the engine…', spin: true };
     return { html: 'Stockfish is thinking…', spin: true };
@@ -3838,11 +4105,11 @@ function renderCustom(anim) {
   }
   const rule = ruleOf(G.rule), c = G.chess;
   board.orientation = G.orientation;
-  board.set(c, { lastMove: G.lastMove, animate: anim });
+  board.set(c, { lastMove: G.lastMove, animate: anim, labels: customLabels(G) });
   setEvalBar(false);
   renderPlayers(customPlayers(G, G.vs, G.userColor), G.orientation, c.fen(), G.over ? null : c.turn());
   const who = rule.both ? 'This rule applies to both sides.' : G.vs === 'friend' ? 'Both players get this power.' : 'Only you get this power. Stockfish plays normal chess.';
-  $('#cBanner').innerHTML = `<span class="eyebrow">Custom rules</span><h3>${esc(rule.title)}</h3><p class="small">${esc(rule.text)}</p><span class="c-who">${esc(who)}</span>`;
+  $('#cBanner').innerHTML = `<span class="eyebrow">Custom rules</span><h3>${esc(rule.title)}</h3>${rule.list ? `<ul class="a51-pow">${rule.list.map(x => `<li>${x}</li>`).join('')}</ul>` : `<p class="small">${esc(rule.text)}</p>`}<span class="c-who">${esc(who)}</span>`;
   statusInto($('#cStatus'), customStatus(G));
   const sans = G.log.map(e => e.san), sheet = $('#cMoves');
   sheet.innerHTML = sheetHTML(sans, sans.length, fenTurn(G.startFen), 1, null, false);
@@ -3896,7 +4163,9 @@ function wire() {
       return board.chess ? board.chess.turn() : null;
     },
     onUserMove: (f, t, p) => S.tab === 'review' ? onReviewMove(f, t, p) : onPlayMove(f, t, p),
-    extraMoves: sq => (S.tab === 'custom' && CUSTOM.phase === 'game' && CUSTOM.chess) ? powerMoves(CUSTOM, sq) : []
+    extraMoves: sq => (S.tab === 'custom' && CUSTOM.phase === 'game' && CUSTOM.chess) ? powerMoves(CUSTOM, sq) : [],
+    allowStd: sq => S.tab !== 'custom' || customAllowStd(sq),
+    skin: (sq, p) => S.tab === 'custom' ? customSkin(sq, p) : null
   });
 
   $$('.tab').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));

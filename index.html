@@ -4216,11 +4216,14 @@ function renderCustom(anim) {
 // Paste the address of your Cloudflare worker here, e.g. 'https://sixtyfour-online.yourname.workers.dev'.
 // (You can also test one without editing by opening the site with ?server=https://... once.)
 const ONLINE_SERVER_DEFAULT = 'https://sixtyfour-online.crossguardstudios.workers.dev';
+// online time controls: [seconds, increment, name, detail]
+const OTCS = [[60, 0, 'Bullet', '1 min'], [180, 2, 'Blitz', '3 | 2'], [600, 0, 'Rapid', '10 min'], [0, 0, 'No time', '']];
+const otcName = tc => { const t = OTCS.find(t => t[0] === tc[0] && t[1] === tc[1]); return t ? (t[3] ? `${t[2]} (${t[3]})` : t[2]) : ''; };
 const ONLINE = {
   mode: 'online', phase: 'lobby', chess: null, userColor: 'w', orientation: 'w', over: null, lastMove: null, gen: 0,
   thinking: false, job: null, hintJob: null,
   ws: null, lobbyWs: null, code: null, st: null, recvAt: 0, msg: '', msgErr: false, searchSince: 0, waiting: 0,
-  name: store.get('s64.oname', store.get('s64.me', '') || ''), tcIdx: clamp(store.get('s64.otc', 4) | 0, 0, TCS.length - 1),
+  name: store.get('s64.oname', store.get('s64.me', '') || ''), tcIdx: clamp(store.get('s64.otc2', 2) | 0, 0, OTCS.length - 1),
   colorPref: store.get('s64.ocolor', 'r'), retry: 0, retryTimer: null, ping: null, flash: null
 };
 function onlineServer() { return String(store.get('s64.server', '') || ONLINE_SERVER_DEFAULT || '').replace(/\/+$/, ''); }
@@ -4404,7 +4407,7 @@ function onlineFind() {
   let ws;
   try { ws = new WebSocket(oWs('/ws/lobby')); } catch (e) { G.phase = 'lobby'; onlineSetMsg("Couldn't reach the online server.", true); return; }
   G.lobbyWs = ws;
-  ws.onopen = () => ws.send(JSON.stringify({ t: 'search', token: onlineToken(), name: oName(), tc: TCS[G.tcIdx].slice(0, 2) }));
+  ws.onopen = () => ws.send(JSON.stringify({ t: 'search', token: onlineToken(), name: oName(), tc: OTCS[G.tcIdx].slice(0, 2) }));
   ws.onmessage = ev => {
     let m; try { m = JSON.parse(ev.data); } catch (e) { return; }
     if (m.t === 'searching') { G.waiting = m.waiting | 0; if (S.tab === 'online') renderPlay(); }
@@ -4428,7 +4431,7 @@ async function onlineCreate() {
   onlineLeave();
   G.phase = 'connecting'; renderPlay();
   try {
-    const r = await fetch(onlineServer() + '/api/new', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tc: TCS[G.tcIdx].slice(0, 2) }) });
+    const r = await fetch(onlineServer() + '/api/new', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tc: OTCS[G.tcIdx].slice(0, 2) }) });
     const j = await r.json();
     if (!j.code) throw new Error('no code');
     onlineConnect(j.code, G.colorPref);
@@ -4462,14 +4465,14 @@ function renderOnlineWait() {
     const sec = (performance.now() - G.searchSince) / 1000;
     el.innerHTML = `<span class="sec-label">Finding a player</span><div class="o-radar" aria-hidden="true"></div>` +
       `<p class="o-big">Looking ${sec > 30 ? 'everywhere' : 'within ' + radiusLabel(sec) + ' of you'}…</p>` +
-      `<p class="tip" style="text-align:center">${esc(TCS[G.tcIdx][2])} · ${G.waiting ? `${G.waiting} other ${G.waiting === 1 ? 'player is' : 'players are'} searching right now` : 'Nobody else is searching yet. Send the site to a friend!'}</p>`;
+      `<p class="tip" style="text-align:center">${esc(otcName(OTCS[G.tcIdx]))} · ${G.waiting ? `${G.waiting} other ${G.waiting === 1 ? 'player is' : 'players are'} searching right now` : 'Nobody else is searching yet. Send the site to a friend!'}</p>`;
   } else if (G.phase === 'connecting') {
     el.innerHTML = `<div class="status"><span class="spin" aria-hidden="true"></span><span>Connecting…</span></div>`;
   } else if (G.phase === 'wait' && G.st) {
     const link = location.origin + location.pathname + '?join=' + G.st.code;
     el.innerHTML = `<span class="sec-label">Send this code to your friend</span><div class="o-code" id="oCodeBig">${esc(G.st.code)}</div>` +
       `<div class="btn-row"><button class="btn" type="button" id="oCopyCode">Copy code</button><button class="btn" type="button" id="oCopyLink">Copy invite link</button></div>` +
-      `<div class="status"><span class="spin" aria-hidden="true"></span><span>Waiting for your friend to join… You play ${G.st.you === 'w' ? 'White' : 'Black'}, ${esc(TCS.find(t => t[0] === G.st.tc[0] && t[1] === G.st.tc[1])?.[2] || '')}.</span></div>`;
+      `<div class="status"><span class="spin" aria-hidden="true"></span><span>Waiting for your friend to join… You play ${G.st.you === 'w' ? 'White' : 'Black'}, ${esc(otcName(G.st.tc))}.</span></div>`;
     const copy = (txt, b) => { (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => { b.textContent = 'Copied!'; setTimeout(() => { b.textContent = b.id === 'oCopyCode' ? 'Copy code' : 'Copy invite link'; }, 1400); }).catch(() => { b.textContent = txt; }); };
     $('#oCopyCode').onclick = e => copy(G.st.code, e.currentTarget);
     $('#oCopyLink').onclick = e => copy(link, e.currentTarget);
@@ -4542,8 +4545,8 @@ function renderOnline(anim) {
 }
 
 function wireOnline() {
-  $('#oTc').innerHTML = TCS.map((t, i) => `<button type="button" class="chip" data-tc="${i}">${esc(t[2])}</button>`).join('');
-  $('#oTc').addEventListener('click', e => { const b = e.target.closest('[data-tc]'); if (!b) return; ONLINE.tcIdx = +b.dataset.tc; store.set('s64.otc', ONLINE.tcIdx); renderPlay(); });
+  $('#oTc').innerHTML = OTCS.map((t, i) => `<button type="button" class="chip" data-tc="${i}" title="${esc(t[3] || t[2])}">${esc(t[2])}${t[3] ? ` <span class="muted">${esc(t[3])}</span>` : ''}</button>`).join('');
+  $('#oTc').addEventListener('click', e => { const b = e.target.closest('[data-tc]'); if (!b) return; ONLINE.tcIdx = +b.dataset.tc; store.set('s64.otc2', ONLINE.tcIdx); renderPlay(); });
   $('#oColor').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; ONLINE.colorPref = b.dataset.c; store.set('s64.ocolor', ONLINE.colorPref); renderPlay(); });
   $('#oName').addEventListener('input', e => { ONLINE.name = e.target.value.slice(0, 20); store.set('s64.oname', ONLINE.name); });
   $('#oFind').addEventListener('click', onlineFind);

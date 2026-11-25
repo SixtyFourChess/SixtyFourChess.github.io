@@ -570,6 +570,7 @@ textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 0; }
             <p class="tip">Pick a twist, then take on Stockfish or a friend. Stockfish plays normal chess and has no idea the rules changed.</p>
           </div>
           <div class="rules" id="cRules"></div>
+          <div class="block" id="cOptBlock" hidden><span class="sec-label" id="cOptLabel">Choose</span><div class="chips" id="cOpt"></div></div>
           <div class="block">
             <span class="sec-label">Opponent</span>
             <div class="seg" id="cVs"><button type="button" data-vs="bot">Stockfish</button><button type="button" data-vs="friend">Friend, same device</button></div>
@@ -1988,14 +1989,15 @@ const evalCache = new Map();
    Players & captured material
    ============================================================ */
 function capturedInfo(fen) {
-  const start = { p: 8, n: 2, b: 2, r: 2, q: 1 };
-  const have = { w: { p: 0, n: 0, b: 0, r: 0, q: 0 }, b: { p: 0, n: 0, b: 0, r: 0, q: 0 } };
-  for (const ch of fen.split(' ')[0]) {
-    const t = ch.toLowerCase();
-    if (have.w[t] === undefined) continue;
-    have[ch === t ? 'b' : 'w'][t]++;
-  }
-  const lost = c => ['q', 'r', 'b', 'n', 'p'].flatMap(t => Array(Math.max(0, start[t] - have[c][t])).fill(t));
+  const count = f => {
+    const h = { w: { p: 0, n: 0, b: 0, r: 0, q: 0 }, b: { p: 0, n: 0, b: 0, r: 0, q: 0 } };
+    for (const ch of f.split(' ')[0]) { const t = ch.toLowerCase(); if (h.w[t] !== undefined) h[ch === t ? 'b' : 'w'][t]++; }
+    return h;
+  };
+  // custom modes can start without some pieces, so compare with that game's own starting position
+  const baseFen = typeof CUSTOM !== 'undefined' && S.tab === 'custom' ? (CUSTOM.phase === 'game' ? CUSTOM.startFen : CUSTOM.lobbyFen) : null;
+  const start = baseFen ? count(baseFen) : count(START_FEN), have = count(fen);
+  const lost = c => ['q', 'r', 'b', 'n', 'p'].flatMap(t => Array(Math.max(0, start[c][t] - have[c][t])).fill(t));
   return { byW: lost('b'), byB: lost('w'), diff: materialFor(fen, 'w') };
 }
 function playerHTML({ name, rating, color, fen, avatar: ava }) {
@@ -3564,8 +3566,8 @@ const ruleOf = id => RULES.find(r => r.id === id) || RULES[0] || NO_RULE;
 const CUSTOM = {
   mode: 'custom', saveKey: 's64.custom', chess: null, userColor: 'w', orientation: 'w', over: null, thinking: false,
   job: null, hint: null, hintJob: null, hintBusy: false, lastMove: null, gen: 3, animating: false,
-  sel: { rule: store.get('s64.cRule', ''), vs: store.get('s64.cVs', 'bot'), elo: store.get('s64.cElo', 1500), color: store.get('s64.cColor', 'w') },
-  rule: 'none', vs: 'bot', elo: 1500, phase: 'lobby', startFen: START_FEN, log: [], tags: {}, startTags: {}, frenzy: null
+  sel: { rule: store.get('s64.cRule', ''), vs: store.get('s64.cVs', 'bot'), elo: store.get('s64.cElo', 1500), color: store.get('s64.cColor', 'w'), opt: store.get('s64.cOpt', '') },
+  rule: 'none', vs: 'bot', elo: 1500, opt: '', phase: 'lobby', startFen: START_FEN, log: [], tags: {}, startTags: {}, frenzy: null
 };
 const isCol = (ch, col) => (ch === ch.toUpperCase()) === (col === 'w');
 const keyOf = ch => (ch === ch.toUpperCase() ? 'w' : 'b') + ch.toUpperCase();
@@ -3605,14 +3607,17 @@ function attacked(m, col) { // is col's king attacked in this position?
   try { return new Chess(buildFen(m, col, '-', '-', 0, 1)).in_check(); } catch (e) { return false; }
 }
 // Hook: the starting position for a rule. `sides` lists who gets the rule ('w', 'b' or both).
-const powered = (G, col) => ruleOf(G.rule).both || G.vs === 'friend' || col === G.userColor;
-const poweredSides = G => ruleOf(G.rule).both || G.vs === 'friend' ? ['w', 'b'] : [G.userColor];
+// oneSide rules: only you get them against Stockfish; against a friend, White gets them
+const sidesFor = (r, vs, user) => r.oneSide ? (vs === 'friend' ? ['w'] : [user]) : r.both || vs === 'friend' ? ['w', 'b'] : [user];
+const powered = (G, col) => sidesFor(ruleOf(G.rule), G.vs, G.userColor).includes(col);
+const poweredSides = G => sidesFor(ruleOf(G.rule), G.vs, G.userColor);
+const optOf = (r, v) => r.choose ? (r.choose.options.some(o => o[0] === v) ? v : r.choose.options[0][0]) : '';
 const sqName = (f, r) => String.fromCharCode(97 + f) + r;
 const onBoard = (f, r) => f >= 0 && f <= 7 && r >= 1 && r <= 8;
 const sideOfPiece = ch => ch === ch.toUpperCase() ? 'w' : 'b';
-function startFenFor(rule, vs, userColor) {
+function startFenFor(rule, vs, userColor, opt) {
   const r = ruleOf(rule);
-  return r.setup ? r.setup(vs === 'friend' || r.both ? ['w', 'b'] : [userColor]) : START_FEN;
+  return r.setup ? r.setup(sidesFor(r, vs, userColor), optOf(r, opt)) : START_FEN;
 }
 function powerMoves(G, from) {
   const rule = ruleOf(G.rule);
@@ -3634,8 +3639,7 @@ function customSkin(sq, p) {
   const G = CUSTOM, inGame = G.phase === 'game', rule = ruleOf(inGame ? G.rule : G.sel.rule);
   if (!rule.skin) return null;
   const vs = inGame ? G.vs : G.sel.vs, user = inGame ? G.userColor : (G.sel.color === 'b' ? 'b' : 'w');
-  const sides = rule.both || vs === 'friend' ? ['w', 'b'] : [user];
-  return rule.skin(G, sq, p, sides, inGame);
+  return rule.skin(G, sq, p, sidesFor(rule, vs, user), inGame);
 }
 function customLabels(G) {
   const rule = ruleOf(G.rule);
@@ -3718,13 +3722,27 @@ function a51Src(type, col, k) {
   return A51_CACHE[key];
 }
 const A51 = {
-  id: 'area51', short: 'The Area 51 Army', card: 'Clones, the Maw, the Watcher, a UFO and the Egg',
-  title: 'Chess, but my pieces are the Area 51 Army',
+  id: 'area51', short: 'The Area 51 Army', card: 'Your king and ONE alien against a full army', oneSide: true,
+  title: 'Chess, but my whole army is one alien',
+  choose: { label: 'Your alien', options: [['egg', 'The Egg'], ['ufo', 'The UFO'], ['watcher', 'The Watcher'], ['maw', 'The Maw'], ['clone', 'A Clone']] },
+  setup(sides, unit) {
+    const m = fenToMap(START_FEN);
+    let cast = 'KQkq';
+    for (const col of sides) {
+      const W = col === 'w', back = W ? '1' : '8', pawn = W ? '2' : '7';
+      for (const f of 'abcdefgh') { delete m[f + back]; delete m[f + pawn]; }
+      m['e' + back] = W ? 'K' : 'k';
+      const letter = { egg: 'q', ufo: 'r', watcher: 'b', maw: 'n', clone: 'p' }[unit] || 'q';
+      m[(unit === 'clone' ? 'd' + pawn : 'd' + back)] = W ? letter.toUpperCase() : letter;
+      cast = cast.replace(W ? /[KQ]/g : /[kq]/g, '');
+    }
+    return buildFen(m, 'w', cast || '-', '-', 0, 1);
+  },
   text: 'Clones (pawns) leave a copy behind whenever they capture. The Maw (knights) swallows what it captures and can spit it back out as a missile. The Watcher (bishops) fires a laser that bounces off the walls. The UFO (rooks) is nearly invisible and abducts any enemy within 2 squares. The Egg (queen) cannot move and cracks every 2 moves. After 3 cracks it hatches into the Overlord: it moves like a queen and a knight, gets a bonus move after every capture, and mind-controls every enemy piece it lands next to. Purple dots show the powers.',
-  list: ['<b>Clones</b> (pawns): every capture leaves a copy behind.', '<b>The Maw</b> (knights): swallows what it captures, then spits it back out as a missile.', '<b>The Watcher</b> (bishops): a laser that bounces off the walls. Recharges in 3 moves.', '<b>The UFO</b> (rooks): nearly invisible, abducts any enemy within 2 squares. Recharges in 3 moves.', '<b>The Egg</b> (queen): cannot move, cracks every 2 moves. After 3 cracks it hatches into <b>the Overlord</b>: moves like a queen and a knight, gets a frenzy bonus move after a capture, and mind-controls every enemy piece it lands next to.', 'Purple dots show your alien powers.'],
+  list: ['<b>Clones</b> (pawns): every capture leaves a copy behind.', '<b>The Maw</b> (knights): swallows what it captures, then spits it back out as a missile.', '<b>The Watcher</b> (bishops): a laser that bounces off the walls. Recharges in 3 moves.', '<b>The UFO</b> (rooks): nearly invisible, abducts any enemy within 2 squares. Recharges in 3 moves.', '<b>The Egg</b> (queen): cannot move, cracks every 2 moves. After 3 cracks it hatches into <b>the Overlord</b>: moves like a queen and a knight, gets a frenzy bonus move after a capture, and mind-controls every enemy piece it lands next to.', 'Your whole army is your king and the one alien you picked. Purple dots show its powers.'],
   icon: () => `<img src="${a51Src('ufo', 'w')}" alt="">`,
-  init(G, sides) {
-    for (const col of sides) G.tags[col === 'w' ? 'd1' : 'd8'] = { type: 'egg', cracks: 0, n: 0 };
+  init(G, sides, unit) {
+    if (unit === 'egg') for (const col of sides) G.tags[col === 'w' ? 'd1' : 'd8'] = { type: 'egg', cracks: 0, n: 0 };
   },
   allowStd(G, from) { const t = G.tags[from]; return !(t && t.type === 'egg'); },
   power(G, from, col, m) {
@@ -3859,13 +3877,13 @@ function restoreFromLog(G) {
 }
 function saveCustom() {
   const G = CUSTOM;
-  store.set('s64.custom', { rule: G.rule, vs: G.vs, elo: G.elo, userColor: G.userColor, orientation: G.orientation, startFen: G.startFen, startTags: G.startTags, log: G.log, over: G.over, phase: G.phase });
+  store.set('s64.custom', { rule: G.rule, vs: G.vs, elo: G.elo, opt: G.opt, userColor: G.userColor, orientation: G.orientation, startFen: G.startFen, startTags: G.startTags, log: G.log, over: G.over, phase: G.phase });
 }
 function restoreCustom() {
   const G = CUSTOM, d = store.get('s64.custom', null);
   if (d && Array.isArray(d.log) && d.startFen) {
     try {
-      Object.assign(G, { rule: ruleOf(d.rule).id, vs: d.vs === 'friend' ? 'friend' : 'bot', elo: +d.elo || 1500, userColor: d.userColor === 'b' ? 'b' : 'w', orientation: d.orientation === 'b' ? 'b' : 'w', startFen: d.startFen, startTags: d.startTags || {}, log: d.log, phase: d.phase === 'game' ? 'game' : 'lobby' });
+      Object.assign(G, { rule: ruleOf(d.rule).id, vs: d.vs === 'friend' ? 'friend' : 'bot', elo: +d.elo || 1500, opt: d.opt || '', userColor: d.userColor === 'b' ? 'b' : 'w', orientation: d.orientation === 'b' ? 'b' : 'w', startFen: d.startFen, startTags: d.startTags || {}, log: d.log, phase: d.phase === 'game' ? 'game' : 'lobby' });
       restoreFromLog(G);
       G.over = d.over || null;
     } catch (e) { G.phase = 'lobby'; G.log = []; }
@@ -4040,10 +4058,11 @@ function customStart() {
   Object.assign(G, { rule: ruleOf(sel.rule).id, vs: sel.vs === 'friend' ? 'friend' : 'bot', elo: sel.elo });
   G.userColor = G.vs === 'friend' ? 'w' : sel.color === 'r' ? (Math.random() < 0.5 ? 'w' : 'b') : sel.color === 'b' ? 'b' : 'w';
   G.orientation = G.vs === 'friend' ? 'w' : G.userColor;
-  G.startFen = startFenFor(G.rule, G.vs, G.userColor);
+  G.opt = optOf(ruleOf(G.rule), sel.opt);
+  G.startFen = startFenFor(G.rule, G.vs, G.userColor, G.opt);
   Object.assign(G, { chess: new Chess(G.startFen), log: [], over: null, lastMove: null, phase: 'game', thinking: false, animating: false, gen: ++SEQ, tags: {}, frenzy: null });
   const rr = ruleOf(G.rule);
-  if (rr.init) rr.init(G, poweredSides(G));
+  if (rr.init) rr.init(G, poweredSides(G), G.opt);
   G.startTags = JSON.parse(JSON.stringify(G.tags));
   saveCustom(); renderCustom(false);
   customBot();
@@ -4090,10 +4109,18 @@ function renderCustom(anim) {
   $$('#cVs button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.vs === sel.vs)));
   $$('#cElo .chip').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.e === sel.elo)));
   $$('#cColor button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.c === sel.color)));
+  const selRule = ruleOf(sel.rule);
+  $('#cOptBlock').hidden = !selRule.choose;
+  if (selRule.choose) {
+    const cur = optOf(selRule, sel.opt);
+    $('#cOptLabel').textContent = selRule.choose.label;
+    $('#cOpt').innerHTML = selRule.choose.options.map(([v, l]) => `<button type="button" class="chip" data-o="${v}" aria-pressed="${v === cur}">${esc(l)}</button>`).join('');
+  }
   $('#cEloBlock').hidden = sel.vs !== 'bot';
   $('#cColorBlock').hidden = sel.vs !== 'bot';
   if (!inGame) {
-    const user = sel.vs === 'bot' && sel.color === 'b' ? 'b' : 'w', fen = startFenFor(sel.rule, sel.vs, user), c = new Chess(fen);
+    const user = sel.vs === 'bot' && sel.color === 'b' ? 'b' : 'w', fen = startFenFor(sel.rule, sel.vs, user, sel.opt), c = new Chess(fen);
+    G.lobbyFen = fen;
     board.orientation = user;
     board.set(c, {});
     setEvalBar(false);
@@ -4108,7 +4135,7 @@ function renderCustom(anim) {
   board.set(c, { lastMove: G.lastMove, animate: anim, labels: customLabels(G) });
   setEvalBar(false);
   renderPlayers(customPlayers(G, G.vs, G.userColor), G.orientation, c.fen(), G.over ? null : c.turn());
-  const who = rule.both ? 'This rule applies to both sides.' : G.vs === 'friend' ? 'Both players get this power.' : 'Only you get this power. Stockfish plays normal chess.';
+  const who = rule.oneSide ? (G.vs === 'friend' ? `${pName('w')} (White) plays the alien. ${pName('b')} has a full army.` : 'Only you get the alien. Stockfish has its full army.') : rule.both ? 'This rule applies to both sides.' : G.vs === 'friend' ? 'Both players get this power.' : 'Only you get this power. Stockfish plays normal chess.';
   $('#cBanner').innerHTML = `<span class="eyebrow">Custom rules</span><h3>${esc(rule.title)}</h3>${rule.list ? `<ul class="a51-pow">${rule.list.map(x => `<li>${x}</li>`).join('')}</ul>` : `<p class="small">${esc(rule.text)}</p>`}<span class="c-who">${esc(who)}</span>`;
   statusInto($('#cStatus'), customStatus(G));
   const sans = G.log.map(e => e.san), sheet = $('#cMoves');
@@ -4195,6 +4222,7 @@ function wire() {
   // custom mode
   $('#cRules').innerHTML = !RULES.length ? '<p class="tip">No custom rules yet. Add your own to the RULES list in index.html and they will show up here.</p>' : RULES.map(r => `<button type="button" class="rule" data-rule="${r.id}"><span class="ri">${r.icon()}</span><span class="rt">${esc(r.short)}</span><span class="rd">${esc(r.card)}</span></button>`).join('');
   $('#cRules').addEventListener('click', e => { const b = e.target.closest('[data-rule]'); if (!b) return; CUSTOM.sel.rule = b.dataset.rule; store.set('s64.cRule', CUSTOM.sel.rule); renderPlay(); });
+  $('#cOpt').addEventListener('click', e => { const b = e.target.closest('[data-o]'); if (!b) return; CUSTOM.sel.opt = b.dataset.o; store.set('s64.cOpt', CUSTOM.sel.opt); renderPlay(); });
   $('#cVs').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; CUSTOM.sel.vs = b.dataset.vs; store.set('s64.cVs', CUSTOM.sel.vs); renderPlay(); });
   $('#cElo').innerHTML = [[800, '800'], [1500, '1500'], [2200, '2200'], [3200, 'Max']].map(([v, l]) => `<button type="button" class="chip" data-e="${v}">${l}</button>`).join('');
   $('#cElo').addEventListener('click', e => { const b = e.target.closest('[data-e]'); if (!b) return; CUSTOM.sel.elo = +b.dataset.e; store.set('s64.cElo', CUSTOM.sel.elo); renderPlay(); });

@@ -9,7 +9,7 @@ No install, no account, no server. Open the page and play.
 - **Play the computer.** Stockfish 19 at any rating from 300 to full strength. Hints, take-backs and a "review this game" button.
 - **Beat the NPCs.** Twelve characters with their own personalities, from Pip (300) to OMEGA, the AI Chess Master God (3200+). Beat each one to unlock the next.
 - **Friend on the same device.** Two players, one screen, with names, an auto-turning board and a chess clock (1 min up to 30 min, with increments).
-- **Custom mode: Chess, but...** Broken-rules chess against Stockfish or a friend, starting with **the Area 51 Army**: Clones, the Maw, the Watcher, the UFO and the Egg that hatches into the Overlord.
+- **Custom mode: Chess, but...** Broken-rules chess against Stockfish or a friend, starting with **the Area 51 Army**: your king plus ONE alien (a Clone, the Maw, the Watcher, the UFO or the Egg that hatches into the Overlord) against a full army.
 - **Game review.** Paste any PGN, for example from chess.com or lichess. You get accuracy, a rating estimate, move labels (Brilliant to Blunder), an eval graph, retry-the-mistake and "show engine line".
 - **Highlights with Coach Ozzie.** A narrated replay of the key moments, with optional voice.
 - **Battle mode.** Captures become fights: spears, a pistol for en passant, sabers, a sniper rifle, cannons, a magic staff and a royal sword.

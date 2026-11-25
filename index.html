@@ -580,7 +580,6 @@ textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 0; }
         <div class="panel-inner" id="cGame" hidden>
           <div class="coach c-banner" id="cBanner"></div>
           <div class="status" id="cStatus" role="status"></div>
-          <button class="btn primary wide" id="cTime" type="button" hidden>Time travel</button>
           <div class="sheet" id="cMoves" data-empty="Moves will appear here."></div>
           <div class="btn-row">
             <button class="btn" id="cUndo" type="button">Take back</button>
@@ -3536,30 +3535,26 @@ function hlAction(a) {
 }
 
 /* ============================================================
-   CUSTOM MODE: "Chess, but the rules are broken"
-   Rules change the position after a normal move, so the result is
-   always a legal chess position and Stockfish can keep playing.
+   CUSTOM MODE: "Chess, but..."
+   Add your own rules to the RULES list below. A rule is an object like:
+     { id: 'myrule', short: 'Short name', card: 'One-line summary',
+       title: 'Chess, but ...', text: 'Full explanation shown during the game.',
+       both: false,            // true = the rule applies to both sides
+       icon: () => '<b>?</b>' } // HTML for the little icon in the list
+   Then make it do something in the hooks below:
+     startFenFor()  - change the starting position
+     applyEffects() - change the board after a move (move or remove pieces)
+     powerMoves()   - give pieces extra moves
+   Every change must leave a legal chess position, so Stockfish can keep playing.
    ============================================================ */
-const IC = {
-  gravity: `<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3v13M6.5 10.5 12 16l5.5-5.5M5 21h14'/></svg>`,
-  magnet: `<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round'><path d='M6 4v8a6 6 0 0 0 12 0V4'/><path d='M6 8h3.2M14.8 8H18' stroke='#f8412d'/></svg>`,
-  time: `<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 3h12M6 21h12M7 3c0 4 5 6 5 9s-5 5-5 9M17 3c0 4-5 6-5 9s5 5 5 9'/></svg>`
-};
-const RULES = [
-  { id: 'queens', short: 'Queen Army', card: 'All my pieces are queens', title: 'Chess, but all my pieces are queens', text: 'Your rooks, knights and bishops start as queens. Seven queens against Stockfish. Easy, right?', icon: () => `<img src="${PIECE_URL.wQ}" alt="">` },
-  { id: 'knights', short: 'Knight Horde', card: 'My pawns are knights', title: 'Chess, but my pawns are knights', text: 'Your eight pawns become eight knights. No pawn structure, only chaos.', icon: () => `<img src="${PIECE_URL.wN}" alt="">` },
-  { id: 'gravity', short: 'Gravity', card: 'My pieces fall back after every move', title: 'Chess, but my pieces have gravity', text: 'After each of your moves, your pieces fall straight back toward your side until they land on something. Pawns and the king stay put.', icon: () => IC.gravity },
-  { id: 'magnets', short: 'Magnets', card: 'The piece I move pulls enemies closer', title: 'Chess, but my pieces have magnets', text: 'The piece you move pulls the nearest enemy in every direction one step closer, from up to 3 squares away. Kings are too heavy to pull.', icon: () => IC.magnet },
-  { id: 'five', short: '5-Move Limit', card: 'Every piece vanishes after 5 moves', title: 'Chess, but each piece gets only 5 moves', text: 'Every piece except the kings disappears after its fifth move. The number on each piece shows how many moves it has left.', both: true, icon: () => `<span class="r5">5</span>` },
-  { id: 'flyking', short: 'Flying King', card: 'My king moves like a queen', title: 'Chess, but my king can fly', text: 'Your king can fly any distance in a straight line, like a queen. Purple dots show the flying moves.', icon: () => `<img src="${PIECE_URL.wK}" alt="">` },
-  { id: 'time', short: 'Time Travel', card: 'Rewind the game 3 times', title: 'Chess, but I can time travel', text: 'Three times per game, travel back to before your last move and play it again.', icon: () => IC.time }
-];
-const ruleOf = id => RULES.find(r => r.id === id) || RULES[0];
+const RULES = [];
+const NO_RULE = { id: 'none', short: 'No rule', card: '', title: 'Chess, but...', text: 'No custom rule yet.', icon: () => '' };
+const ruleOf = id => RULES.find(r => r.id === id) || RULES[0] || NO_RULE;
 const CUSTOM = {
   mode: 'custom', saveKey: 's64.custom', chess: null, userColor: 'w', orientation: 'w', over: null, thinking: false,
   job: null, hint: null, hintJob: null, hintBusy: false, lastMove: null, gen: 3, animating: false,
-  sel: { rule: store.get('s64.cRule', 'gravity'), vs: store.get('s64.cVs', 'bot'), elo: store.get('s64.cElo', 1500), color: store.get('s64.cColor', 'w') },
-  rule: 'gravity', vs: 'bot', elo: 1500, phase: 'lobby', startFen: START_FEN, log: [], counts: {}, rewinds: { w: 3, b: 3 }
+  sel: { rule: store.get('s64.cRule', ''), vs: store.get('s64.cVs', 'bot'), elo: store.get('s64.cElo', 1500), color: store.get('s64.cColor', 'w') },
+  rule: 'none', vs: 'bot', elo: 1500, phase: 'lobby', startFen: START_FEN, log: []
 };
 const isCol = (ch, col) => (ch === ch.toUpperCase()) === (col === 'w');
 const keyOf = ch => (ch === ch.toUpperCase() ? 'w' : 'b') + ch.toUpperCase();
@@ -3599,102 +3594,20 @@ const buildFen = (m, turn, cast, ep, half, full) => `${mapToBoard(m)} ${turn} ${
 function attacked(m, col) { // is col's king attacked in this position?
   try { return new Chess(buildFen(m, col, '-', '-', 0, 1)).in_check(); } catch (e) { return false; }
 }
+// Hook: the starting position for a rule. `sides` lists who gets the rule ('w', 'b' or both).
 function startFenFor(rule, vs, userColor) {
   const sides = vs === 'friend' ? ['w', 'b'] : [userColor];
-  let rows = START_FEN.split(' ')[0].split('/'), cast = 'KQkq';
-  for (const col of sides) {
-    const back = col === 'w' ? 7 : 0, pawn = col === 'w' ? 6 : 1;
-    if (rule === 'queens') { rows[back] = col === 'w' ? 'QQQQKQQQ' : 'qqqqkqqq'; cast = cast.replace(col === 'w' ? /[KQ]/g : /[kq]/g, ''); }
-    if (rule === 'knights') rows[pawn] = col === 'w' ? 'NNNNNNNN' : 'nnnnnnnn';
-  }
-  return `${rows.join('/')} w ${cast || '-'} - 0 1`;
+  void sides;
+  return START_FEN;
 }
-function fiveLabels(fen, counts) {
-  const m = fenToMap(fen), out = {};
-  for (const sq in m) if (m[sq].toLowerCase() !== 'k') out[sq] = Math.max(0, 5 - (counts[sq] || 0));
-  return out;
-}
-const labelsFor = G => G.rule === 'five' && G.chess ? fiveLabels(G.chess.fen(), G.counts) : null;
-function powerMoves(G, from) { // flying king: queen-like moves for the king
-  if (G.rule !== 'flyking' || !G.chess || G.over) return [];
-  const m = fenToMap(G.chess.fen()), ch = m[from], col = G.chess.turn();
-  if (!ch || ch.toLowerCase() !== 'k' || !isCol(ch, col) || !powered(G, col)) return [];
-  const std = new Set(G.chess.moves({ square: from, verbose: true }).map(x => x.to)), out = [];
-  const f0 = from.charCodeAt(0) - 97, r0 = +from[1];
-  for (const [df, dr] of KG) {
-    let f = f0, r = r0, d = 0;
-    while (true) {
-      f += df; r += dr; d++;
-      if (f < 0 || f > 7 || r < 1 || r > 8) break;
-      const sq = String.fromCharCode(97 + f) + r, t = m[sq];
-      if (t && (isCol(t, col) || t.toLowerCase() === 'k')) break;
-      if (d >= 2 && !std.has(sq)) {
-        const mm = Object.assign({}, m);
-        delete mm[from]; mm[sq] = ch;
-        if (!attacked(mm, col)) out.push({ to: sq, captured: t ? t.toLowerCase() : undefined });
-      }
-      if (t) break;
-    }
-  }
-  return out;
-}
-function trackCounts(G, mv, col) {
-  const c = G.counts;
-  if (mv.captured) delete c[mv.flags.includes('e') ? mv.to[0] + mv.from[1] : mv.to];
-  const n = (c[mv.from] || 0) + 1;
-  delete c[mv.from];
-  c[mv.to] = n;
-  if (mv.flags.includes('k') || mv.flags.includes('q')) {
-    const r = col === 'w' ? '1' : '8', [rf, rt] = mv.flags.includes('k') ? ['h' + r, 'f' + r] : ['a' + r, 'd' + r];
-    c[rt] = (c[rf] || 0) + 1;
-    delete c[rf];
-  }
-}
+// Hook: extra moves a piece may make under the current rule. Return [{ to, captured }].
+function powerMoves(G, from) { return []; }
+// Hook: change the board after a move. `m` maps squares to pieces (e.g. m.e4 = 'P'), `col` is the
+// side that just moved, `mv` is the move. Record what you change so it can be animated:
+// fx.moves.push({ from, to }) when a piece slides, fx.gone.push({ sq, key }) when one disappears.
+// Use attacked(m, col) to undo a change that would leave the mover's own king in check.
 function applyEffects(G, m, col, mv) {
   const fx = { moves: [], gone: [] };
-  if (G.rule === 'gravity' && powered(G, col)) {
-    const dir = col === 'w' ? -1 : 1;
-    const sqs = Object.keys(m).filter(sq => isCol(m[sq], col) && !'kp'.includes(m[sq].toLowerCase()));
-    sqs.sort((a, b) => col === 'w' ? a[1] - b[1] : b[1] - a[1]);
-    for (const sq of sqs) {
-      const ch = m[sq], f = sq[0], r = +sq[1];
-      const lim = ch.toLowerCase() === 'p' ? (col === 'w' ? 2 : 7) : (col === 'w' ? 1 : 8);
-      let nr = r;
-      while (true) { const t = nr + dir; if (col === 'w' ? t < lim : t > lim) break; if (m[f + t]) break; nr = t; }
-      if (nr === r) continue;
-      delete m[sq]; m[f + nr] = ch;
-      if (attacked(m, col)) { delete m[f + nr]; m[sq] = ch; continue; }
-      fx.moves.push({ from: sq, to: f + nr });
-    }
-  }
-  if (G.rule === 'magnets' && powered(G, col) && mv) {
-    const tf = mv.to.charCodeAt(0) - 97, tr = +mv.to[1];
-    for (const [df, dr] of KG) {
-      let f = tf, r = tr, d = 0, hit = null;
-      while (d < 3) {
-        f += df; r += dr; d++;
-        if (f < 0 || f > 7 || r < 1 || r > 8) break;
-        const sq = String.fromCharCode(97 + f) + r;
-        if (m[sq]) { hit = { sq, d }; break; }
-      }
-      if (!hit || hit.d < 2) continue;
-      const ch = m[hit.sq];
-      if (isCol(ch, col) || ch.toLowerCase() === 'k') continue;
-      const ns = String.fromCharCode(hit.sq.charCodeAt(0) - df) + (+hit.sq[1] - dr);
-      if (ch.toLowerCase() === 'p' && (ns[1] === '1' || ns[1] === '8')) continue;
-      delete m[hit.sq]; m[ns] = ch;
-      if (attacked(m, col)) { delete m[ns]; m[hit.sq] = ch; continue; }
-      fx.moves.push({ from: hit.sq, to: ns });
-    }
-  }
-  if (G.rule === 'five' && mv) {
-    const T = mv.to, ch = m[T];
-    if (ch && ch.toLowerCase() !== 'k' && (G.counts[T] || 0) >= 5) {
-      delete m[T];
-      if (attacked(m, col)) m[T] = ch;
-      else { fx.gone.push({ sq: T, key: keyOf(ch) }); delete G.counts[T]; }
-    }
-  }
   return fx;
 }
 function customDoMove(G, from, to, promo) {
@@ -3706,10 +3619,9 @@ function customDoMove(G, from, to, promo) {
     const ch = m[from], cap = m[to];
     delete m[from]; m[to] = ch;
     turn = col === 'w' ? 'b' : 'w';
-    cast = parts[2].replace(col === 'w' ? /[KQ]/g : /[kq]/g, '') || '-';
-    ep = '-'; half = cap ? 0 : +parts[4] + 1; full = +parts[5] + (col === 'b' ? 1 : 0);
-    mv = { from, to, color: col, piece: 'k', captured: cap ? cap.toLowerCase() : undefined, flags: cap ? 'c' : 'n', san: '' };
-    san = 'K' + (cap ? 'x' : '') + to;
+    cast = parts[2]; ep = '-'; half = cap ? 0 : +parts[4] + 1; full = +parts[5] + (col === 'b' ? 1 : 0);
+    mv = { from, to, color: col, piece: ch.toLowerCase(), captured: cap ? cap.toLowerCase() : undefined, flags: cap ? 'c' : 'n', san: '' };
+    san = (ch.toLowerCase() === 'p' ? '' : ch.toUpperCase()) + (cap ? 'x' : '') + to;
   } else {
     const c = new Chess(G.chess.fen());
     mv = c.move({ from, to, promotion: promo || 'q' });
@@ -3719,14 +3631,13 @@ function customDoMove(G, from, to, promo) {
     san = mv.san.replace(/[+#]$/, '');
   }
   const fenMid = buildFen(m, turn, cast, ep, half, full);
-  if (G.rule === 'five') trackCounts(G, mv, col);
   const fx = applyEffects(G, m, col, mv);
   const fenFinal = fx.moves.length || fx.gone.length ? buildFen(m, turn, cast, '-', half, full) : fenMid;
   const c2 = new Chess(fenFinal);
   san += (c2.in_checkmate() ? '#' : c2.in_check() ? '+' : '') + (pw ? '✦' : '');
   G.chess = c2;
   G.lastMove = { from, to };
-  G.log.push({ fen: fenFinal, san, from, to, color: col, counts: G.rule === 'five' ? Object.assign({}, G.counts) : null });
+  G.log.push({ fen: fenFinal, san, from, to, color: col });
   return { mv, fenMid, fx };
 }
 const cName = (G, col) => G.vs === 'friend' ? pName(col) : col === G.userColor ? 'You' : 'Stockfish';
@@ -3749,18 +3660,17 @@ function restoreFromLog(G) {
   const last = G.log[G.log.length - 1];
   G.chess = new Chess(last ? last.fen : G.startFen);
   G.lastMove = last ? { from: last.from, to: last.to } : null;
-  G.counts = last && last.counts ? Object.assign({}, last.counts) : {};
   G.over = null;
 }
 function saveCustom() {
   const G = CUSTOM;
-  store.set('s64.custom', { rule: G.rule, vs: G.vs, elo: G.elo, userColor: G.userColor, orientation: G.orientation, startFen: G.startFen, log: G.log, over: G.over, phase: G.phase, rewinds: G.rewinds });
+  store.set('s64.custom', { rule: G.rule, vs: G.vs, elo: G.elo, userColor: G.userColor, orientation: G.orientation, startFen: G.startFen, log: G.log, over: G.over, phase: G.phase });
 }
 function restoreCustom() {
   const G = CUSTOM, d = store.get('s64.custom', null);
   if (d && Array.isArray(d.log) && d.startFen) {
     try {
-      Object.assign(G, { rule: ruleOf(d.rule).id, vs: d.vs === 'friend' ? 'friend' : 'bot', elo: +d.elo || 1500, userColor: d.userColor === 'b' ? 'b' : 'w', orientation: d.orientation === 'b' ? 'b' : 'w', startFen: d.startFen, log: d.log, rewinds: d.rewinds || { w: 3, b: 3 }, phase: d.phase === 'game' ? 'game' : 'lobby' });
+      Object.assign(G, { rule: ruleOf(d.rule).id, vs: d.vs === 'friend' ? 'friend' : 'bot', elo: +d.elo || 1500, userColor: d.userColor === 'b' ? 'b' : 'w', orientation: d.orientation === 'b' ? 'b' : 'w', startFen: d.startFen, log: d.log, phase: d.phase === 'game' ? 'game' : 'lobby' });
       restoreFromLog(G);
       G.over = d.over || null;
     } catch (e) { G.phase = 'lobby'; G.log = []; }
@@ -3798,7 +3708,7 @@ function customShow(G, res, anim, done) {
   const n = res.fx.moves.length + res.fx.gone.length;
   if (!n || G !== P || S.tab !== 'custom') { if (G === P && S.tab === 'custom') renderCustom(anim); setTimeout(done, 0); return; }
   board.orientation = G.orientation;
-  board.set(new Chess(res.fenMid), { lastMove: G.lastMove, animate: anim, labels: G.rule === 'five' ? fiveLabels(res.fenMid, G.counts) : null });
+  board.set(new Chess(res.fenMid), { lastMove: G.lastMove, animate: anim, labels: null });
   const t0 = performance.now(), wait = anim ? 330 : 120;
   const go = () => {
     if (G !== P || S.tab !== 'custom') { done(); return; }
@@ -3808,7 +3718,7 @@ function customShow(G, res, anim, done) {
       const el = board.pcs.querySelector(`[data-sq="${to}"]`);
       if (!el) return;
       const a = board.xy(from), b = board.xy(to), dx = (a.x - b.x) * 100, dy = (a.y - b.y) * 100;
-      if (G.rule === 'gravity') el.animate([{ transform: `translate(${dx}%, ${dy}%)` }, { transform: 'none', offset: 0.78 }, { transform: `translate(0, ${dy > 0 ? 7 : -7}%)`, offset: 0.89 }, { transform: 'none' }], { duration: 430, easing: 'cubic-bezier(.5,0,.9,.6)' });
+      if (false) el.animate([{ transform: `translate(${dx}%, ${dy}%)` }, { transform: 'none', offset: 0.78 }, { transform: `translate(0, ${dy > 0 ? 7 : -7}%)`, offset: 0.89 }, { transform: 'none' }], { duration: 430, easing: 'cubic-bezier(.5,0,.9,.6)' });
       else el.animate([{ transform: `translate(${dx}%, ${dy}%)`, filter: 'drop-shadow(0 0 6px rgba(248,65,45,.9))' }, { transform: 'none', filter: 'none' }], { duration: 320, easing: 'cubic-bezier(.6,0,.4,1)' });
     });
     res.fx.gone.forEach(({ sq, key }) => {
@@ -3818,7 +3728,7 @@ function customShow(G, res, anim, done) {
       board.fx.appendChild(g);
       g.animate([{ transform: 'scale(1)', opacity: 1, filter: 'none' }, { transform: 'scale(1.25) translateY(-10%)', opacity: 0.9, filter: 'brightness(2) drop-shadow(0 0 8px #b48cff)', offset: 0.3 }, { transform: 'scale(.2) translateY(-60%) rotate(90deg)', opacity: 0, filter: 'brightness(3)' }], { duration: 650, easing: 'ease-in' }).onfinish = () => g.remove();
     });
-    sfx(G.rule === 'magnets' ? 'zap' : G.rule === 'gravity' ? 'whoosh' : 'charge');
+    sfx('charge');
     board.fxUntil = performance.now() + 460;
     setTimeout(() => { if (!board.hideSq) board.fxUntil = 0; done(); }, 470);
   };
@@ -3868,31 +3778,19 @@ function customStart() {
   G.userColor = G.vs === 'friend' ? 'w' : sel.color === 'r' ? (Math.random() < 0.5 ? 'w' : 'b') : sel.color === 'b' ? 'b' : 'w';
   G.orientation = G.vs === 'friend' ? 'w' : G.userColor;
   G.startFen = startFenFor(G.rule, G.vs, G.userColor);
-  Object.assign(G, { chess: new Chess(G.startFen), log: [], counts: {}, over: null, lastMove: null, rewinds: { w: 3, b: 3 }, phase: 'game', thinking: false, animating: false, gen: ++SEQ });
+  Object.assign(G, { chess: new Chess(G.startFen), log: [], over: null, lastMove: null, phase: 'game', thinking: false, animating: false, gen: ++SEQ });
   saveCustom(); renderCustom(false);
   customBot();
 }
 function customUndo() {
   const G = CUSTOM;
-  if (G.phase !== 'game' || !G.log.length || G.animating || G.rule === 'time') return;
+  if (G.phase !== 'game' || !G.log.length || G.animating) return;
   pauseBot(G);
   G.log.pop();
   restoreFromLog(G);
   if (G.vs === 'bot' && G.chess.turn() !== G.userColor && G.log.length) { G.log.pop(); restoreFromLog(G); }
   saveCustom(); renderCustom(false);
   customBot();
-}
-function customRewind() {
-  const G = CUSTOM;
-  if (G.rule !== 'time' || G.phase !== 'game' || G.over || G.thinking || G.animating) return;
-  const col = G.vs === 'friend' ? G.chess.turn() : G.userColor;
-  if (G.rewinds[col] <= 0 || G.log.length < 2 || (G.vs === 'bot' && G.chess.turn() !== G.userColor)) return;
-  G.rewinds[col]--;
-  G.log.splice(-2, 2);
-  restoreFromLog(G);
-  sfx('charge');
-  board.el.animate([{ filter: 'none' }, { filter: 'sepia(1) hue-rotate(190deg) saturate(2.4) brightness(1.15) blur(1px)', offset: 0.4 }, { filter: 'none' }], { duration: 750, easing: 'ease-in-out' });
-  saveCustom(); renderCustom(false);
 }
 function customResign() {
   const G = CUSTOM;
@@ -3920,6 +3818,7 @@ function renderCustom(anim) {
   const G = CUSTOM, sel = G.sel, inGame = G.phase === 'game' && !!G.chess;
   $('#cLobby').hidden = inGame;
   $('#cGame').hidden = !inGame;
+  $('#cStart').disabled = !RULES.length;
   $$('#cRules .rule').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.rule === sel.rule)));
   $$('#cVs button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.vs === sel.vs)));
   $$('#cElo .chip').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.e === sel.elo)));
@@ -3929,7 +3828,7 @@ function renderCustom(anim) {
   if (!inGame) {
     const user = sel.vs === 'bot' && sel.color === 'b' ? 'b' : 'w', fen = startFenFor(sel.rule, sel.vs, user), c = new Chess(fen);
     board.orientation = user;
-    board.set(c, { labels: sel.rule === 'five' ? fiveLabels(fen, {}) : null });
+    board.set(c, {});
     setEvalBar(false);
     renderPlayers(customPlayers(G, sel.vs, user), user, fen, null);
     const resumable = G.log.length > 0 && !G.over;
@@ -3939,7 +3838,7 @@ function renderCustom(anim) {
   }
   const rule = ruleOf(G.rule), c = G.chess;
   board.orientation = G.orientation;
-  board.set(c, { lastMove: G.lastMove, animate: anim, labels: labelsFor(G) });
+  board.set(c, { lastMove: G.lastMove, animate: anim });
   setEvalBar(false);
   renderPlayers(customPlayers(G, G.vs, G.userColor), G.orientation, c.fen(), G.over ? null : c.turn());
   const who = rule.both ? 'This rule applies to both sides.' : G.vs === 'friend' ? 'Both players get this power.' : 'Only you get this power. Stockfish plays normal chess.';
@@ -3948,14 +3847,6 @@ function renderCustom(anim) {
   const sans = G.log.map(e => e.san), sheet = $('#cMoves');
   sheet.innerHTML = sheetHTML(sans, sans.length, fenTurn(G.startFen), 1, null, false);
   scrollCurrent(sheet);
-  const tt = G.rule === 'time', tb = $('#cTime');
-  tb.hidden = !tt;
-  if (tt) {
-    const col = G.vs === 'friend' ? c.turn() : G.userColor, left = G.rewinds[col];
-    tb.textContent = `Time travel (${left} left)`;
-    tb.disabled = !!G.over || G.thinking || G.animating || left <= 0 || G.log.length < 2 || (G.vs === 'bot' && c.turn() !== G.userColor);
-  }
-  $('#cUndo').hidden = tt;
   $('#cUndo').disabled = !G.log.length || G.animating;
   $('#cResign').disabled = !!G.over || !G.log.length;
 }
@@ -4033,7 +3924,7 @@ function wire() {
   $('#reviewThisBtn').addEventListener('click', () => reviewPlayedGame(false));
 
   // custom mode
-  $('#cRules').innerHTML = RULES.map(r => `<button type="button" class="rule" data-rule="${r.id}"><span class="ri">${r.icon()}</span><span class="rt">${esc(r.short)}</span><span class="rd">${esc(r.card)}</span></button>`).join('');
+  $('#cRules').innerHTML = !RULES.length ? '<p class="tip">No custom rules yet. Add your own to the RULES list in index.html and they will show up here.</p>' : RULES.map(r => `<button type="button" class="rule" data-rule="${r.id}"><span class="ri">${r.icon()}</span><span class="rt">${esc(r.short)}</span><span class="rd">${esc(r.card)}</span></button>`).join('');
   $('#cRules').addEventListener('click', e => { const b = e.target.closest('[data-rule]'); if (!b) return; CUSTOM.sel.rule = b.dataset.rule; store.set('s64.cRule', CUSTOM.sel.rule); renderPlay(); });
   $('#cVs').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; CUSTOM.sel.vs = b.dataset.vs; store.set('s64.cVs', CUSTOM.sel.vs); renderPlay(); });
   $('#cElo').innerHTML = [[800, '800'], [1500, '1500'], [2200, '2200'], [3200, 'Max']].map(([v, l]) => `<button type="button" class="chip" data-e="${v}">${l}</button>`).join('');
@@ -4041,7 +3932,6 @@ function wire() {
   $('#cColor').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; CUSTOM.sel.color = b.dataset.c; store.set('s64.cColor', CUSTOM.sel.color); renderPlay(); });
   $('#cStart').addEventListener('click', customStart);
   $('#cResume').addEventListener('click', () => { CUSTOM.phase = 'game'; saveCustom(); renderPlay(); customBot(); });
-  $('#cTime').addEventListener('click', customRewind);
   $('#cUndo').addEventListener('click', customUndo);
   $('#cFlip').addEventListener('click', () => { CUSTOM.orientation = CUSTOM.orientation === 'w' ? 'b' : 'w'; saveCustom(); renderPlay(); });
   $('#cResign').addEventListener('click', customResign);

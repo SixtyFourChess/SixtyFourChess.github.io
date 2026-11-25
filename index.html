@@ -439,6 +439,19 @@ textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 0; }
 .fx-pts { position: absolute; font: 800 calc(var(--bsz) * .042)/1 var(--font-display); color: #fff; text-shadow: 0 2px 6px rgba(0, 0, 0, .6), 0 0 2px rgba(0, 0, 0, .8); white-space: nowrap; }
 .fx-ghost { position: fixed; z-index: 60; pointer-events: none; filter: drop-shadow(0 8px 10px rgba(0, 0, 0, .35)); }
 
+/* online play */
+.o-code { font: 700 40px/1 var(--font-mono); letter-spacing: .18em; text-align: center; padding: 18px 10px; border-radius: 12px; background: var(--surface); border: 1px dashed var(--accent); user-select: all; }
+.o-join { display: flex; gap: 8px; }
+.o-join input { flex: 1; min-width: 0; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 9px 11px; font: 700 16px var(--font-mono); letter-spacing: .12em; text-transform: uppercase; }
+.o-or { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; }
+.o-or::before, .o-or::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.o-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--c-best, #5a9a3c); margin-left: 6px; vertical-align: middle; }
+.o-dot.off { background: var(--muted); opacity: .5; }
+.o-radar { width: 92px; height: 92px; margin: 6px auto; border-radius: 50%; border: 2px solid var(--accent); position: relative; overflow: hidden; background: var(--accent-soft); }
+.o-radar::after { content: ""; position: absolute; inset: 0; background: conic-gradient(from 0deg, transparent 0 300deg, var(--accent) 360deg); opacity: .55; animation: spin 1.6s linear infinite; }
+.o-radar::before { content: ""; position: absolute; left: 50%; top: 50%; width: 10px; height: 10px; margin: -5px; border-radius: 50%; background: var(--accent); z-index: 1; }
+.o-big { text-align: center; font-weight: 700; }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }
 }
@@ -454,6 +467,7 @@ textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 0; }
       <button class="tab" role="tab" id="tabPlay" data-tab="play" aria-selected="true">Play</button>
       <button class="tab" role="tab" id="tabLadder" data-tab="ladder" aria-selected="false">Beat the NPCs</button>
       <button class="tab" role="tab" id="tabCustom" data-tab="custom" aria-selected="false">Custom</button>
+      <button class="tab" role="tab" id="tabOnline" data-tab="online" aria-selected="false">Online</button>
       <button class="tab" role="tab" id="tabReview" data-tab="review" aria-selected="false">Game review</button>
     </nav>
     <div class="top-right">
@@ -593,6 +607,51 @@ textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 0; }
             <button class="btn" id="cResign" type="button">Resign</button>
             <button class="btn" id="cLeave" type="button">Rules</button>
           </div>
+        </div>
+      </div>
+
+      <!-- ONLINE -->
+      <div class="panel-inner" id="onlinePanel" hidden>
+        <div class="panel-inner" id="oLobby">
+          <div class="block">
+            <span class="sec-label">Online</span>
+            <h2>Play real people</h2>
+            <p class="tip">Find someone near you, or make a code and send it to a friend.</p>
+          </div>
+          <label class="me-row" for="oName"><span class="sec-label">Your name</span><input id="oName" type="text" autocomplete="off" spellcheck="false" maxlength="20" placeholder="Guest"></label>
+          <div class="block"><span class="sec-label">Time control</span><div class="chips" id="oTc"></div></div>
+          <button class="btn primary wide" id="oFind" type="button">Find a player near me</button>
+          <div class="o-or">or play a friend</div>
+          <div class="block">
+            <span class="sec-label">You play</span>
+            <div class="seg" id="oColor"><button type="button" data-c="w">White</button><button type="button" data-c="r">Random</button><button type="button" data-c="b">Black</button></div>
+            <button class="btn wide" id="oCreate" type="button">Create a game code</button>
+          </div>
+          <div class="block">
+            <span class="sec-label">Got a code?</span>
+            <div class="o-join"><input id="oCode" type="text" autocomplete="off" spellcheck="false" maxlength="6" placeholder="ABC123" aria-label="Game code"><button class="btn" id="oJoin" type="button">Join</button></div>
+          </div>
+          <div class="status" id="oLobbyStatus" role="status" hidden></div>
+        </div>
+        <div class="panel-inner" id="oWait" hidden>
+          <div class="block" id="oWaitBody"></div>
+          <button class="btn wide" id="oCancel" type="button">Cancel</button>
+        </div>
+        <div class="panel-inner" id="oGame" hidden>
+          <div class="status" id="oStatus" role="status"></div>
+          <div class="sheet" id="oMoves" data-empty="Moves will appear here."></div>
+          <div class="btn-row" id="oPlayBtns">
+            <button class="btn" id="oDraw" type="button">Offer draw</button>
+            <button class="btn" id="oDecline" type="button" hidden>Decline</button>
+            <button class="btn" id="oFlip" type="button">Flip</button>
+            <button class="btn" id="oResign" type="button">Resign</button>
+          </div>
+          <div class="btn-row" id="oAfterBtns" hidden>
+            <button class="btn primary" id="oRematch" type="button">Rematch</button>
+            <button class="btn" id="oReview" type="button">Review game</button>
+            <button class="btn" id="oLeave" type="button">New game</button>
+          </div>
+          <p class="small muted" id="oCodeNote"></p>
         </div>
       </div>
 
@@ -2123,6 +2182,7 @@ function newGame() {
 }
 function onPlayMove(from, to, promo) {
   if (P.mode === 'custom') return customUserMove(from, to, promo);
+  if (P.mode === 'online') return onlineUserMove(from, to, promo);
   if (P.over || P.thinking || (P.vs !== 'friend' && P.chess.turn() !== P.userColor)) return false;
   const m = P.chess.move({ from, to, promotion: promo || 'q' });
   if (!m) return false;
@@ -2265,6 +2325,7 @@ function renderPlay(anim) {
   $$('#ladColor button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.c === LADDER.colorPref)));
   if (S.tab === 'ladder') { renderLadder(anim); return; }
   if (S.tab === 'custom') { renderCustom(anim); return; }
+  if (S.tab === 'online') { renderOnline(anim); return; }
   if (S.tab !== 'play') return;
   const c = P.chess;
   board.orientation = P.orientation;
@@ -3028,6 +3089,7 @@ function flagFall(loser) {
   if (P === FREE) { gameEnded(); savePlay(); renderPlay(); }
 }
 function clockTick() {
+  if (S.tab === 'online' && ONLINE.st && ONLINE.st.tc[0]) renderClocks();
   const c = FREE.clk;
   if (!c || !c.running || c.paused || FREE.over) return;
   const now = performance.now();
@@ -3044,7 +3106,8 @@ function fmtClock(ms) {
   return m >= 60 ? `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}:${String(sec).padStart(2, '0')}` : `${m}:${String(sec).padStart(2, '0')}`;
 }
 function renderClocks() {
-  const c = FREE.clk, show = S.tab === 'play' && FREE.vs === 'friend' && !!c;
+  const on = S.tab === 'online', c = on ? onlineClk() : FREE.clk, show = on ? !!c : S.tab === 'play' && FREE.vs === 'friend' && !!c;
+  const isOver = on ? !!ONLINE.over : !!FREE.over;
   ['#pTop', '#pBottom'].forEach(id => {
     const strip = $(id);
     let el = strip.querySelector('.pclock');
@@ -3053,7 +3116,7 @@ function renderClocks() {
     if (!el) { el = document.createElement('span'); el.className = 'pclock'; el.setAttribute('aria-label', 'Time left'); strip.insertBefore(el, strip.querySelector('.turn')); }
     const ms = c[col];
     el.textContent = fmtClock(ms);
-    el.classList.toggle('on', c.running === col && !c.paused && !FREE.over);
+    el.classList.toggle('on', c.running === col && !c.paused && !isOver);
     el.classList.toggle('low', ms < 20000 && ms > 0);
     el.classList.toggle('out', ms <= 0);
     el.classList.toggle('paused', !!c.paused);
@@ -3128,6 +3191,7 @@ function pauseBot(G) {
   G.job = null; G.thinking = false; G.hintBusy = false;
 }
 function resumeBot() {
+  if (S.tab === 'online') return;
   if (S.tab === 'custom') { customBot(); return; }
   if (S.tab === 'review' || !P.chess || P.over || P.thinking) return;
   if (P.mode === 'ladder' && P.phase !== 'game') return;
@@ -4145,6 +4209,370 @@ function renderCustom(anim) {
   $('#cResign').disabled = !!G.over || !G.log.length;
 }
 
+
+/* ============================================================
+   ONLINE: play people through the Sixty-Four server (Cloudflare)
+   ============================================================ */
+// Paste the address of your Cloudflare worker here, e.g. 'https://sixtyfour-online.yourname.workers.dev'.
+// (You can also test one without editing by opening the site with ?server=https://... once.)
+const ONLINE_SERVER_DEFAULT = '';
+const ONLINE = {
+  mode: 'online', phase: 'lobby', chess: null, userColor: 'w', orientation: 'w', over: null, lastMove: null, gen: 0,
+  thinking: false, job: null, hintJob: null,
+  ws: null, lobbyWs: null, code: null, st: null, recvAt: 0, msg: '', msgErr: false, searchSince: 0, waiting: 0,
+  name: store.get('s64.oname', store.get('s64.me', '') || ''), tcIdx: clamp(store.get('s64.otc', 4) | 0, 0, TCS.length - 1),
+  colorPref: store.get('s64.ocolor', 'r'), retry: 0, retryTimer: null, ping: null, flash: null
+};
+function onlineServer() { return String(store.get('s64.server', '') || ONLINE_SERVER_DEFAULT || '').replace(/\/+$/, ''); }
+function onlineToken() {
+  let t = store.get('s64.otoken', '');
+  if (!/^[A-Za-z0-9-]{8,64}$/.test(t)) { t = (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2) + Date.now()).replace(/[^A-Za-z0-9-]/g, ''); store.set('s64.otoken', t); }
+  return t;
+}
+const oName = () => (ONLINE.name || '').trim() || 'Guest';
+const oWs = path => onlineServer().replace(/^http/, 'ws') + path;
+const oOpp = () => ONLINE.userColor === 'w' ? 'b' : 'w';
+
+function onlineBoot() {
+  const q = new URLSearchParams(location.search);
+  const srv = q.get('server');
+  if (srv && /^https?:\/\/[^\s]+$/.test(srv)) store.set('s64.server', srv);
+  let join = (q.get('join') || (location.hash.match(/join=([A-Za-z0-9]+)/) || [])[1] || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
+  if (srv || join) { try { history.replaceState(null, '', location.pathname); } catch (e) { /* ignore */ } }
+  ONLINE.chess = new Chess();
+  const saved = store.get('s64.ogame', null);
+  if (join && onlineServer()) { onlineConnect(join, null); return join; }
+  if (join) { ONLINE.msg = 'That invite needs the online server, which is not set up on this copy of the app yet.'; ONLINE.msgErr = true; return join; }
+  if (saved && saved.code && onlineServer()) onlineConnect(saved.code, null, true);
+  return null;
+}
+function onlineSetMsg(m, err) { ONLINE.msg = m || ''; ONLINE.msgErr = !!err; if (S.tab === 'online') renderPlay(); }
+
+/* ---- connecting to a game ---- */
+function onlineConnect(code, pref, quiet) {
+  const G = ONLINE;
+  onlineClose();
+  G.code = code; G.st = null; G.over = null; G.chess = new Chess(); G.lastMove = null; G.retry = 0;
+  G.phase = quiet ? 'lobby' : 'connecting';
+  G.quiet = !!quiet;
+  store.set('s64.ogame', { code });
+  onlineOpen(pref);
+  if (S.tab === 'online') renderPlay();
+}
+function onlineOpen(pref) {
+  const G = ONLINE, code = G.code;
+  const q = new URLSearchParams({ token: onlineToken(), name: oName() });
+  if (pref) q.set('pref', pref);
+  let ws;
+  try { ws = new WebSocket(oWs('/ws/game/' + code + '?' + q)); } catch (e) { onlineSetMsg("Couldn't reach the online server.", true); G.phase = 'lobby'; return; }
+  G.ws = ws;
+  ws.onmessage = ev => {
+    if (ws !== G.ws) return;
+    let m; try { m = JSON.parse(ev.data); } catch (e) { return; }
+    if (m.t === 'state') { G.retry = 0; onlineState(m); }
+    else if (m.t === 'error') {
+      G.ws = null; store.set('s64.ogame', null);
+      G.phase = 'lobby'; G.code = null; G.st = null;
+      if (!G.quiet) onlineSetMsg(m.msg, true); else if (S.tab === 'online') renderPlay();
+    } else if (m.t === 'reject') { G.pendingPly = null; onlineSetMsg(m.msg, true); }
+  };
+  ws.onopen = () => { clearInterval(G.ping); G.ping = setInterval(() => { try { ws.send('{"t":"ping"}'); } catch (e) { /* closed */ } }, 25000); };
+  ws.onclose = () => {
+    if (ws !== G.ws) return;
+    G.ws = null; clearInterval(G.ping);
+    if (!G.code) return;
+    // lost the connection: keep trying (the server keeps your seat for a minute)
+    const wait = Math.min(8000, 800 * Math.pow(1.6, G.retry++));
+    if (G.retry > 12) { G.phase = 'lobby'; onlineSetMsg('Lost the connection to the game.', true); return; }
+    clearTimeout(G.retryTimer);
+    G.retryTimer = setTimeout(() => { if (G.code && !G.ws) onlineOpen(); }, wait);
+    if (S.tab === 'online') renderPlay();
+  };
+}
+function onlineClose() {
+  const G = ONLINE;
+  clearTimeout(G.retryTimer); clearInterval(G.ping);
+  if (G.ws) { const w = G.ws; G.ws = null; try { w.close(); } catch (e) { /* ignore */ } }
+}
+function onlineLeave() {
+  const G = ONLINE;
+  onlineClose();
+  G.code = null; G.st = null; G.phase = 'lobby'; G.over = null; G.lastMove = null; G.chess = new Chess();
+  store.set('s64.ogame', null);
+  onlineSetMsg('');
+}
+function onlineSend(o) { const w = ONLINE.ws; if (w && w.readyState === 1) { w.send(JSON.stringify(o)); return true; } return false; }
+
+function onlineOverText(st) {
+  const o = st.over, you = st.you, nm = c => c === you ? 'You' : (st.players[c] ? st.players[c].name : 'Opponent');
+  if (!o) return null;
+  const win = o.result === '1-0' ? 'w' : o.result === '0-1' ? 'b' : null;
+  const youWin = win === you;
+  switch (o.reason) {
+    case 'checkmate': return youWin ? 'Checkmate! You win.' : `Checkmate. ${nm(win)} wins.`;
+    case 'resign': return o.loser === you ? 'You resigned.' : `${nm(o.loser)} resigned. You win!`;
+    case 'time': return o.loser === you ? 'You ran out of time.' : `${nm(o.loser)} ran out of time. You win!`;
+    case 'time-draw': return `${nm(o.loser)} ran out of time, but there's no way to checkmate. Draw.`;
+    case 'abandoned': return o.loser === you ? 'You left the game for too long.' : `${nm(o.loser)} left the game. You win!`;
+    case 'aborted': return 'Game aborted.';
+    case 'stalemate': return 'Stalemate. The game is a draw.';
+    case 'repetition': return 'Draw by threefold repetition.';
+    case 'material': return 'Draw: not enough material to mate.';
+    case 'fifty': return 'Draw by the 50-move rule.';
+    case 'agreed': return 'Draw agreed.';
+  }
+  return 'Game over.';
+}
+function onlineState(st) {
+  const G = ONLINE, prev = G.st;
+  G.st = st; G.recvAt = performance.now();
+  G.userColor = st.you;
+  const fresh = !prev || prev.round !== st.round || prev.code !== st.code;
+  const local = G.chess.history({ verbose: true }).map(toUci);
+  const same = local.every((u, i) => i >= st.moves.length || st.moves[i] === u);
+  // our own move that the server hasn't confirmed yet stays on the board
+  const pending = G.pendingPly != null && local.length === st.moves.length + 1 && G.pendingPly === st.moves.length;
+  if (st.moves.length > (G.pendingPly ?? -1)) G.pendingPly = null;
+  let anim = false, last = null;
+  if (fresh || (local.length > st.moves.length && !pending) || !same) {
+    G.chess = new Chess();
+    for (const u of st.moves) G.chess.move(uciObj(u));
+    if (fresh) G.orientation = st.you;
+    G.lastMove = lastMoveOf(G.chess);
+  } else if (st.moves.length > local.length) {
+    for (const u of st.moves.slice(local.length)) last = G.chess.move(uciObj(u));
+    if (last) { G.lastMove = { from: last.from, to: last.to }; moveSound(last, G.chess); anim = true; }
+  }
+  const both = !!(st.players.w && st.players.b);
+  const wasOver = !!G.over;
+  G.over = st.over ? { result: st.over.result, text: onlineOverText(st) } : null;
+  if (G.over && !wasOver && prev && !(last && G.chess.in_checkmate())) sound('end');
+  if (both && G.quiet && st.over && !prev) { G.quiet = false; } // resuming a finished game after a reload
+  if (G.quiet && !both) { // you had a game open, but nobody joined it: forget it
+    onlineLeave(); return;
+  }
+  G.quiet = false;
+  if (both && prev && !(prev.players.w && prev.players.b)) sound('check'); // your friend joined
+  G.phase = both ? 'game' : 'wait';
+  if (!G.over && both) store.set('s64.ogame', { code: st.code });
+  if (G.msg && !G.msgErr) G.msg = '';
+  if (G.msgErr && G.phase === 'game') G.msg = '';
+  onlineFlash();
+  if (S.tab === 'online') renderPlay(anim);
+}
+// tell the player it's their move if they're on another browser tab
+function onlineFlash() {
+  const G = ONLINE, base = 'Sixty-Four';
+  const mine = G.phase === 'game' && !G.over && G.chess.turn() === G.userColor;
+  if (!G.flash) G.flash = document.title || base;
+  document.title = mine && document.hidden ? '● Your move · ' + G.flash : G.flash;
+}
+document.addEventListener('visibilitychange', () => { if (ONLINE.flash) document.title = ONLINE.flash; });
+
+function onlineClk() {
+  const st = ONLINE.st;
+  if (!st || !st.tc[0] || ONLINE.phase !== 'game') return null;
+  const c = { w: st.clock.w, b: st.clock.b, running: st.clock.running, paused: false };
+  if (c.running && !st.over) c[c.running] = Math.max(0, c[c.running] - (performance.now() - ONLINE.recvAt));
+  return c;
+}
+function onlineMovable() {
+  const G = ONLINE;
+  if (G.phase !== 'game' || G.over || !G.st || !G.ws || G.ws.readyState !== 1) return null;
+  return G.chess.turn() === G.userColor ? G.userColor : null;
+}
+function onlineUserMove(from, to, promo) {
+  const G = ONLINE;
+  if (onlineMovable() !== G.chess.turn()) return false;
+  const ply = G.chess.history().length;
+  const m = G.chess.move({ from, to, promotion: promo || 'q' });
+  if (!m) return false;
+  G.lastMove = { from: m.from, to: m.to };
+  moveSound(m, G.chess);
+  G.pendingPly = ply;
+  onlineSend({ t: 'move', uci: m.from + m.to + (m.promotion || ''), ply });
+  renderPlay(true);
+  return true;
+}
+
+/* ---- matchmaking ---- */
+function onlineFind() {
+  const G = ONLINE;
+  if (!onlineServer()) return;
+  onlineLeave();
+  G.phase = 'search'; G.searchSince = performance.now(); G.waiting = 0;
+  let ws;
+  try { ws = new WebSocket(oWs('/ws/lobby')); } catch (e) { G.phase = 'lobby'; onlineSetMsg("Couldn't reach the online server.", true); return; }
+  G.lobbyWs = ws;
+  ws.onopen = () => ws.send(JSON.stringify({ t: 'search', token: onlineToken(), name: oName(), tc: TCS[G.tcIdx].slice(0, 2) }));
+  ws.onmessage = ev => {
+    let m; try { m = JSON.parse(ev.data); } catch (e) { return; }
+    if (m.t === 'searching') { G.waiting = m.waiting | 0; if (S.tab === 'online') renderPlay(); }
+    else if (m.t === 'matched') { G.lobbyWs = null; try { ws.close(); } catch (e) { /* ignore */ } onlineConnect(m.code, null); }
+    else if (m.t === 'cancelled') { if (G.lobbyWs === ws) { G.lobbyWs = null; G.phase = 'lobby'; onlineSetMsg('You started searching in another tab.', false); } }
+  };
+  ws.onclose = () => { if (G.lobbyWs === ws) { G.lobbyWs = null; G.phase = 'lobby'; onlineSetMsg('Lost the connection while searching. Try again.', true); } };
+  clearInterval(G.searchTick);
+  G.searchTick = setInterval(() => { if (G.phase !== 'search') { clearInterval(G.searchTick); return; } if (S.tab === 'online') renderOnlineWait(); }, 1000);
+  renderPlay();
+}
+function onlineCancelSearch() {
+  const G = ONLINE;
+  if (G.lobbyWs) { const w = G.lobbyWs; G.lobbyWs = null; try { w.send('{"t":"cancel"}'); w.close(); } catch (e) { /* ignore */ } }
+  if (G.code) onlineLeave();
+  G.phase = 'lobby'; onlineSetMsg('');
+}
+async function onlineCreate() {
+  const G = ONLINE;
+  if (!onlineServer()) return;
+  onlineLeave();
+  G.phase = 'connecting'; renderPlay();
+  try {
+    const r = await fetch(onlineServer() + '/api/new', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tc: TCS[G.tcIdx].slice(0, 2) }) });
+    const j = await r.json();
+    if (!j.code) throw new Error('no code');
+    onlineConnect(j.code, G.colorPref);
+  } catch (e) { G.phase = 'lobby'; onlineSetMsg("Couldn't reach the online server. Try again in a moment.", true); }
+}
+function onlineJoin() {
+  const code = $('#oCode').value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (code.length < 4) { onlineSetMsg('Type the code your friend sent you.', true); return; }
+  onlineConnect(code, null);
+}
+function onlineReview() {
+  const G = ONLINE, st = G.st;
+  if (!st || G.chess.history().length < 2) return;
+  const res = st.over ? st.over.result : '*';
+  const nm = c => (st.players[c] ? st.players[c].name : '?').replace(/"/g, "'").replace(/]/g, ')');
+  const head = `[Event "Sixty-Four online"]\n[Date "${new Date().toISOString().slice(0, 10).replace(/-/g, '.')}"]\n[White "${nm('w')}"]\n[Black "${nm('b')}"]\n[Result "${res}"]\n\n`;
+  let body = '';
+  G.chess.history().forEach((s, i) => { body += (i % 2 === 0 ? `${i / 2 + 1}. ` : '') + s + ' '; });
+  const pgn = head + body + res;
+  $('#pgnIn').value = pgn;
+  $('#exampleNote').textContent = `${nm('w')} vs ${nm('b')}, online`;
+  setTab('review');
+  startReview(pgn, { orientation: G.userColor, highlights: false });
+}
+
+/* ---- drawing the panel ---- */
+function radiusLabel(sec) { if (sec > 30) return 'anywhere'; const r = 100 * Math.pow(2, sec / 4); return r < 1000 ? `${Math.round(r / 10) * 10} km` : `${(Math.round(r / 100) * 100).toLocaleString()} km`; }
+function renderOnlineWait() {
+  const G = ONLINE, el = $('#oWaitBody');
+  if (G.phase === 'search') {
+    const sec = (performance.now() - G.searchSince) / 1000;
+    el.innerHTML = `<span class="sec-label">Finding a player</span><div class="o-radar" aria-hidden="true"></div>` +
+      `<p class="o-big">Looking ${sec > 30 ? 'everywhere' : 'within ' + radiusLabel(sec) + ' of you'}…</p>` +
+      `<p class="tip" style="text-align:center">${esc(TCS[G.tcIdx][2])} · ${G.waiting ? `${G.waiting} other ${G.waiting === 1 ? 'player is' : 'players are'} searching right now` : 'Nobody else is searching yet. Send the site to a friend!'}</p>`;
+  } else if (G.phase === 'connecting') {
+    el.innerHTML = `<div class="status"><span class="spin" aria-hidden="true"></span><span>Connecting…</span></div>`;
+  } else if (G.phase === 'wait' && G.st) {
+    const link = location.origin + location.pathname + '?join=' + G.st.code;
+    el.innerHTML = `<span class="sec-label">Send this code to your friend</span><div class="o-code" id="oCodeBig">${esc(G.st.code)}</div>` +
+      `<div class="btn-row"><button class="btn" type="button" id="oCopyCode">Copy code</button><button class="btn" type="button" id="oCopyLink">Copy invite link</button></div>` +
+      `<div class="status"><span class="spin" aria-hidden="true"></span><span>Waiting for your friend to join… You play ${G.st.you === 'w' ? 'White' : 'Black'}, ${esc(TCS.find(t => t[0] === G.st.tc[0] && t[1] === G.st.tc[1])?.[2] || '')}.</span></div>`;
+    const copy = (txt, b) => { (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => { b.textContent = 'Copied!'; setTimeout(() => { b.textContent = b.id === 'oCopyCode' ? 'Copy code' : 'Copy invite link'; }, 1400); }).catch(() => { b.textContent = txt; }); };
+    $('#oCopyCode').onclick = e => copy(G.st.code, e.currentTarget);
+    $('#oCopyLink').onclick = e => copy(link, e.currentTarget);
+  }
+}
+function renderOnline(anim) {
+  const G = ONLINE, st = G.st, server = !!onlineServer();
+  const inGame = G.phase === 'game' && st;
+  $('#oLobby').hidden = G.phase !== 'lobby';
+  $('#oWait').hidden = !['search', 'connecting', 'wait'].includes(G.phase);
+  $('#oGame').hidden = !inGame;
+  board.orientation = G.orientation;
+  board.set(G.chess, { lastMove: G.lastMove, animate: anim, arrows: [] });
+  setEvalBar(false);
+  const me = { name: inGame ? (st.players[G.userColor] || {}).name || oName() : oName() };
+  let opp = { name: G.phase === 'search' ? 'Searching…' : G.phase === 'wait' ? 'Waiting for a friend…' : 'Opponent' };
+  if (inGame) {
+    const o = st.players[oOpp()];
+    opp = { name: o.name, rating: o.info || '' };
+  }
+  renderPlayers({ [G.userColor]: me, [G.userColor === 'w' ? 'b' : 'w']: opp }, G.orientation, G.chess.fen(), inGame && !G.over ? G.chess.turn() : null);
+  if (inGame) { // online dot next to the opponent's name
+    const o = st.players[oOpp()], strip = G.orientation === G.userColor ? $('#pTop') : $('#pBottom'), nm = strip.querySelector('.pname');
+    if (nm) nm.insertAdjacentHTML('beforeend', `<span class="o-dot${o.online ? '' : ' off'}" title="${o.online ? 'Online' : 'Offline'}"></span>`);
+  }
+  renderClocks();
+
+  if (G.phase === 'lobby') {
+    if (document.activeElement !== $('#oName')) $('#oName').value = G.name;
+    $$('#oTc .chip').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.tc === G.tcIdx)));
+    $$('#oColor button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.c === G.colorPref)));
+    ['#oFind', '#oCreate', '#oJoin'].forEach(id => { $(id).disabled = !server; });
+    const ls = $('#oLobbyStatus');
+    const msg = !server ? 'Online play needs the Sixty-Four server. It is not connected on this copy of the app yet.' : G.msg;
+    ls.hidden = !msg;
+    ls.className = 'status' + (G.msgErr || !server ? ' over' : '');
+    ls.innerHTML = `<span>${esc(msg || '')}</span>`;
+  } else if (!inGame) renderOnlineWait();
+
+  if (inGame) {
+    const c = G.chess, opp = st.players[oOpp()], myTurn = c.turn() === G.userColor;
+    let html, spin = false;
+    if (G.over) html = esc(G.over.text);
+    else if (!G.ws || G.ws.readyState !== 1) { html = 'Reconnecting…'; spin = true; }
+    else if (!opp.online) { html = `${esc(opp.name)} disconnected. If they don't come back within a minute, ${c.history().length < 2 ? 'the game is cancelled' : 'you win'}.`; spin = true; }
+    else if (st.drawOffer === oOpp()) html = `${esc(opp.name)} offers a draw.`;
+    else if (myTurn) html = (c.history().length < 2 ? `You have ${G.userColor === 'w' ? 'White' : 'Black'}. Your move.` : 'Your move.') + (c.in_check() ? ' You are in check!' : '');
+    else html = `Waiting for ${esc(opp.name)}…`;
+    if (G.msg && G.msgErr && !G.over) html += ` <span class="muted">(${esc(G.msg)})</span>`;
+    const se = $('#oStatus');
+    se.className = 'status' + (G.over ? ' over' : '');
+    se.innerHTML = (spin ? '<span class="spin" aria-hidden="true"></span>' : '') + `<span>${html}</span>`;
+    const sans = c.history(), sheet = $('#oMoves');
+    sheet.innerHTML = sheetHTML(sans, sans.length, 'w', 1, null, false);
+    scrollCurrent(sheet);
+    $('#oPlayBtns').hidden = !!G.over; $('#oAfterBtns').hidden = !G.over;
+    const theyOffer = st.drawOffer === oOpp(), iOffer = st.drawOffer === G.userColor;
+    const dr = $('#oDraw');
+    dr.textContent = theyOffer ? 'Accept draw' : iOffer ? 'Draw offered' : 'Offer draw';
+    dr.disabled = iOffer || sans.length < 2;
+    dr.classList.toggle('primary', theyOffer);
+    $('#oDecline').hidden = !theyOffer;
+    $('#oResign').textContent = sans.length < 2 ? 'Abort' : 'Resign';
+    const rm = $('#oRematch'), meR = st.rematch[G.userColor], themR = st.rematch[oOpp()];
+    rm.textContent = themR ? 'Accept rematch' : meR ? 'Rematch sent…' : 'Rematch';
+    rm.disabled = meR || !opp.online;
+    $('#oReview').disabled = sans.length < 2;
+    $('#oCodeNote').textContent = G.over && themR ? `${opp.name} wants a rematch!` : `Game code ${st.code}`;
+  }
+}
+
+function wireOnline() {
+  $('#oTc').innerHTML = TCS.map((t, i) => `<button type="button" class="chip" data-tc="${i}">${esc(t[2])}</button>`).join('');
+  $('#oTc').addEventListener('click', e => { const b = e.target.closest('[data-tc]'); if (!b) return; ONLINE.tcIdx = +b.dataset.tc; store.set('s64.otc', ONLINE.tcIdx); renderPlay(); });
+  $('#oColor').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; ONLINE.colorPref = b.dataset.c; store.set('s64.ocolor', ONLINE.colorPref); renderPlay(); });
+  $('#oName').addEventListener('input', e => { ONLINE.name = e.target.value.slice(0, 20); store.set('s64.oname', ONLINE.name); });
+  $('#oFind').addEventListener('click', onlineFind);
+  $('#oCreate').addEventListener('click', onlineCreate);
+  $('#oJoin').addEventListener('click', onlineJoin);
+  $('#oCode').addEventListener('keydown', e => { if (e.key === 'Enter') onlineJoin(); });
+  $('#oCancel').addEventListener('click', onlineCancelSearch);
+  $('#oDraw').addEventListener('click', () => onlineSend({ t: 'draw' }));
+  $('#oDecline').addEventListener('click', () => onlineSend({ t: 'decline' }));
+  $('#oResign').addEventListener('click', () => {
+    const short = ONLINE.chess.history().length < 2;
+    if (!short && !confirmResign()) return;
+    onlineSend({ t: 'resign' });
+  });
+  $('#oFlip').addEventListener('click', () => { ONLINE.orientation = ONLINE.orientation === 'w' ? 'b' : 'w'; renderPlay(); });
+  $('#oRematch').addEventListener('click', () => onlineSend({ t: 'rematch' }));
+  $('#oReview').addEventListener('click', onlineReview);
+  $('#oLeave').addEventListener('click', () => { onlineLeave(); renderPlay(); });
+}
+// resigning is one click, so ask twice within a few seconds instead of popping up a dialog
+let resignArm = 0;
+function confirmResign() {
+  const b = $('#oResign'), now = performance.now();
+  if (now - resignArm < 3000) { resignArm = 0; return true; }
+  resignArm = now; b.textContent = 'Sure? Click again';
+  setTimeout(() => { if (performance.now() - resignArm >= 2900 && S.tab === 'online') renderPlay(); }, 3000);
+  return false;
+}
+
 /* ============================================================
    Tabs, wiring, boot
    ============================================================ */
@@ -4152,11 +4580,12 @@ function setTab(t) {
   if (S.tab !== t) pauseBot(P);
   if (t !== 'review') stopHL();
   S.tab = t;
-  P = t === 'ladder' ? LADDER : t === 'custom' ? CUSTOM : FREE;
+  P = t === 'ladder' ? LADDER : t === 'custom' ? CUSTOM : t === 'online' ? ONLINE : FREE;
   $$('.tab').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === t)));
   $('#playPanel').hidden = t !== 'play';
   $('#ladderPanel').hidden = t !== 'ladder';
   $('#customPanel').hidden = t !== 'custom';
+  $('#onlinePanel').hidden = t !== 'online';
   $('#reviewPanel').hidden = t !== 'review';
   hideSayPop();
   if (t === 'review') renderReview();
@@ -4180,6 +4609,7 @@ function wire() {
   board = new Board($('#board'), {
     movable: () => {
       if (S.tab === 'custom') return customMovable();
+      if (S.tab === 'online') return onlineMovable();
       if (S.tab !== 'review') {
         if (S.tab === 'ladder' && P.phase !== 'game') return null;
         if (P.vs === 'friend') return (!P.over && P.chess && !(P.clk && P.clk.paused)) ? P.chess.turn() : null;
@@ -4228,6 +4658,7 @@ function wire() {
   $('#cElo').addEventListener('click', e => { const b = e.target.closest('[data-e]'); if (!b) return; CUSTOM.sel.elo = +b.dataset.e; store.set('s64.cElo', CUSTOM.sel.elo); renderPlay(); });
   $('#cColor').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; CUSTOM.sel.color = b.dataset.c; store.set('s64.cColor', CUSTOM.sel.color); renderPlay(); });
   $('#cStart').addEventListener('click', customStart);
+  wireOnline();
   $('#cResume').addEventListener('click', () => { CUSTOM.phase = 'game'; saveCustom(); renderPlay(); customBot(); });
   $('#cUndo').addEventListener('click', customUndo);
   $('#cFlip').addEventListener('click', () => { CUSTOM.orientation = CUSTOM.orientation === 'w' ? 'b' : 'w'; saveCustom(); renderPlay(); });
@@ -4429,7 +4860,8 @@ function start(data) {
   P = FREE; restorePlay(data.play || store.get('s64.play', null));
   restoreCustom();
   if (!FREE.clk && !FREE.chess.history().length) resetClock();
-  setTab(data.tab === 'review' || data.tab === 'ladder' ? data.tab : 'play');
+  const joinCode = onlineBoot();
+  setTab(joinCode ? 'online' : data.tab === 'review' || data.tab === 'ladder' ? data.tab : 'play');
   engine.boot().catch(() => {});
 }
 

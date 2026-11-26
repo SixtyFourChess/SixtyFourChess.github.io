@@ -10,10 +10,16 @@ No install, no account, no server. Open the page and play.
 - **Beat the NPCs.** Twelve characters with their own personalities, from Pip (300) to OMEGA, the AI Chess Master God (3200+). Beat each one to unlock the next.
 - **Friend on the same device.** Two players, one screen, with names, an auto-turning board and a chess clock (1 min up to 30 min, with increments).
 - **Animations** (Full / Light / Off, top bar): checkmate gun finisher, promotion power-up, castling shield, en passant ghost, fork lines, queen-sacrifice slow-mo, king tipping over on resign, clock shattering on time-out, frozen board on draws, NPC boss intros and victory cards, and an online VS card. Light keeps only the quick effects; online Bullet always plays as Light.
-- **Replay**: in Game review, press 🎬 Replay to watch the game play itself out move by move on a plain board (pause, restart, 1× / 1.5× / 2× speed).
+- **Replay**: in Game review, press 🎬 Replay to watch the game play itself out move by move. The camera stays still for the opening, then glides in to follow each move and pulls back at the end (pause, restart, 1× / 1.5× / 2× speed).
 - **Secret army** (Custom mode): arrange your pieces in secret, then play against an army of boxes and remember which box is which.
 - **Fischer random (Chess960)**: in Custom mode and Online. The back pieces start shuffled; castle by moving your king onto your rook.
 - **Online**: find a player near you, or make a code and send it to a friend. Runs on a small Cloudflare Worker in `online/` (see `online/README.md`).
+  - **Premoves**: on your opponent's turn, drag a piece to queue your next move; it plays the instant it's legal. Right-click to cancel. Also works against the computer and the NPCs.
+  - **Daily games**: a fresh day for every move. Leave and come back; your daily games are listed in the Online lobby with whose move it is.
+  - **Head-to-head and leaderboard**: every finished game counts. See your record against each friend (and who's on a streak) and a rating leaderboard that starts everyone at 1200.
+  - **My games**: finished online games are saved automatically. Open one in Review, or share a link that opens it for anyone.
+  - **Watch live**: see who's playing right now and watch (and chat) without playing, or watch by game code.
+- **Puzzles from your mistakes**: every blunder, mistake and missed win of yours in a reviewed game becomes a "find the move you missed" puzzle (Game review tab).
 - **Custom mode: Chess, but...** Broken-rules chess against Stockfish or a friend, starting with **the Area 51 Army**: your king plus one of every alien (a Clone, the Maw, the Watcher, the UFO and the Egg that hatches into the Overlord) against a full army.
 - **Game review.** Paste any PGN, for example from chess.com or lichess. You get accuracy, a rating estimate, move labels (Brilliant to Blunder), an eval graph, retry-the-mistake and "show engine line".
 - **Highlights with Coach Ozzie.** A narrated replay of the key moments, with optional voice.

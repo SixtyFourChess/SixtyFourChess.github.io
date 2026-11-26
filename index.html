@@ -139,6 +139,25 @@ button { cursor: pointer; }
 .hl.last { background: rgba(226, 170, 70, .42); }
 .hl.last.tint { background: color-mix(in srgb, var(--hc) 46%, transparent); }
 .hl.sel { background: rgba(226, 170, 70, .62); }
+.hl.pre { background: rgba(70, 130, 235, .5); }
+.status.good { color: #3f8f2a; font-weight: 600; }
+.o-hubbtns { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.o-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.o-list li { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px; background: var(--sunk); font-size: 13.5px; }
+.o-list li .grow { flex: 1; min-width: 0; }
+.o-list li .grow > * { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.o-list li .sub { font-size: 12px; color: var(--muted); }
+.o-list li.me { outline: 2px solid var(--accent, #e2aa46); }
+.o-list li .rk { width: 1.6em; text-align: right; font-weight: 700; color: var(--muted); }
+.o-list li .num { font: 600 13px var(--font-mono); }
+.o-list li .btn { padding: 4px 10px; min-height: 0; height: 30px; }
+.o-list li.turn { box-shadow: inset 3px 0 0 #57a336; }
+.o-win { color: #57a336; font-weight: 700; } .o-loss { color: #d9534f; font-weight: 700; } .o-draw { color: var(--muted); font-weight: 700; }
+.o-hub-head { display: flex; flex-direction: column; gap: 8px; }
+.o-h2h { margin: 0; font-size: 13px; color: var(--muted); }
+.o-h2h b { color: var(--text, inherit); }
+.cm.watch b::after { content: " 👀"; }
+.hl.presel { background: rgba(70, 130, 235, .38); }
 .hl.dot::after { content: ""; position: absolute; left: 50%; top: 50%; width: 30%; height: 30%; transform: translate(-50%, -50%); border-radius: 50%; background: var(--dot); }
 .hl.cap { background: radial-gradient(circle, transparent 60%, var(--dot) 61%); }
 .hl.check { background: radial-gradient(circle, rgba(225, 40, 30, .9) 0%, rgba(225, 40, 30, .55) 38%, rgba(225, 40, 30, 0) 72%); }
@@ -420,6 +439,7 @@ textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 0; }
 .rp-frame { position: relative; height: 100vh; height: 100dvh; max-width: 100vw; aspect-ratio: 9 / 16; display: flex; flex-direction: column; }
 @media (max-aspect-ratio: 9/17) { .rp-frame { height: auto; width: 100vw; } }
 .rp-scene { position: relative; flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.rp-cam { position: relative; width: 100%; transform-origin: 0 0; will-change: transform; }
 .rp-board { position: relative; width: 100%; aspect-ratio: 1 / 1; background: repeating-conic-gradient(#8f9197 0 25%, #ececec 0 50%) 0 0 / 25% 25%; }
 .rp-board > div { position: absolute; inset: 0; pointer-events: none; }
 .rp-board > .rp-hl { z-index: 0; } .rp-board > .rp-pcs { z-index: 1; }
@@ -704,12 +724,25 @@ textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 0; }
             <div class="o-join"><input id="oCode" type="text" autocomplete="off" spellcheck="false" maxlength="6" placeholder="ABC123" aria-label="Game code"><button class="btn" id="oJoin" type="button">Join</button></div>
           </div>
           <div class="status" id="oLobbyStatus" role="status" hidden></div>
+          <div class="block" id="oDailyBox" hidden><span class="sec-label">Your daily games</span><ul class="o-list" id="oDailyList"></ul></div>
+          <div class="block">
+            <span class="sec-label">Friends</span>
+            <div class="o-hubbtns" id="oHubBtns"><button class="btn" type="button" data-hub="board">🏆 Leaderboard</button><button class="btn" type="button" data-hub="rivals">⚔️ Head-to-head</button><button class="btn" type="button" data-hub="games">📜 My games</button><button class="btn" type="button" data-hub="watch">👀 Watch live</button></div>
+          </div>
+        </div>
+        <div class="panel-inner" id="oHub" hidden>
+          <div class="o-hub-head">
+            <button class="btn" id="oHubBack" type="button">← Back</button>
+            <div class="seg" id="oHubSeg"><button type="button" data-hub="board">Leaderboard</button><button type="button" data-hub="rivals">Head-to-head</button><button type="button" data-hub="games">My games</button><button type="button" data-hub="watch">Watch</button></div>
+          </div>
+          <div class="block" id="oHubBody"></div>
         </div>
         <div class="panel-inner" id="oWait" hidden>
           <div class="block" id="oWaitBody"></div>
           <button class="btn wide" id="oCancel" type="button">Cancel</button>
         </div>
         <div class="panel-inner" id="oGame" hidden>
+          <p class="o-h2h" id="oH2H" hidden></p>
           <div class="status" id="oStatus" role="status"></div>
           <div class="sheet" id="oMoves" data-empty="Moves will appear here."></div>
           <div class="btn-row" id="oPlayBtns">
@@ -717,6 +750,12 @@ textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 0; }
             <button class="btn" id="oDecline" type="button" hidden>Decline</button>
             <button class="btn" id="oFlip" type="button">Flip</button>
             <button class="btn" id="oResign" type="button">Resign</button>
+            <button class="btn" id="oToLobby" type="button" hidden title="Daily game: leave it here and come back later">Lobby</button>
+          </div>
+          <div class="btn-row" id="oWatchBtns" hidden>
+            <button class="btn" id="oWFlip" type="button">Flip</button>
+            <button class="btn" id="oWReview" type="button">Review game</button>
+            <button class="btn" id="oWStop" type="button">Stop watching</button>
           </div>
           <div class="btn-row" id="oAfterBtns" hidden>
             <button class="btn primary" id="oRematch" type="button">Rematch</button>
@@ -759,6 +798,17 @@ textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 0; }
             <span class="sec-label">Recent reviews</span>
             <ul class="recent" id="recentList"></ul>
           </div>
+          <div class="block" id="pzBox">
+            <span class="sec-label">Puzzles from your mistakes</span>
+            <p class="tip" id="pzInfo"></p>
+            <button class="btn primary wide" id="pzStart" type="button" data-act="pzStart">Start puzzles</button>
+          </div>
+        </div>
+
+        <div class="panel-inner" id="rvPuzzle" hidden>
+          <div class="block"><span class="sec-label" id="pzHead">Puzzle</span><h2 id="pzTitle"></h2><p class="tip" id="pzFrom"></p></div>
+          <div class="status" id="pzStatus" role="status"></div>
+          <div class="btn-row" id="pzBtns"></div>
         </div>
 
         <div class="panel-inner" id="rvRun" hidden>
@@ -773,7 +823,7 @@ textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 0; }
           </div>
           <div class="sheet" id="rvMoves"></div>
           <button class="btn wide" id="hlBtn" type="button" data-act="highlights">Watch highlights with Coach Ozzie</button>
-          <button class="btn wide" type="button" data-act="replay">🎬 Replay like an edit</button>
+          <button class="btn wide" type="button" data-act="replay">🎬 Replay</button>
           <button class="btn wide" type="button" data-act="newReview">Review another game</button>
         </div>
       </div>
@@ -1526,6 +1576,7 @@ class Board {
     this.el = el; this.opts = opts;
     this.orientation = 'w'; this.chess = null; this.lastMove = null; this.selected = null;
     this.arrows = []; this.badge = null; this.drag = null; this.pending = null; this.promoOpen = false;
+    this.premove = null; this.preSel = null; // a move queued for when it's your turn again
     el.innerHTML = '<div class="sqs"></div><div class="hls"></div><div class="vic"></div><div class="pcs"></div><svg class="arrows" viewBox="0 0 800 800" aria-hidden="true"></svg><div class="badges"></div><div class="fx"></div><div class="promo" hidden></div>';
     this.sqs = el.querySelector('.sqs'); this.hls = el.querySelector('.hls'); this.pcs = el.querySelector('.pcs');
     this.svg = el.querySelector('.arrows'); this.badges = el.querySelector('.badges'); this.promo = el.querySelector('.promo');
@@ -1539,6 +1590,7 @@ class Board {
     el.addEventListener('pointermove', e => this.moveDrag(e));
     el.addEventListener('pointerup', e => this.up(e));
     el.addEventListener('pointercancel', () => this.cancelDrag());
+    el.addEventListener('contextmenu', e => { if (this.premove || this.preSel) { e.preventDefault(); this.clearPremove(); } });
     try { new ResizeObserver(() => el.style.setProperty('--bsz', el.clientWidth + 'px')).observe(el); } catch (e) { /* old browser */ }
   }
   xy(sq) {
@@ -1560,6 +1612,7 @@ class Board {
     const prevMap = this.pieceMap, dragged = this.skipAnim;
     this.chess = chess; this.lastMove = o.lastMove || null; this.arrows = o.arrows || []; this.badge = o.badge || null;
     this.selected = null; this.closePromo();
+    if ((this.premove || this.preSel) && !this.opts.movable() && !(this.opts.premovable && this.opts.premovable())) { this.premove = null; this.preSel = null; }
     const slid = !!o.animate && !this.skipAnim;
     this.renderCoords(); this.renderPieces(slid); this.skipAnim = false;
     this.renderHL(); this.renderArrows(); this.renderBadge();
@@ -2129,6 +2182,8 @@ class Board {
         if (p && p.type === 'k' && p.color === turn) add(String.fromCharCode(97 + f) + (8 - row), 'check');
       }
     }
+    if (this.premove) { add(this.premove.from, 'pre'); add(this.premove.to, 'pre'); }
+    if (this.preSel) add(this.preSel, 'presel');
     if (this.selected) {
       add(this.selected, 'sel');
       if (!this.opts.allowStd || this.opts.allowStd(this.selected)) for (const m of this.chess.moves({ square: this.selected, verbose: true })) add(m.to, (m.captured ? 'cap' : 'dot'));
@@ -2156,10 +2211,29 @@ class Board {
   }
   select(sq) { this.selected = sq; this.renderHL(); }
   isTarget(from, to) { return ((!this.opts.allowStd || this.opts.allowStd(from)) && this.chess.moves({ square: from, verbose: true }).some(m => m.to === to)) || (this.opts.extraMoves ? this.opts.extraMoves(from).some(m => m.to === to) : false); }
+  // premoves: while it's not your turn you can still pick up your piece and drop it; it plays as soon as it's legal
+  setPremove(from, to) { this.premove = { from, to }; this.preSel = null; this.renderHL(); }
+  clearPremove() { if (!this.premove && !this.preSel) return; this.premove = null; this.preSel = null; this.renderHL(); }
+  preDown(e) {
+    const pc = this.opts.premovable && this.opts.premovable();
+    if (!pc) return;
+    const sq = this.sqFromEvent(e);
+    if (!sq) return;
+    const p = this.chess.get(sq), own = p && p.color === pc;
+    if (this.preSel && sq !== this.preSel && !own) { e.preventDefault(); this.setPremove(this.preSel, sq); return; }
+    if (own) {
+      e.preventDefault();
+      const was = this.preSel === sq;
+      this.premove = null; this.preSel = sq; this.renderHL();
+      const img = this.pcs.querySelector(`[data-sq="${sq}"]`);
+      this.drag = { from: sq, el: img, sx: e.clientX, sy: e.clientY, active: false, wasSelected: was, pre: true };
+      try { this.el.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+    } else this.clearPremove();
+  }
   down(e) {
     if (!this.chess || this.promoOpen || e.button > 0 || performance.now() < (this.fxUntil || 0)) return;
     const color = this.opts.movable();
-    if (!color) return;
+    if (!color) { this.preDown(e); return; }
     const sq = this.sqFromEvent(e);
     if (!sq) return;
     if (this.selected && this.selected !== sq && this.isTarget(this.selected, sq)) { e.preventDefault(); this.tryMove(this.selected, sq, false); return; }
@@ -2190,6 +2264,14 @@ class Board {
     const d = this.drag;
     if (!d) return;
     this.drag = null;
+    if (d.pre) {
+      const to = d.active ? this.sqFromEvent(e) : null;
+      if (to && to !== d.from) this.setPremove(d.from, to);
+      else if (!d.active && d.wasSelected) this.clearPremove();
+      if (d.active) this.renderPieces(false);
+      this.flushPending();
+      return;
+    }
     if (d.active) {
       const to = this.sqFromEvent(e);
       if (to && to !== d.from && this.isTarget(d.from, to)) { this.skipAnim = true; this.tryMove(d.from, to, true); }
@@ -2508,6 +2590,7 @@ function newGame() {
   P.orientation = P.vs === 'friend' ? 'w' : P.userColor;
   if (P === FREE) resetClock();
   P.over = null; P.thinking = false; P.hint = null; P.hintBusy = false; P.lastMove = null;
+  board.premove = null; board.preSel = null;
   savePlay(); renderPlay();
   if (P.chess.turn() !== P.userColor) botMove();
 }
@@ -2575,6 +2658,7 @@ async function botMove() {
   checkOver(true);
   if (P.over) gameEnded();
   savePlay(); renderPlay(true);
+  if (!P.over && board.premove && P.chess.turn() === P.userColor) runPremove(P.chess, P.userColor, onPlayMove);
 }
 function undoPlay() {
   if (!P.chess.history().length) return;
@@ -2582,6 +2666,7 @@ function undoPlay() {
   if (P.job) P.job.cancel();
   if (P.hintJob) P.hintJob.cancel();
   P.thinking = false; P.over = null; P.hint = null; P.hintBusy = false;
+  board.premove = null; board.preSel = null;
   P.chess.undo();
   if (P.vs !== 'friend' && P.chess.turn() !== P.userColor && P.chess.history().length) P.chess.undo();
   if (P.vs === 'friend' && P.autoFlip) P.orientation = P.chess.turn();
@@ -2943,6 +3028,7 @@ function startReview(text, opts = {}) {
   R.autoHL = !!opts.highlights;
   R.game = g; R.ply = 0; R.explore = null; R.retry = null;
   R.orientation = opts.orientation || myColor(g) || 'w';
+  R.mine = opts.orientation || myColor(g) || null; // whose mistakes become puzzles (both sides if we can't tell)
   if (opts.cached && applyCached(g, opts.cached)) { finishAnalysis(false); return; }
   R.phase = 'analyzing';
   renderReview();
@@ -2987,6 +3073,7 @@ function finishAnalysis(save) {
   summarize(g);
   R.phase = 'review'; R.ply = 0;
   if (save) saveRecent(g);
+  try { harvestPuzzles(g, R.mine); } catch (e) { /* puzzles are a bonus */ }
   renderReview();
   if (R.autoHL) { R.autoHL = false; startHighlights(); }
 }
@@ -3014,6 +3101,132 @@ function saveRecent(g) {
   });
   while (list.length > 6) list.pop();
   store.set('s64.recent', list);
+}
+
+/* ============================================================
+   PUZZLES: every blunder, mistake and miss from your reviewed games becomes "find the move you missed"
+   ============================================================ */
+const PZ = { order: [], idx: 0, cur: null, state: 'try', msg: '', hint: false, showFen: null, lastMove: null, arrows: [] };
+const pzAll = () => store.get('s64.puzzles', []) || [];
+const pzEval = l => l.mate != null ? (l.mate > 0 ? 100000 - l.mate : -100000 - l.mate) : l.cp;
+function harvestPuzzles(g, mine) {
+  const list = pzAll(), have = new Set(list.map(p => p.id)), id0 = gameId(g), h = g.headers;
+  let added = 0;
+  for (let i = 0; i < g.moves.length; i++) {
+    const mv = g.moves[i], c = g.cls && g.cls[i];
+    if (!c || !['blunder', 'mistake', 'miss'].includes(c.cls)) continue;
+    if (mine && mv.color !== mine) continue;
+    const L = (g.positions[i] && g.positions[i].lines) || [];
+    if (!L[0] || !L[0].pv.length || L[0].pv[0] === mv.uci) continue;
+    const id = id0 + ':' + i;
+    if (have.has(id)) continue;
+    // a second move that's just as good also counts as solved
+    const alt = L[1] && L[1].pv.length && Math.abs(pzEval(L[0]) - pzEval(L[1])) <= 25 ? [L[1].pv[0]] : [];
+    list.unshift({ id, fen: g.positions[i].fen, best: L[0].pv[0], alt, line: L[0].pv.slice(0, 5), played: mv.uci, playedSan: mv.san, cls: c.cls, white: h.White || 'White', black: h.Black || 'Black', at: Date.now(), solved: 0, tries: 0 });
+    added++;
+  }
+  store.set('s64.puzzles', list.slice(0, 300));
+  return added;
+}
+// the first time: turn the games you've already reviewed into puzzles too
+function pzBootstrap() {
+  if (store.get('s64.pzBoot', false)) return;
+  store.set('s64.pzBoot', true);
+  for (const r of store.get('s64.recent', []) || []) {
+    try {
+      const g = parseGame(r.pgn);
+      computeBook(g);
+      if (!applyCached(g, r.lines)) continue;
+      g.cls = [];
+      for (let i = 0; i < g.moves.length; i++) g.cls[i] = classifyMove(g, i);
+      harvestPuzzles(g, myColor(g) || r.orientation || null);
+    } catch (e) { /* skip that one */ }
+  }
+}
+function renderPuzzleBox() {
+  pzBootstrap();
+  const all = pzAll(), open = all.filter(p => !p.solved).length, st = store.get('s64.pzStats', { solved: 0, best: 0 });
+  $('#pzInfo').innerHTML = all.length ? `<b>${open}</b> to solve${all.length - open ? `, ${all.length - open} solved` : ''}. Best streak: ${st.best || 0}.` : 'Review a game and every blunder, mistake or missed win you made turns into a puzzle here.';
+  $('#pzStart').disabled = !all.length;
+  $('#pzStart').textContent = open ? 'Start puzzles' : all.length ? 'Practice again' : 'Start puzzles';
+}
+function startPuzzles() {
+  pzBootstrap();
+  const all = pzAll();
+  if (!all.length) return;
+  const open = all.filter(p => !p.solved), done = all.filter(p => p.solved).sort(() => Math.random() - 0.5);
+  PZ.order = open.concat(done).map(p => p.id);
+  PZ.idx = 0; PZ.streak = 0;
+  loadPuzzle();
+}
+function loadPuzzle() {
+  const p = pzAll().find(x => x.id === PZ.order[PZ.idx]);
+  if (!p) { R.phase = 'input'; renderReview(); return; }
+  stopHL(); cancelReviewJobs();
+  PZ.cur = p; PZ.state = 'try'; PZ.msg = ''; PZ.hint = false; PZ.showFen = null; PZ.lastMove = null; PZ.arrows = [];
+  R.phase = 'puzzle';
+  renderReview();
+}
+function pzSave(p) { const all = pzAll(), i = all.findIndex(x => x.id === p.id); if (i >= 0) { all[i] = p; store.set('s64.puzzles', all); } }
+function onPuzzleMove(from, to, promo) {
+  const p = PZ.cur;
+  if (!p || PZ.state !== 'try') return false;
+  const c = mkChess(p.fen), m = c.move({ from, to, promotion: promo || 'q' });
+  if (!m) return false;
+  const u = toUci(m);
+  moveSound(m, c);
+  PZ.showFen = c.fen(); PZ.lastMove = { from: m.from, to: m.to }; PZ.arrows = [];
+  const st = store.get('s64.pzStats', { solved: 0, best: 0 });
+  if (u === p.best || p.alt.includes(u) || c.in_checkmate()) {
+    PZ.state = 'right'; PZ.streak = (PZ.streak || 0) + 1;
+    p.solved = (p.solved || 0) + 1; pzSave(p);
+    st.solved = (st.solved || 0) + 1; st.best = Math.max(st.best || 0, PZ.streak); store.set('s64.pzStats', st);
+    PZ.msg = `Correct! ${PZ.streak > 1 ? `${PZ.streak} in a row.` : ''}`;
+    renderReview(true);
+    // show the opponent's best reply so you see why it works
+    const reply = p.line[1];
+    if (reply) setTimeout(() => {
+      if (PZ.cur !== p || PZ.state !== 'right') return;
+      const m2 = c.move(uciObj(reply));
+      if (m2) { moveSound(m2, c); PZ.showFen = c.fen(); PZ.lastMove = { from: m2.from, to: m2.to }; renderReview(true); }
+    }, 700);
+  } else {
+    PZ.state = 'wrong'; PZ.streak = 0; p.tries = (p.tries || 0) + 1; pzSave(p);
+    PZ.msg = u === p.played ? "That's the move you played in the game. There's something better." : 'Not the best move. Try again.';
+    renderReview(true);
+    setTimeout(() => { if (PZ.cur === p && PZ.state === 'wrong') { PZ.state = 'try'; PZ.showFen = null; PZ.lastMove = null; renderReview(false); } }, 1100);
+  }
+  return true;
+}
+function puzzleAnswer() {
+  const p = PZ.cur;
+  if (!p) return;
+  PZ.state = 'shown'; PZ.streak = 0; PZ.showFen = null; PZ.lastMove = null;
+  PZ.arrows = [{ ...uciObj(p.best), kind: 'best' }];
+  PZ.msg = `The best move was ${sanOf(p.fen, p.best)}. In the game you played ${p.playedSan}.`;
+  renderReview(false);
+}
+function nextPuzzle() { PZ.idx = (PZ.idx + 1) % Math.max(1, PZ.order.length); loadPuzzle(); }
+function renderPuzzle(anim) {
+  const p = PZ.cur;
+  if (!p) return;
+  const turn = fenTurn(p.fen), chess = mkChess(PZ.showFen || p.fen);
+  board.orientation = turn;
+  board.set(chess, { lastMove: PZ.lastMove, animate: anim, arrows: PZ.arrows });
+  setEvalBar(false);
+  renderPlayers({ w: { name: p.white }, b: { name: p.black } }, turn, chess.fen(), PZ.state === 'try' ? turn : null);
+  $('#pzHead').textContent = `Puzzle ${PZ.idx + 1} of ${PZ.order.length}`;
+  $('#pzTitle').textContent = `Find the best move for ${turn === 'w' ? 'White' : 'Black'}`;
+  const lbl = { blunder: 'a blunder', mistake: 'a mistake', miss: 'a missed win' }[p.cls] || 'a mistake';
+  $('#pzFrom').textContent = `From ${p.white} vs ${p.black}. You played ${p.playedSan} here, ${lbl}.`;
+  let msg = PZ.msg;
+  if (PZ.state === 'try' && PZ.hint) { const pc = mkChess(p.fen).get(p.best.slice(0, 2)); msg = `Hint: move your ${pc ? NAME[pc.type] : 'piece'}.`; }
+  if (PZ.state === 'try' && !msg) msg = 'Your move.';
+  const se = $('#pzStatus');
+  se.className = 'status' + (PZ.state === 'right' ? ' good' : PZ.state === 'wrong' ? ' over' : '');
+  se.innerHTML = `<span>${esc(msg)}</span>`;
+  const b = (act, txt, pri) => `<button class="btn${pri ? ' primary' : ''}" type="button" data-act="${act}">${txt}</button>`;
+  $('#pzBtns').innerHTML = PZ.state === 'right' || PZ.state === 'shown' ? b('pzNext', 'Next puzzle', true) + b('pzExit', 'Done') : b('pzHint', 'Hint') + b('pzAnswer', 'Show answer') + b('pzNext', 'Skip') + b('pzExit', 'Done');
 }
 
 /* ============================================================
@@ -3179,17 +3392,19 @@ function reviewView() {
   return { fen: pos.fen, lastMove, arrows, badge: b, evalPos: pos, cursorPly: R.ply };
 }
 function renderReview(anim) {
-  const inputPhase = R.phase === 'input';
+  const inputPhase = R.phase === 'input', puzzle = R.phase === 'puzzle';
   $('#rvInput').hidden = !inputPhase;
-  $('#rvRun').hidden = inputPhase;
+  $('#rvRun').hidden = inputPhase || puzzle;
+  $('#rvPuzzle').hidden = !puzzle;
   if (S.tab !== 'review') return;
+  if (puzzle) { renderPuzzle(anim); return; }
   if (inputPhase || !R.game) {
     board.orientation = 'w';
     const c = new Chess();
     board.set(c, {});
     setEvalBar(false);
     renderPlayers({ w: { name: 'White' }, b: { name: 'Black' } }, 'w', c.fen(), null);
-    renderDepth(); renderRecent();
+    renderDepth(); renderRecent(); renderPuzzleBox();
     return;
   }
   const g = R.game, v = reviewView();
@@ -3436,6 +3651,7 @@ function clockTick() {
 }
 function fmtClock(ms) {
   if (ms <= 0) return '0:00';
+  if (ms >= 2 * 3600_000) { const m = Math.floor(ms / 60000); return `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, '0')}m`; } // daily games
   if (ms < 10000) return '0:0' + (ms / 1000).toFixed(1);
   const t = Math.ceil(ms / 1000), m = Math.floor(t / 60), sec = t % 60;
   return m >= 60 ? `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}:${String(sec).padStart(2, '0')}` : `${m}:${String(sec).padStart(2, '0')}`;
@@ -4734,7 +4950,8 @@ function renderCustom(anim) {
 // (You can also test one without editing by opening the site with ?server=https://... once.)
 const ONLINE_SERVER_DEFAULT = 'https://sixtyfour-online.crossguardstudios.workers.dev';
 // online time controls: [seconds, increment, name, detail]
-const OTCS = TCS;
+const OTCS = TCS.concat([[86400, 0, 'Daily', '1 day a move']]);
+const isDailyTc = tc => !!tc && tc[0] === 86400;
 const otcName = tc => { const t = OTCS.find(t => t[0] === tc[0] && t[1] === tc[1]); return t ? (t[3] ? `${t[2]} (${t[3]})` : t[2]) : ''; };
 const ONLINE = {
   mode: 'online', phase: 'lobby', chess: null, userColor: 'w', orientation: 'w', over: null, lastMove: null, gen: 0,
@@ -4758,7 +4975,9 @@ function onlineBoot() {
   const srv = q.get('server');
   if (srv && /^https?:\/\/[^\s]+$/.test(srv)) store.set('s64.server', srv);
   let join = (q.get('join') || (location.hash.match(/join=([A-Za-z0-9]+)/) || [])[1] || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
-  if (srv || join) { try { history.replaceState(null, '', location.pathname); } catch (e) { /* ignore */ } }
+  const shared = (q.get('game') || '').toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 16);
+  if (/^[A-Z0-9]{4,8}-\d+$/.test(shared)) ONLINE.shared = shared;
+  if (srv || join || shared) { try { history.replaceState(null, '', location.pathname); } catch (e) { /* ignore */ } }
   ONLINE.chess = new Chess();
   const saved = store.get('s64.ogame', null);
   if (join && onlineServer()) { onlineConnect(join, null); return join; }
@@ -4769,13 +4988,14 @@ function onlineBoot() {
 function onlineSetMsg(m, err) { ONLINE.msg = m || ''; ONLINE.msgErr = !!err; if (S.tab === 'online') renderPlay(); }
 
 /* ---- connecting to a game ---- */
-function onlineConnect(code, pref, quiet) {
+function onlineConnect(code, pref, quiet, watch) {
   const G = ONLINE;
   onlineClose();
   G.code = code; G.st = null; G.over = null; G.chess = new Chess(); G.lastMove = null; G.retry = 0; G.chat = []; G.unread = 0;
   G.phase = quiet ? 'lobby' : 'connecting';
-  G.quiet = !!quiet;
-  store.set('s64.ogame', { code });
+  G.quiet = !!quiet; G.watch = !!watch; G.watching = false; G.h2h = null;
+  board.premove = null; board.preSel = null;
+  if (!watch) store.set('s64.ogame', { code });
   onlineOpen(pref);
   if (S.tab === 'online') renderPlay();
 }
@@ -4783,6 +5003,7 @@ function onlineOpen(pref) {
   const G = ONLINE, code = G.code;
   const q = new URLSearchParams({ token: onlineToken(), name: oName() });
   if (pref) q.set('pref', pref);
+  if (G.watch) q.set('watch', '1');
   let ws;
   try { ws = new WebSocket(oWs('/ws/game/' + code + '?' + q)); } catch (e) { onlineSetMsg("Couldn't reach the online server.", true); G.phase = 'lobby'; return; }
   G.ws = ws;
@@ -4791,14 +5012,14 @@ function onlineOpen(pref) {
     let m; try { m = JSON.parse(ev.data); } catch (e) { return; }
     if (m.t === 'state') { G.retry = 0; onlineState(m); }
     else if (m.t === 'error') {
-      G.ws = null; store.set('s64.ogame', null);
+      G.ws = null; if (!G.watch) store.set('s64.ogame', null);
       G.phase = 'lobby'; G.code = null; G.st = null;
       if (!G.quiet) onlineSetMsg(m.msg, true); else if (S.tab === 'online') renderPlay();
     } else if (m.t === 'reject') { G.pendingPly = null; onlineSetMsg(m.msg, true); }
     else if (m.t === 'chatlog') { G.chat = Array.isArray(m.chat) ? m.chat : []; renderChat(); }
     else if (m.t === 'chat' && m.msg) {
       G.chat.push(m.msg); if (G.chat.length > 60) G.chat.shift();
-      const mine = G.st && G.st.players[G.userColor] && m.msg.id === G.st.players[G.userColor].id;
+      const mine = m.msg.id === myChatId();
       if (!mine && !onlineMuted()) { if (S.tab !== 'online') G.unread++; if (document.hidden && G.flash) document.title = '💬 ' + G.flash; }
       renderChat();
     }
@@ -4824,7 +5045,8 @@ function onlineClose() {
 function onlineLeave() {
   const G = ONLINE;
   onlineClose();
-  G.code = null; G.st = null; G.phase = 'lobby'; G.over = null; G.lastMove = null; G.chess = new Chess(); G.chat = []; G.unread = 0; renderChat();
+  G.code = null; G.st = null; G.phase = 'lobby'; G.over = null; G.lastMove = null; G.chess = new Chess(); G.chat = []; G.unread = 0;
+  G.watch = false; G.watching = false; G.h2h = null; renderChat();
   store.set('s64.ogame', null);
   onlineSetMsg('');
 }
@@ -4833,6 +5055,12 @@ function onlineSend(o) { const w = ONLINE.ws; if (w && w.readyState === 1) { w.s
 function onlineOverText(st) {
   const o = st.over, you = st.you, nm = c => c === you ? 'You' : (st.players[c] ? st.players[c].name : 'Opponent');
   if (!o) return null;
+  if (!you) { // watching: say it plainly
+    const win = o.result === '1-0' ? 'w' : o.result === '0-1' ? 'b' : null, W = win ? nm(win) : '';
+    const why = { checkmate: 'by checkmate', resign: 'by resignation', time: 'on time', abandoned: '(opponent left)' }[o.reason];
+    if (o.reason === 'aborted') return 'Game aborted.';
+    return win ? `${W} wins ${why || ''}.`.replace(' .', '.') : 'The game is a draw.';
+  }
   const win = o.result === '1-0' ? 'w' : o.result === '0-1' ? 'b' : null;
   const youWin = win === you;
   switch (o.reason) {
@@ -4853,7 +5081,8 @@ function onlineOverText(st) {
 function onlineState(st) {
   const G = ONLINE, prev = G.st;
   G.st = st; G.recvAt = performance.now();
-  G.userColor = st.you;
+  G.watching = !!st.watching;
+  G.userColor = st.you || (prev && prev.code === st.code ? G.userColor : 'w');
   const fresh = !prev || prev.round !== st.round || prev.code !== st.code;
   const local = G.chess.history({ verbose: true }).map(toUci);
   const same = local.every((u, i) => i >= st.moves.length || st.moves[i] === u);
@@ -4864,7 +5093,7 @@ function onlineState(st) {
   if (fresh || (local.length > st.moves.length && !pending) || !same) {
     G.chess = st.startFen ? mkChess(st.startFen) : new Chess();
     for (const u of st.moves) G.chess.move(uciObj(u));
-    if (fresh) G.orientation = st.you;
+    if (fresh) G.orientation = st.you || 'w';
     G.lastMove = lastMoveOf(G.chess);
   } else if (st.moves.length > local.length) {
     for (const u of st.moves.slice(local.length)) last = G.chess.move(uciObj(u));
@@ -4887,17 +5116,19 @@ function onlineState(st) {
     if (how) setTimeout(() => { if (S.tab === 'online') endFx(how, lz || (G.chess ? G.chess.turn() : 'w')); }, 60);
   }
   G.phase = both ? 'game' : 'wait';
-  if (!G.over && both) store.set('s64.ogame', { code: st.code });
+  if (!G.over && both && !G.watching) store.set('s64.ogame', { code: st.code });
+  if (both && !G.watching) { dailyRemember(st); onlineH2H(fresh || (G.over && !wasOver)); }
   if (G.msg && !G.msgErr) G.msg = '';
   if (G.msgErr && G.phase === 'game') G.msg = '';
   onlineFlash();
   if (S.tab === 'online') renderPlay(anim);
-  if (startNow && S.tab === 'online') setTimeout(() => vsCard(st), 80);
+  if (startNow && S.tab === 'online' && !G.watching) setTimeout(() => vsCard(st), 80);
+  if (last && !G.over && !G.watching && board.premove && S.tab === 'online' && G.chess.turn() === G.userColor) runPremove(G.chess, G.userColor, onlineUserMove);
 }
 // tell the player it's their move if they're on another browser tab
 function onlineFlash() {
   const G = ONLINE, base = 'Sixty-Four';
-  const mine = G.phase === 'game' && !G.over && G.chess.turn() === G.userColor;
+  const mine = G.phase === 'game' && !G.over && !G.watching && G.chess.turn() === G.userColor;
   if (!G.flash) G.flash = document.title || base;
   document.title = mine && document.hidden ? '● Your move · ' + G.flash : G.flash;
 }
@@ -4912,7 +5143,7 @@ function onlineClk() {
 }
 function onlineMovable() {
   const G = ONLINE;
-  if (G.phase !== 'game' || G.over || !G.st || !G.ws || G.ws.readyState !== 1) return null;
+  if (G.phase !== 'game' || G.over || !G.st || G.watching || !G.ws || G.ws.readyState !== 1) return null;
   return G.chess.turn() === G.userColor ? G.userColor : null;
 }
 function onlineUserMove(from, to, promo) {
@@ -4988,6 +5219,180 @@ function onlineReview() {
   startReview(pgn, { orientation: G.userColor, highlights: false });
 }
 
+/* ---- daily games: remembered on this device, status from the server ---- */
+const DAILY = { info: {}, at: 0, busy: false };
+const dailyList = () => (store.get('s64.daily', []) || []).filter(d => d && d.code);
+function dailyRemember(st) {
+  if (!st || st.watching || !isDailyTc(st.tc) || !st.players.w || !st.players.b) return;
+  const opp = st.players[st.you === 'w' ? 'b' : 'w'];
+  const l = dailyList().filter(d => d.code !== st.code);
+  l.unshift({ code: st.code, opp: opp ? opp.name : 'Opponent', at: Date.now() });
+  store.set('s64.daily', l.slice(0, 25));
+}
+function dailyForget(code) { store.set('s64.daily', dailyList().filter(d => d.code !== code)); delete DAILY.info[code]; }
+async function dailyRefresh() {
+  const l = dailyList();
+  if (!l.length || DAILY.busy || !onlineServer()) return;
+  DAILY.busy = true; DAILY.at = Date.now();
+  try {
+    const pid = await myPid();
+    const r = await fetch(onlineServer() + '/api/status?codes=' + l.map(d => d.code).join(','));
+    const j = await r.json();
+    for (const g of j.games || []) { if (pid && g.players) g.mine = g.players.w && g.players.w.pid === pid ? 'w' : g.players.b && g.players.b.pid === pid ? 'b' : null; DAILY.info[g.code] = g; }
+  } catch (e) { /* offline: keep what we had */ }
+  DAILY.busy = false;
+  if (S.tab === 'online' && ONLINE.phase === 'lobby') renderDaily();
+}
+function renderDaily() {
+  const l = dailyList(), box = $('#oDailyBox');
+  box.hidden = !l.length;
+  if (!l.length) return;
+  if (Date.now() - DAILY.at > 30000) dailyRefresh();
+  const rows = l.map(d => {
+    const g = DAILY.info[d.code];
+    let txt = 'Checking…', cls = '', btn = `<button class="btn" type="button" data-daily="open" data-code="${esc(d.code)}">Open</button>`;
+    if (g && g.gone) { txt = 'This game has expired.'; btn = `<button class="btn" type="button" data-daily="forget" data-code="${esc(d.code)}">Remove</button>`; }
+    else if (g && g.over) {
+      const w = g.over.result === '1-0' ? 'w' : g.over.result === '0-1' ? 'b' : null;
+      txt = !w ? '<span class="o-draw">Draw</span>' : w === g.mine ? '<span class="o-win">You won</span>' : '<span class="o-loss">You lost</span>';
+      btn += `<button class="btn" type="button" data-daily="forget" data-code="${esc(d.code)}" aria-label="Remove">✕</button>`;
+    } else if (g && g.players) {
+      const mineTurn = g.mine && g.turn === g.mine, left = g.left != null ? fmtClock(g.left) : '';
+      txt = mineTurn ? `<b>Your move</b>${left ? ' · ' + left + ' left' : ''}` : `Their move${left ? ' · ' + left + ' left' : ''}`;
+      if (mineTurn) cls = 'turn';
+    }
+    return `<li class="${cls}"><span class="grow"><b>vs ${esc(d.opp)}</b><span class="sub">${txt}</span></span>${btn}</li>`;
+  });
+  $('#oDailyList').innerHTML = rows.join('');
+}
+
+/* ---- friends hub: leaderboard, head-to-head, saved games, watching ---- */
+const HUB = { tab: 'board', data: {}, at: {}, err: {} };
+async function myPid() {
+  if (ONLINE.pid) return ONLINE.pid;
+  try {
+    const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('sixtyfour:' + onlineToken()));
+    ONLINE.pid = Array.from(new Uint8Array(h).slice(0, 6), b => b.toString(16).padStart(2, '0')).join('');
+  } catch (e) { ONLINE.pid = null; }
+  return ONLINE.pid;
+}
+async function hubGet(kind) {
+  const srv = onlineServer();
+  if (kind === 'board') return (await fetch(srv + '/api/leaderboard')).json();
+  if (kind === 'watch') return (await fetch(srv + '/api/live')).json();
+  const pid = await myPid();
+  if (!pid) throw new Error('no id');
+  return (await fetch(srv + '/api/player?pid=' + pid)).json();
+}
+async function hubLoad(tab, force) {
+  const kind = tab === 'board' || tab === 'watch' ? tab : 'player';
+  if (!force && HUB.data[kind] && Date.now() - (HUB.at[kind] || 0) < 15000) return;
+  HUB.at[kind] = Date.now(); HUB.err[kind] = null;
+  try { HUB.data[kind] = await hubGet(kind); } catch (e) { HUB.err[kind] = true; }
+  if (S.tab === 'online' && ONLINE.phase === 'hub') renderHub();
+}
+const resultFor = (g, pid) => { const white = g.w.pid === pid; return g.result === '1/2-1/2' ? 'd' : (g.result === '1-0') === white ? 'w' : 'l'; };
+const RES_LABEL = { w: '<span class="o-win">Win</span>', l: '<span class="o-loss">Loss</span>', d: '<span class="o-draw">Draw</span>' };
+const REASON = { checkmate: 'checkmate', resign: 'resignation', time: 'on time', 'time-draw': 'time', abandoned: 'left the game', stalemate: 'stalemate', repetition: 'repetition', material: 'material', fifty: '50 moves', agreed: 'agreed' };
+function recordText(o, name) {
+  const parts = [`${o.w} win${o.w === 1 ? '' : 's'}`, `${o.l} loss${o.l === 1 ? '' : 'es'}`];
+  if (o.d) parts.push(`${o.d} draw${o.d === 1 ? '' : 's'}`);
+  let streak = '';
+  if (o.streak >= 2) streak = o.streakRes === 'w' ? ` · you've won the last ${o.streak}` : ` · ${name} has won the last ${o.streak}`;
+  return parts.join(' · ') + streak;
+}
+function renderHub() {
+  const t = HUB.tab, body = $('#oHubBody');
+  $$('#oHubSeg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.hub === t)));
+  const kind = t === 'board' || t === 'watch' ? t : 'player', d = HUB.data[kind], me = ONLINE.pid;
+  if (!onlineServer()) { body.innerHTML = '<p class="tip">Needs the online server.</p>'; return; }
+  const loading = !d && !HUB.err[kind] ? '<div class="status"><span class="spin" aria-hidden="true"></span><span>Loading…</span></div>' : '';
+  const err = HUB.err[kind] && !d ? '<p class="tip">Couldn\'t reach the server. Try again in a moment.</p>' : '';
+  let html = '';
+  if (t === 'watch') {
+    html += `<span class="sec-label">Watch a game by code</span><div class="o-join"><input id="oWatchCode" type="text" autocomplete="off" spellcheck="false" maxlength="6" placeholder="ABC123" aria-label="Game code to watch"><button class="btn" id="oWatchGo" type="button" data-hubact="watchcode">Watch</button></div>`;
+    html += `<span class="sec-label" style="margin-top:12px">Live now</span>`;
+    if (d) html += d.games.length ? `<ul class="o-list">${d.games.map(g => `<li><span class="grow"><b>${esc(g.w.name)} vs ${esc(g.b.name)}</b><span class="sub">${esc(otcName(g.tc) || '')}${g.variant === '960' ? ' · Fischer random' : ''}</span></span><button class="btn" type="button" data-hubact="watch" data-code="${esc(g.code)}">Watch</button></li>`).join('')}</ul>` : '<p class="tip">Nobody is playing right now.</p>';
+  } else if (t === 'board') {
+    if (d) html = d.players.length ? `<ul class="o-list">${d.players.map((p, i) => `<li class="${p.pid === me ? 'me' : ''}"><span class="rk">${i + 1}</span><span class="grow"><b>${esc(p.name)}${p.pid === me ? ' (you)' : ''}</b><span class="sub">${p.w} W · ${p.l} L · ${p.d} D</span></span><span class="num">${p.rating}</span></li>`).join('')}</ul><p class="tip">Everyone starts at 1200. Beat stronger players to climb faster.</p>` : '<p class="tip">No finished games yet. Play a friend online and the leaderboard fills up.</p>';
+  } else if (t === 'rivals') {
+    if (d) html = (d.me ? `<p class="tip">You: <b>${d.me.rating}</b> rating · ${d.me.w} W · ${d.me.l} L · ${d.me.d} D</p>` : '') +
+      (d.opponents.length ? `<ul class="o-list">${d.opponents.map(o => `<li><span class="grow"><b>vs ${esc(o.name)}</b><span class="sub">${esc(recordText(o, o.name))}</span></span><span class="num">${o.w}–${o.l}${o.d ? '–' + o.d : ''}</span></li>`).join('')}</ul>` : '<p class="tip">Play a friend online and your record against them shows up here.</p>');
+  } else if (t === 'games') {
+    if (d) html = d.games.length ? `<ul class="o-list">${d.games.map(g => {
+      const white = g.w.pid === me, opp = white ? g.b : g.w, r = resultFor(g, me);
+      return `<li><span class="grow"><b>vs ${esc(opp.name)}</b><span class="sub">${RES_LABEL[r]} · ${REASON[g.reason] || ''} · ${white ? 'White' : 'Black'} · ${esc(otcName(g.tc) || '')} · ${new Date(g.ended).toLocaleDateString()}</span></span><button class="btn" type="button" data-hubact="review" data-id="${esc(g.id)}">Review</button><button class="btn" type="button" data-hubact="share" data-id="${esc(g.id)}">Share</button></li>`;
+    }).join('')}</ul>` : '<p class="tip">Your finished online games are saved here automatically.</p>';
+  }
+  body.innerHTML = html + loading + err;
+}
+function hubClick(e) {
+  const b = e.target.closest('[data-hubact]');
+  if (!b) return;
+  const a = b.dataset.hubact;
+  if (a === 'watch') onlineConnect(b.dataset.code, null, false, true);
+  else if (a === 'watchcode') {
+    const code = ($('#oWatchCode').value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (code.length >= 4) onlineConnect(code, null, false, true);
+  } else if (a === 'review') {
+    const g = ((HUB.data.player || {}).games || []).find(x => x.id === b.dataset.id);
+    if (g) openOnlineGame(g);
+  } else if (a === 'share') {
+    const link = location.origin + location.pathname + '?game=' + b.dataset.id;
+    (navigator.clipboard ? navigator.clipboard.writeText(link) : Promise.reject()).then(() => { b.textContent = 'Link copied!'; setTimeout(() => { b.textContent = 'Share'; }, 1500); }).catch(() => { b.textContent = link; });
+  }
+}
+// a saved online game -> PGN -> Review
+function pgnFromOnline(g) {
+  const c = g.startFen ? mkChess(g.startFen) : new Chess();
+  for (const u of g.moves) if (!c.move(uciObj(u))) break;
+  const nm = x => String(x || '?').replace(/"/g, "'").replace(/]/g, ')');
+  const head = `[Event "Sixty-Four online"]\n[Date "${new Date(g.ended || Date.now()).toISOString().slice(0, 10).replace(/-/g, '.')}"]\n[White "${nm(g.w.name)}"]\n[Black "${nm(g.b.name)}"]\n[Result "${g.result}"]\n` + variantHead({ startFen: g.startFen }) + '\n';
+  let body = '';
+  c.history().forEach((s2, i) => { body += (i % 2 === 0 ? `${i / 2 + 1}. ` : '') + s2 + ' '; });
+  return head + body + g.result;
+}
+function openOnlineGame(g) {
+  const pgn = pgnFromOnline(g), me = ONLINE.pid;
+  $('#pgnIn').value = pgn;
+  $('#exampleNote').textContent = `${g.w.name} vs ${g.b.name}, online`;
+  setTab('review');
+  startReview(pgn, { orientation: me && g.b.pid === me ? 'b' : 'w', highlights: false });
+}
+async function openSharedGame(id) {
+  if (!onlineServer()) return;
+  try {
+    await myPid();
+    const r = await fetch(onlineServer() + '/api/game?id=' + encodeURIComponent(id));
+    const j = await r.json();
+    if (j.game) openOnlineGame(j.game);
+  } catch (e) { /* the link didn't work; stay where we are */ }
+}
+// your record against the person you're playing
+async function onlineH2H(force) {
+  const G = ONLINE, st = G.st;
+  if (!st || G.watching || !onlineServer()) return;
+  const opp = st.players[st.you === 'w' ? 'b' : 'w'];
+  if (!opp || !opp.pid) return;
+  const key = st.code + ':' + st.round;
+  if (!force && G.h2h && G.h2h.key === key) return;
+  G.h2h = { key, rec: G.h2h && G.h2h.opp === opp.pid ? G.h2h.rec : null, opp: opp.pid, name: opp.name };
+  if (G.over) await sleep(1200); // give the server a moment to record the result
+  try {
+    const pid = await myPid();
+    const j = await (await fetch(onlineServer() + '/api/player?pid=' + pid)).json();
+    const o = (j.opponents || []).find(x => x.pid === opp.pid);
+    if (G.h2h && G.h2h.key === key) { G.h2h.rec = o || { w: 0, l: 0, d: 0 }; HUB.data.player = j; HUB.at.player = Date.now(); if (S.tab === 'online') renderH2H(); }
+  } catch (e) { /* no record shown */ }
+}
+function renderH2H() {
+  const G = ONLINE, el = $('#oH2H'), h = G.h2h;
+  if (!h || !h.rec || G.watching || G.phase !== 'game') { el.hidden = true; return; }
+  const r = h.rec;
+  el.hidden = false;
+  el.innerHTML = r.w + r.l + r.d === 0 ? `First game against <b>${esc(h.name)}</b>.` : `Your record vs <b>${esc(h.name)}</b>: ${esc(recordText(r, h.name))}`;
+}
+
 /* ---- drawing the panel ---- */
 function radiusLabel(sec) { if (sec > 30) return 'anywhere'; const r = 100 * Math.pow(2, sec / 4); return r < 1000 ? `${Math.round(r / 10) * 10} km` : `${(Math.round(r / 100) * 100).toLocaleString()} km`; }
 function renderOnlineWait() {
@@ -5013,6 +5418,8 @@ function renderOnline(anim) {
   const G = ONLINE, st = G.st, server = !!onlineServer();
   const inGame = G.phase === 'game' && st;
   $('#oLobby').hidden = G.phase !== 'lobby';
+  $('#oHub').hidden = G.phase !== 'hub';
+  if (G.phase === 'hub') renderHub();
   $('#oWait').hidden = !['search', 'connecting', 'wait'].includes(G.phase);
   $('#oGame').hidden = !inGame;
   board.orientation = G.orientation;
@@ -5042,18 +5449,23 @@ function renderOnline(anim) {
     ls.hidden = !msg;
     ls.className = 'status' + (G.msgErr || !server ? ' over' : '');
     ls.innerHTML = `<span>${esc(msg || '')}</span>`;
-  } else if (!inGame) renderOnlineWait();
+    renderDaily();
+  } else if (!inGame && G.phase !== 'hub') renderOnlineWait();
 
   if (inGame) {
     const c = G.chess, opp = st.players[oOpp()], myTurn = c.turn() === G.userColor;
     let html, spin = false;
     if (G.over) html = esc(G.over.text);
     else if (!G.ws || G.ws.readyState !== 1) { html = 'Reconnecting…'; spin = true; }
-    else if (!opp.online) { html = `${esc(opp.name)} disconnected. If they don't come back within a minute, ${c.history().length < 2 ? 'the game is cancelled' : 'you win'}.`; spin = true; }
+    else if (G.watching) {
+      const tn = st.players[c.turn()];
+      html = `👀 Watching. ${esc(tn ? tn.name : SIDE[c.turn()])} to move${c.in_check() ? ', in check' : ''}.` + (st.watchers > 1 ? ` <span class="muted">${st.watchers} watching</span>` : '');
+    }
+    else if (!opp.online && st.abandonMs) { html = `${esc(opp.name)} disconnected. If they don't come back within a minute, ${c.history().length < 2 ? 'the game is cancelled' : 'you win'}.`; spin = true; }
     else if (st.drawOffer === oOpp()) html = `${esc(opp.name)} offers a draw.`;
     else if (myTurn) html = (c.history().length < 2 ? `You have ${G.userColor === 'w' ? 'White' : 'Black'}. Your move.` : 'Your move.') + (c.in_check() ? ' You are in check!' : '');
+    else html = `Waiting for ${esc(opp.name)}…` + (isDailyTc(st.tc) ? ' <span class="muted">Daily game: you can leave and come back.</span>' : '') + (board.premove ? ' <span class="muted">Premove set (right-click to cancel).</span>' : '');
     if (!G.over && st.variant === '960' && c.history().length < 2) html += ` <span class="muted">Fischer random #${st.n960}. To castle, move your king onto your rook.</span>`;
-    else html = `Waiting for ${esc(opp.name)}…`;
     if (G.msg && G.msgErr && !G.over) html += ` <span class="muted">(${esc(G.msg)})</span>`;
     const se = $('#oStatus');
     se.className = 'status' + (G.over ? ' over' : '');
@@ -5061,7 +5473,11 @@ function renderOnline(anim) {
     const sans = c.history(), sheet = $('#oMoves');
     sheet.innerHTML = sheetHTML(sans, sans.length, 'w', 1, null, false);
     scrollCurrent(sheet);
-    $('#oPlayBtns').hidden = !!G.over; $('#oAfterBtns').hidden = !G.over;
+    $('#oPlayBtns').hidden = !!G.over || G.watching; $('#oAfterBtns').hidden = !G.over || G.watching;
+    $('#oWatchBtns').hidden = !G.watching; $('#oWReview').disabled = sans.length < 2;
+    $('#oToLobby').hidden = !isDailyTc(st.tc);
+    $('#oMute').hidden = G.watching;
+    renderH2H();
     const theyOffer = st.drawOffer === oOpp(), iOffer = st.drawOffer === G.userColor;
     const dr = $('#oDraw');
     dr.textContent = theyOffer ? 'Accept draw' : iOffer ? 'Draw offered' : 'Offer draw';
@@ -5074,24 +5490,29 @@ function renderOnline(anim) {
     rm.disabled = meR || !opp.online;
     $('#oReview').disabled = sans.length < 2;
     renderChat();
-    $('#oCodeNote').textContent = G.over && themR ? `${opp.name} wants a rematch!` : `Game code ${st.code}`;
+    $('#oCodeNote').textContent = G.watching ? `Watching game ${st.code}` : G.over && themR ? `${opp.name} wants a rematch!` : `Game code ${st.code}`;
   }
 }
 
+function myChatId() {
+  const G = ONLINE, st = G.st;
+  if (G.watching) return 'w-' + onlineToken().slice(0, 6);
+  return st && st.players[G.userColor] ? st.players[G.userColor].id : null;
+}
 function onlineMuted() { const m = store.get('s64.omute', {}) || {}; return !!(ONLINE.code && m[ONLINE.code]); }
 function renderChat() {
   const G = ONLINE, log = $('#oChatLog'), tab = $('#tabOnline');
   if (S.tab === 'online') G.unread = 0;
   tab.innerHTML = 'Online' + (G.unread ? `<span class="o-unread">${G.unread > 9 ? '9+' : G.unread}</span>` : '');
   if (!log) return;
-  const st = G.st, myId = st && st.players[G.userColor] ? st.players[G.userColor].id : null, muted = onlineMuted();
+  const st = G.st, myId = myChatId(), muted = onlineMuted() && !G.watching;
   const opp = st && st.players[oOpp()] ? st.players[oOpp()].name : 'your opponent';
   const atBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 30;
   let hidden = 0;
   log.innerHTML = G.chat.map(c => {
     const mine = c.id === myId;
     if (!mine && muted) { hidden++; return ''; }
-    return `<div class="cm${mine ? ' me' : ''}"><b>${mine ? 'You' : esc(c.name)}</b>${esc(c.text)}</div>`;
+    return `<div class="cm${mine ? ' me' : ''}${c.watcher && !mine ? ' watch' : ''}"><b>${mine ? 'You' : esc(c.name)}</b>${esc(c.text)}</div>`;
   }).join('') + (muted ? `<div class="note">You muted ${esc(opp)}${hidden ? ` (${hidden} hidden)` : ''}.</div>` : '');
   if (atBottom) log.scrollTop = log.scrollHeight;
   $('#oMute').textContent = muted ? 'Unmute' : 'Mute opponent';
@@ -5131,6 +5552,23 @@ function wireOnline() {
   $('#oRematch').addEventListener('click', () => onlineSend({ t: 'rematch' }));
   $('#oReview').addEventListener('click', onlineReview);
   $('#oLeave').addEventListener('click', () => { onlineLeave(); renderPlay(); });
+  $('#oToLobby').addEventListener('click', () => { onlineLeave(); renderPlay(); });
+  $('#oWFlip').addEventListener('click', () => { ONLINE.orientation = ONLINE.orientation === 'w' ? 'b' : 'w'; renderPlay(); });
+  $('#oWReview').addEventListener('click', onlineReview);
+  $('#oWStop').addEventListener('click', () => { onlineLeave(); ONLINE.phase = 'hub'; HUB.tab = 'watch'; renderPlay(); });
+  const hubOpen = t => { HUB.tab = t; ONLINE.phase = 'hub'; hubLoad(t); renderPlay(); };
+  $('#oHubBtns').addEventListener('click', e => { const b = e.target.closest('[data-hub]'); if (b) hubOpen(b.dataset.hub); });
+  $('#oHubSeg').addEventListener('click', e => { const b = e.target.closest('[data-hub]'); if (b) hubOpen(b.dataset.hub); });
+  $('#oHubBack').addEventListener('click', () => { ONLINE.phase = 'lobby'; renderPlay(); });
+  $('#oHubBody').addEventListener('click', hubClick);
+  $('#oHubBody').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'oWatchCode') hubClick({ target: $('#oWatchGo') }); });
+  $('#oDailyList').addEventListener('click', e => {
+    const b = e.target.closest('[data-daily]');
+    if (!b) return;
+    const code = b.dataset.code;
+    if (b.dataset.daily === 'open') onlineConnect(code, null);
+    else { dailyForget(code); renderPlay(); }
+  });
 }
 // resigning is one click, so ask twice within a few seconds instead of popping up a dialog
 let resignArm = 0;
@@ -5190,7 +5628,7 @@ function startReplay() {
   RP.paused = false;
   const el = document.createElement('div');
   el.className = 'rp';
-  el.innerHTML = `<div class="rp-frame"><div class="rp-scene"><div class="rp-board"><div class="rp-hl"></div><div class="rp-pcs"></div></div></div>
+  el.innerHTML = `<div class="rp-frame"><div class="rp-scene"><div class="rp-cam"><div class="rp-board"><div class="rp-hl"></div><div class="rp-pcs"></div></div></div></div>
     <div class="rp-bar"><button type="button" data-rp="restart" title="Restart">⟲</button><button type="button" data-rp="pause" title="Pause (space)">❚❚</button><button type="button" data-rp="speed" title="Speed">1×</button><span class="rp-prog"></span><button type="button" data-rp="close" title="Close (Esc)">✕</button></div></div>`;
   document.body.appendChild(el);
   RP.el = el;
@@ -5221,6 +5659,23 @@ async function rpPlay(tok) {
   const xy = sq => { const f = sq.charCodeAt(0) - 97, r = +sq[1] - 1; return orient === 'w' ? { x: f, y: 7 - r } : { x: 7 - f, y: r }; };
   const keyOf = ch => (ch === ch.toUpperCase() ? 'w' : 'b') + ch.toUpperCase();
   const place = (img, sq) => { const p = xy(sq); img.style.left = p.x * 12.5 + '%'; img.style.top = p.y * 12.5 + '%'; };
+  // camera: a still board for the opening, then it glides in to follow the action and pulls back at the end
+  const cam = el.querySelector('.rp-cam');
+  cam.getAnimations().forEach(a => a.cancel());
+  let camT = 'translate(0px,0px) scale(1)';
+  cam.style.transform = camT;
+  const camTo = (pt, z, dur) => {
+    const B = cam.clientWidth;
+    let tx = 0, ty = 0;
+    if (pt && z > 1) {
+      const cx = (pt.x + 0.5) * B / 8, cy = (pt.y + 0.5) * B / 8;
+      tx = clamp(B / 2 - z * cx, B - z * B, 0); ty = clamp(B / 2 - z * cy, B - z * B, 0);
+    } else z = 1;
+    const t = `translate(${tx.toFixed(1)}px,${ty.toFixed(1)}px) scale(${z})`, from = camT;
+    if (t === from) return Promise.resolve();
+    camT = t;
+    return rpRun(cam, [{ transform: from }, { transform: t }], { duration: dur, easing: 'cubic-bezier(.45,0,.25,1)' });
+  };
   const els = {};
   { const m = fenToMap(g.positions[0].fen); for (const sq in m) { const i = document.createElement('img'); i.src = PIECE_URL[keyOf(m[sq])]; i.alt = ''; place(i, sq); pcs.appendChild(i); els[sq] = i; } }
   const n = g.moves.length;
@@ -5239,6 +5694,11 @@ async function rpPlay(tok) {
       if (fr) { used.add(fr); pairs.push([fr, to]); }
     }
     const capSqs = vac.filter(sq => !used.has(sq));
+    {
+      const a2 = xy(mv.from), b2 = xy(mv.to), loud = capSqs.length || /[+#]/.test(mv.san || '');
+      if (i < 6) camTo(null, 1, 500);
+      else { camTo({ x: (a2.x + b2.x) / 2, y: (a2.y + b2.y) / 2 }, loud ? 1.55 : 1.35, 520); await rpWait(220, tok); }
+    }
     const anims = pairs.map(([fr, to]) => {
       const img = els[fr];
       if (!img) return Promise.resolve();
@@ -5259,6 +5719,8 @@ async function rpPlay(tok) {
     hl.innerHTML = [mv.from, pairs.length ? pairs[0][1] : mv.to].map(sq => { const p = xy(sq); return `<i style="left:${p.x * 12.5}%;top:${p.y * 12.5}%"></i>`; }).join('');
     await rpWait(750, tok);
   }
+  await rpWait(500, tok);
+  await camTo(null, 1, 800);
   const res = (g.headers && g.headers.Result) || '';
   prog.textContent = (res && res !== '*' ? res + ' · ' : '') + 'Finished · ⟲ to watch again';
 }
@@ -5372,8 +5834,18 @@ function updStart() {
 /* ============================================================
    Tabs, wiring, boot
    ============================================================ */
+// play a queued premove if it's legal now (otherwise it's dropped)
+function runPremove(chess, color, exec) {
+  const pm = board.premove;
+  if (!pm) return false;
+  board.premove = null; board.preSel = null;
+  if (!chess || chess.turn() !== color) { board.renderHL(); return false; }
+  const ok = chess.moves({ verbose: true }).find(m => m.from === pm.from && m.to === pm.to);
+  if (!ok) { board.renderHL(); return false; }
+  return exec(pm.from, pm.to, ok.promotion ? 'q' : undefined);
+}
 function setTab(t) {
-  if (S.tab !== t) pauseBot(P);
+  if (S.tab !== t) { pauseBot(P); board.premove = null; board.preSel = null; }
   if (t !== 'review') stopHL();
   S.tab = t;
   P = t === 'ladder' ? LADDER : t === 'custom' ? CUSTOM : t === 'online' ? ONLINE : FREE;
@@ -5413,11 +5885,18 @@ function wire() {
         if (P.vs === 'friend') return (!P.over && P.chess && !(P.clk && P.clk.paused)) ? P.chess.turn() : null;
         return (!P.over && !P.thinking && P.chess && P.chess.turn() === P.userColor) ? P.userColor : null;
       }
+      if (R.phase === 'puzzle') return PZ.state === 'try' && board.chess ? board.chess.turn() : null;
       if (R.phase !== 'review' || !R.game || R.hl) return null;
       if (R.retry) return R.retry.state === 'try' ? R.game.moves[R.retry.i].color : null;
       return board.chess ? board.chess.turn() : null;
     },
-    onUserMove: (f, t, p) => S.tab === 'review' ? onReviewMove(f, t, p) : onPlayMove(f, t, p),
+    premovable: () => {
+      if (S.tab === 'online') { const G = ONLINE; return G.phase === 'game' && !G.over && G.st && !G.watching && G.chess.turn() !== G.userColor ? G.userColor : null; }
+      if (S.tab !== 'play' && S.tab !== 'ladder') return null;
+      if ((S.tab === 'ladder' && P.phase !== 'game') || P.vs === 'friend' || P.over || !P.chess) return null;
+      return P.chess.turn() !== P.userColor || P.thinking ? P.userColor : null;
+    },
+    onUserMove: (f, t, p) => S.tab === 'review' ? (R.phase === 'puzzle' ? onPuzzleMove(f, t, p) : onReviewMove(f, t, p)) : onPlayMove(f, t, p),
     extraMoves: sq => (S.tab === 'custom' && CUSTOM.phase === 'game' && CUSTOM.chess) ? powerMoves(CUSTOM, sq) : [],
     allowStd: sq => S.tab !== 'custom' || customAllowStd(sq),
     skin: (sq, p) => S.tab === 'custom' ? customSkin(sq, p) : null,
@@ -5582,6 +6061,11 @@ function wire() {
       case 'start': goPly(1); break;
       case 'highlights': startHighlights(); break;
       case 'replay': startReplay(); break;
+      case 'pzStart': startPuzzles(); break;
+      case 'pzHint': PZ.hint = true; renderReview(false); break;
+      case 'pzAnswer': puzzleAnswer(); break;
+      case 'pzNext': nextPuzzle(); break;
+      case 'pzExit': R.phase = 'input'; PZ.cur = null; renderReview(); break;
       case 'retry': startRetry(R.ply - 1); break;
       case 'line': showLine(R.retry ? R.retry.i : R.ply - 1); break;
       case 'exitExplore': { const base = R.explore ? R.explore.base : R.ply; if (R.liveJob) R.liveJob.cancel(); R.explore = null; R.ply = base; renderReview(false); break; }
@@ -5664,6 +6148,7 @@ function start(data) {
   if (!FREE.clk && !FREE.chess.history().length) resetClock();
   const joinCode = onlineBoot();
   setTab(joinCode ? 'online' : data.tab === 'review' || data.tab === 'ladder' ? data.tab : 'play');
+  if (ONLINE.shared) openSharedGame(ONLINE.shared);
   engine.boot().catch(() => {});
 }
 

@@ -5,8 +5,12 @@
   "durable_objects": {
     "bindings": [
       { "name": "LOBBY", "class_name": "Lobby" },
-      { "name": "GAME", "class_name": "Game" }
+      { "name": "GAME", "class_name": "Game" },
+      { "name": "STATS", "class_name": "Stats" }
     ]
   },
-  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Lobby", "Game"] }]
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["Lobby", "Game"] },
+    { "tag": "v2", "new_sqlite_classes": ["Stats"] }
+  ]
 }

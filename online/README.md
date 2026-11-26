@@ -1,6 +1,6 @@
 # Sixty-Four online server
 
-This small Cloudflare Worker runs online play: game codes, "find a player near me", move checking and the clocks.
+This small Cloudflare Worker runs online play: game codes, "find a player near me", move checking and the clocks, daily games, watching, and a Stats store for records, ratings, the leaderboard and saved games.
 It runs on Cloudflare's free plan (Workers + SQLite Durable Objects).
 
 ## Deploy (one time)

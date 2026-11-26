@@ -3,6 +3,12 @@
 //   POST /api/new            -> { code }     make a private game you share with a friend
 //   GET  /ws/game/CODE       -> WebSocket    play a game (?token=&name=&pref=w|b|r)
 //   GET  /ws/lobby           -> WebSocket    "find a player near me" matchmaking
+//   GET  /ws/game/CODE?watch=1 -> WebSocket  watch a game (and chat) without playing
+//   GET  /api/status?codes=A,B -> where each of your daily games stands
+//   GET  /api/player?pid=      -> your record, head-to-head against everyone, your recent games
+//   GET  /api/leaderboard      -> everyone, best rating first
+//   GET  /api/game?id=CODE-2   -> one finished game (share links)
+//   GET  /api/live             -> games being played right now (to watch)
 //
 // Every move is checked with chess.js here, and the clocks are kept here, so nobody can cheat
 // by editing the page.
@@ -17,7 +23,9 @@ const CORS = {
 const json = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json', ...CORS } });
 
 // the same time controls the app offers: [seconds, increment]
-const TCS = [[0, 0], [60, 0], [180, 2], [300, 0], [600, 0], [900, 10], [1800, 0]];
+const TCS = [[0, 0], [60, 0], [180, 2], [300, 0], [600, 0], [900, 10], [1800, 0], [86400, 0]];
+const DAY = 86400;
+const isDaily = tc => tc && tc[0] === DAY; // Daily: a fresh day for every move, play over days
 const validVariant = v => v === '960' ? '960' : 'std';
 const validTc = tc => Array.isArray(tc) && TCS.some(t => t[0] === tc[0] && t[1] === tc[1]) ? [tc[0], tc[1]] : [600, 0];
 
@@ -29,6 +37,13 @@ function newCode() {
 const cleanCode = s => String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8);
 const cleanName = s => String(s || '').replace(/[\u0000-\u001f\u007f<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 20) || 'Guest';
 const cleanToken = s => /^[A-Za-z0-9-]{8,64}$/.test(String(s || '')) ? String(s) : null;
+const cleanPid = s => /^[a-f0-9]{12}$/.test(String(s || '')) ? String(s) : null;
+// a player's public id: a hash of their secret token, so it can be shown without letting anyone take their seat
+async function pidOf(token) {
+  const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('sixtyfour:' + token));
+  return Array.from(new Uint8Array(h).slice(0, 6), b => b.toString(16).padStart(2, '0')).join('');
+}
+const stats = env => env.STATS.get(env.STATS.idFromName('global'));
 
 async function createGame(env, opts) {
   for (let i = 0; i < 8; i++) {
@@ -70,6 +85,18 @@ export default {
       return env.LOBBY.get(env.LOBBY.idFromName('global')).fetch(new Request(u, request));
     }
 
+    if (request.method === 'GET' && path === '/api/status') {
+      const codes = [...new Set(String(url.searchParams.get('codes') || '').split(',').map(cleanCode).filter(c => c.length >= 4))].slice(0, 25);
+      const out = await Promise.all(codes.map(async code => {
+        try { const r = await env.GAME.get(env.GAME.idFromName(code)).fetch('https://game/status'); return r.ok ? await r.json() : { code, gone: true }; } catch (e) { return { code, error: true }; }
+      }));
+      return json({ games: out });
+    }
+    if (request.method === 'GET' && ['/api/player', '/api/leaderboard', '/api/game', '/api/live'].includes(path)) {
+      const r = await stats(env).fetch('https://stats' + path.slice(4) + url.search);
+      return new Response(r.body, { status: r.status, headers: { 'Content-Type': 'application/json', ...CORS } });
+    }
+
     const m = path.match(/^\/ws\/game\/([A-Za-z0-9]+)$/);
     if (m) {
       if (!upgrade) return new Response('Expected a WebSocket', { status: 426 });
@@ -106,7 +133,29 @@ export class Game {
   constructor(ctx, env) { this.ctx = ctx; this.env = env; this.g = undefined; }
 
   async load() { if (this.g === undefined) this.g = (await this.ctx.storage.get('g')) || null; return this.g; }
-  async save() { this.g.touched = Date.now(); await this.ctx.storage.put('g', this.g); await this.schedule(); }
+  async save() { this.g.touched = Date.now(); await this.ctx.storage.put('g', this.g); await this.schedule(); await this.report(); }
+  // tell the stats server when a game starts (so friends can watch it) and when it ends (records, ratings, saved games)
+  async report() {
+    const g = this.g;
+    if (!g || !this.env.STATS) return;
+    const both = g.seats.w && g.seats.b, key = g.code + '-' + g.round;
+    const who = c => ({ pid: g.seats[c].pid, name: g.seats[c].name });
+    try {
+      if (both && !g.over && g.liveKey !== key) {
+        g.liveKey = key;
+        await this.ctx.storage.put('g', g);
+        await stats(this.env).fetch('https://stats/live', { method: 'POST', body: JSON.stringify({ on: true, code: g.code, round: g.round, w: who('w'), b: who('b'), tc: g.tc, variant: g.variant || 'std' }) });
+      }
+      if (both && g.over && g.reportedKey !== key) {
+        g.reportedKey = key;
+        await this.ctx.storage.put('g', g);
+        await stats(this.env).fetch('https://stats/live', { method: 'POST', body: JSON.stringify({ on: false, code: g.code }) });
+        if (g.over.result !== '*' && g.moves.length >= 2) {
+          await stats(this.env).fetch('https://stats/record', { method: 'POST', body: JSON.stringify({ id: key, w: who('w'), b: who('b'), result: g.over.result, reason: g.over.reason, tc: g.tc, variant: g.variant || 'std', startFen: g.startFen || null, moves: g.moves, ended: Date.now() }) });
+        }
+      }
+    } catch (e) { /* the stats server is optional: games still work without it */ }
+  }
 
   // Fischer random gets a new random starting position every game
   newStart(g) {
@@ -130,14 +179,27 @@ export class Game {
       const o = await request.json();
       const base = o.tc[0] * 1000;
       this.g = {
-        code: o.code, tc: o.tc, variant: validVariant(o.variant), reserved: o.reserved || null, round: 1,
+        code: o.code, tc: o.tc, daily: isDaily(o.tc), variant: validVariant(o.variant), reserved: o.reserved || null, round: 1,
         seats: { w: null, b: null }, moves: [], over: null, drawOffer: null, rematch: { w: false, b: false },
         clock: { w: base, b: base, running: null, since: 0 }, gone: { w: null, b: null }, created: Date.now()
       };
       this.newStart(this.g);
-      if (o.reserved) for (const c of ['w', 'b']) this.g.seats[c] = { token: o.reserved[c].token, id: crypto.randomUUID().slice(0, 8), name: cleanName(o.reserved[c].name), info: o.reserved[c].info || '' };
+      if (o.reserved) for (const c of ['w', 'b']) this.g.seats[c] = { token: o.reserved[c].token, pid: await pidOf(o.reserved[c].token), id: crypto.randomUUID().slice(0, 8), name: cleanName(o.reserved[c].name), info: o.reserved[c].info || '' };
       await this.save();
       return new Response('ok');
+    }
+
+    // a quick look at the game for the daily-games list
+    if (url.pathname === '/status') {
+      const g = await this.load();
+      if (!g) return new Response('none', { status: 404 });
+      this.checkClock(g);
+      const c = this.clockNow(g), turn = g.moves.length % 2 === (g.startFen && g.startFen.split(' ')[1] === 'b' ? 1 : 0) ? 'w' : 'b';
+      return new Response(JSON.stringify({
+        code: g.code, round: g.round, tc: g.tc, ply: g.moves.length, turn, over: g.over,
+        players: { w: g.seats.w ? { name: g.seats.w.name, pid: g.seats.w.pid } : null, b: g.seats.b ? { name: g.seats.b.name, pid: g.seats.b.pid } : null },
+        left: g.tc[0] && c.running ? c[c.running] : null, running: c.running
+      }), { headers: { 'Content-Type': 'application/json' } });
     }
 
     // WebSocket join
@@ -150,17 +212,26 @@ export class Game {
     const token = cleanToken(url.searchParams.get('token'));
     if (!token) return fail('Bad request.');
     let color = ['w', 'b'].find(c => g.seats[c] && g.seats[c].token === token);
+    // watching: no seat, but you see the game and the chat
+    if (!color && url.searchParams.get('watch') === '1') {
+      server.serializeAttachment({ token, watch: true, name: cleanName(url.searchParams.get('name')) });
+      server.send(JSON.stringify(this.stateFor(null)));
+      server.send(JSON.stringify({ t: 'chatlog', chat: g.chat || [] }));
+      this.broadcast();
+      return new Response(null, { status: 101, webSocket: client });
+    }
     if (!color) {
       if (g.reserved) return fail('That game is already taken.');
       const free = ['w', 'b'].filter(c => !g.seats[c]);
       if (!free.length) return fail('That game already has two players.');
       if (free.length === 2) { const pref = url.searchParams.get('pref'); color = pref === 'w' || pref === 'b' ? pref : (Math.random() < 0.5 ? 'w' : 'b'); }
       else color = free[0];
-      g.seats[color] = { token, id: crypto.randomUUID().slice(0, 8), name: cleanName(url.searchParams.get('name')), info: '' };
+      g.seats[color] = { token, pid: await pidOf(token), id: crypto.randomUUID().slice(0, 8), name: cleanName(url.searchParams.get('name')), info: '' };
     } else if (url.searchParams.get('name')) {
       g.seats[color].name = cleanName(url.searchParams.get('name'));
     }
     if (!g.seats[color].id) g.seats[color].id = crypto.randomUUID().slice(0, 8);
+    if (!g.seats[color].pid) g.seats[color].pid = await pidOf(token);
     server.serializeAttachment({ token });
     g.gone[color] = null;
     this.checkClock(g);
@@ -204,7 +275,7 @@ export class Game {
     else this.end(g, '1/2-1/2', 'time-draw', { loser });
   }
   checkGone(g, now = Date.now()) {
-    if (g.over) return;
+    if (g.over || isDaily(g.tc)) return; // daily games are meant to be left and come back to
     for (const c of ['w', 'b']) {
       if (!g.gone[c] || now - g.gone[c] < ABANDON_MS) continue;
       if (g.moves.length < 2) this.end(g, '*', 'aborted', { loser: c });
@@ -213,7 +284,7 @@ export class Game {
   }
   async schedule() {
     const g = this.g, now = Date.now();
-    let at = (g.touched || now) + EXPIRE_MS;
+    let at = (g.touched || now) + (isDaily(g.tc) ? 8 * EXPIRE_MS : EXPIRE_MS);
     if (!g.over) {
       if (g.tc[0] && g.clock.running) at = Math.min(at, g.clock.since + g.clock[g.clock.running] + 50);
       for (const c of ['w', 'b']) if (g.gone[c]) at = Math.min(at, g.gone[c] + ABANDON_MS + 50);
@@ -224,7 +295,7 @@ export class Game {
     const g = await this.load();
     if (!g) return;
     const now = Date.now();
-    if (now - (g.touched || 0) >= EXPIRE_MS && !this.ctx.getWebSockets().length) { await this.ctx.storage.deleteAll(); this.g = null; return; }
+    if (now - (g.touched || 0) >= (isDaily(g.tc) ? 8 * EXPIRE_MS : EXPIRE_MS) && !this.ctx.getWebSockets().length) { await this.ctx.storage.deleteAll(); this.g = null; return; }
     const was = JSON.stringify(g.over);
     this.checkClock(g); this.checkGone(g, now);
     if (JSON.stringify(g.over) !== was) { await this.save(); this.broadcast(); }
@@ -233,11 +304,12 @@ export class Game {
 
   stateFor(color) {
     const g = this.g, now = Date.now();
-    const pl = c => g.seats[c] ? { id: g.seats[c].id, name: g.seats[c].name, online: this.online(c), info: g.seats[c].info || '', away: !!g.gone[c] } : null;
+    const pl = c => g.seats[c] ? { id: g.seats[c].id, pid: g.seats[c].pid || null, name: g.seats[c].name, online: this.online(c), info: g.seats[c].info || '', away: !!g.gone[c] } : null;
+    const watchers = this.ctx.getWebSockets().filter(ws => ws.readyState === 1 && (ws.deserializeAttachment() || {}).watch).length;
     return {
       t: 'state', code: g.code, you: color, round: g.round, tc: g.tc, variant: g.variant || 'std', startFen: g.startFen || null, n960: g.n960 ?? null, players: { w: pl('w'), b: pl('b') },
       moves: g.moves, over: g.over, drawOffer: g.drawOffer, rematch: g.rematch,
-      clock: { ...this.clockNow(g, now) }, abandonMs: ABANDON_MS
+      clock: { ...this.clockNow(g, now) }, abandonMs: isDaily(g.tc) ? 0 : ABANDON_MS, watching: color === null, watchers
     };
   }
   broadcast() {
@@ -255,22 +327,25 @@ export class Game {
     const g = await this.load();
     if (!g) return;
     const color = this.colorOf(ws);
-    if (!color) return;
+    const att = ws.deserializeAttachment() || {};
+    if (!color && !att.watch) return;
     if (m.t === 'chat') {
       const text = String(m.text || '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 200);
       if (!text) return;
       const now = Date.now();
       this.spam = this.spam || {};
-      const seen = this.spam[color] = (this.spam[color] || []).filter(t => now - t < 10_000); // at most 6 messages per 10 seconds
+      const who = color || 'watch:' + att.token;
+      const seen = this.spam[who] = (this.spam[who] || []).filter(t => now - t < 10_000); // at most 6 messages per 10 seconds
       if (seen.length >= 6) { ws.send(JSON.stringify({ t: 'reject', msg: 'Slow down, you are sending messages too fast.' })); return; }
       seen.push(now);
-      const msg = { id: g.seats[color].id, name: g.seats[color].name, text, ts: now };
+      const msg = color ? { id: g.seats[color].id, name: g.seats[color].name, text, ts: now } : { id: 'w-' + att.token.slice(0, 6), name: att.name, watcher: true, text, ts: now };
       g.chat = (g.chat || []).concat(msg).slice(-60);
       await this.ctx.storage.put('g', g);
       const out = JSON.stringify({ t: 'chat', msg });
       for (const s of this.ctx.getWebSockets()) { try { s.send(out); } catch (e) { /* closed */ } }
       return;
     }
+    if (!color) return; // watchers can only chat
     const opp = other(color), both = g.seats.w && g.seats.b;
     this.checkClock(g);
     const reject = msg => { ws.send(JSON.stringify({ t: 'reject', msg })); ws.send(JSON.stringify(this.stateFor(color))); };
@@ -288,6 +363,7 @@ export class Game {
       g.moves.push(mv.from + mv.to + (mv.promotion || ''));
       if (g.tc[0]) {
         if (g.clock.running === color) { g.clock[color] = Math.max(0, g.clock[color] - (now - g.clock.since)) + g.tc[1] * 1000; }
+        if (isDaily(g.tc)) g.clock[opp] = DAY * 1000; // daily: every move gets a fresh day
         // clocks start once White has moved
         g.clock.running = opp; g.clock.since = now;
       }
@@ -441,4 +517,88 @@ export class Lobby {
 
   async webSocketClose(ws) { try { ws.close(1000, 'bye'); } catch (e) { } }
   async webSocketError(ws) { try { ws.close(1011, 'err'); } catch (e) { } }
+}
+
+/* ------------------------------------------------------------------ */
+/* Stats: records, ratings, head-to-head, saved games, live games      */
+/* ------------------------------------------------------------------ */
+const K = 32;
+export class Stats {
+  constructor(ctx, env) {
+    this.ctx = ctx; this.env = env; this.sql = ctx.storage.sql;
+    this.sql.exec(`CREATE TABLE IF NOT EXISTS players (pid TEXT PRIMARY KEY, name TEXT, rating REAL DEFAULT 1200, w INTEGER DEFAULT 0, l INTEGER DEFAULT 0, d INTEGER DEFAULT 0, last INTEGER)`);
+    this.sql.exec(`CREATE TABLE IF NOT EXISTS games (id TEXT PRIMARY KEY, wpid TEXT, bpid TEXT, wname TEXT, bname TEXT, result TEXT, reason TEXT, tc TEXT, variant TEXT, startfen TEXT, moves TEXT, ended INTEGER)`);
+    this.sql.exec(`CREATE INDEX IF NOT EXISTS gw ON games (wpid, ended)`);
+    this.sql.exec(`CREATE INDEX IF NOT EXISTS gb ON games (bpid, ended)`);
+    this.sql.exec(`CREATE TABLE IF NOT EXISTS live (code TEXT PRIMARY KEY, data TEXT, since INTEGER)`);
+  }
+  one(q, ...a) { const r = this.sql.exec(q, ...a).toArray(); return r[0] || null; }
+  all(q, ...a) { return this.sql.exec(q, ...a).toArray(); }
+  player(pid, name) {
+    const now = Date.now();
+    this.sql.exec(`INSERT INTO players (pid, name, last) VALUES (?, ?, ?) ON CONFLICT(pid) DO UPDATE SET name = excluded.name, last = excluded.last`, pid, cleanName(name), now);
+    return this.one(`SELECT * FROM players WHERE pid = ?`, pid);
+  }
+  gameOut(r) {
+    return { id: r.id, w: { pid: r.wpid, name: r.wname }, b: { pid: r.bpid, name: r.bname }, result: r.result, reason: r.reason, tc: JSON.parse(r.tc || '[0,0]'), variant: r.variant, startFen: r.startfen || null, moves: (r.moves || '').split(' ').filter(Boolean), ended: r.ended };
+  }
+  async fetch(request) {
+    const url = new URL(request.url), p = url.pathname, q = url.searchParams;
+    const out = (d, st = 200) => new Response(JSON.stringify(d), { status: st, headers: { 'Content-Type': 'application/json' } });
+    if (request.method === 'POST' && p === '/record') {
+      const g = await request.json();
+      const wp = cleanPid(g.w && g.w.pid), bp = cleanPid(g.b && g.b.pid);
+      if (!wp || !bp || wp === bp || !/^[A-Z0-9]{4,8}-\d+$/.test(String(g.id))) return out({ ok: false }, 400);
+      if (this.one(`SELECT id FROM games WHERE id = ?`, g.id)) return out({ ok: true, dup: true });
+      const W = this.player(wp, g.w.name), B = this.player(bp, g.b.name);
+      const sw = g.result === '1-0' ? 1 : g.result === '0-1' ? 0 : 0.5;
+      const ew = 1 / (1 + Math.pow(10, (B.rating - W.rating) / 400));
+      const dw = K * (sw - ew);
+      const col = s => s === 1 ? 'w' : s === 0 ? 'l' : 'd';
+      this.sql.exec(`UPDATE players SET rating = rating + ?, ${col(sw)} = ${col(sw)} + 1 WHERE pid = ?`, dw, wp);
+      this.sql.exec(`UPDATE players SET rating = rating - ?, ${col(1 - sw)} = ${col(1 - sw)} + 1 WHERE pid = ?`, dw, bp);
+      this.sql.exec(`INSERT INTO games (id, wpid, bpid, wname, bname, result, reason, tc, variant, startfen, moves, ended) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
+        g.id, wp, bp, cleanName(g.w.name), cleanName(g.b.name), String(g.result), String(g.reason || ''), JSON.stringify(g.tc || [0, 0]), g.variant === '960' ? '960' : 'std', g.startFen || null, (g.moves || []).filter(u => /^[a-h][1-8][a-h][1-8][qrbn]?$/.test(u)).join(' '), +g.ended || Date.now());
+      return out({ ok: true });
+    }
+    if (request.method === 'POST' && p === '/live') {
+      const d = await request.json(), code = cleanCode(d.code);
+      if (!code) return out({ ok: false }, 400);
+      if (d.on) this.sql.exec(`INSERT OR REPLACE INTO live (code, data, since) VALUES (?, ?, ?)`, code, JSON.stringify({ code, round: d.round, w: d.w, b: d.b, tc: d.tc, variant: d.variant }), Date.now());
+      else this.sql.exec(`DELETE FROM live WHERE code = ?`, code);
+      return out({ ok: true });
+    }
+    if (p === '/live') {
+      // fast games that never reported an end are dropped after 3 hours, daily ones after 9 days
+      this.sql.exec(`DELETE FROM live WHERE since < ? AND data NOT LIKE '%[86400,%'`, Date.now() - 3 * 3600_000);
+      this.sql.exec(`DELETE FROM live WHERE since < ?`, Date.now() - 9 * 86400_000);
+      return out({ games: this.all(`SELECT data, since FROM live ORDER BY since DESC LIMIT 40`).map(r => ({ ...JSON.parse(r.data), since: r.since })) });
+    }
+    if (p === '/leaderboard') {
+      return out({ players: this.all(`SELECT pid, name, rating, w, l, d, last FROM players WHERE w + l + d > 0 ORDER BY rating DESC LIMIT 100`).map(r => ({ ...r, rating: Math.round(r.rating) })) });
+    }
+    if (p === '/player') {
+      const pid = cleanPid(q.get('pid'));
+      if (!pid) return out({ error: 'bad id' }, 400);
+      const me = this.one(`SELECT pid, name, rating, w, l, d FROM players WHERE pid = ?`, pid);
+      const rows = this.all(`SELECT * FROM games WHERE wpid = ? OR bpid = ? ORDER BY ended DESC LIMIT 400`, pid, pid);
+      const h = {};
+      for (const r of rows) {
+        const white = r.wpid === pid, op = white ? r.bpid : r.wpid, opName = white ? r.bname : r.wname;
+        const o = h[op] || (h[op] = { pid: op, name: opName, w: 0, l: 0, d: 0, last: r.ended, streak: 0, streakDone: false });
+        const res = r.result === '1/2-1/2' ? 'd' : (r.result === '1-0') === white ? 'w' : 'l';
+        o[res]++;
+        // rows are newest first: count how many in a row you've won (or lost) against them
+        if (!o.streakDone) { if (o.streak === 0) { o.streakRes = res; o.streak = 1; } else if (o.streakRes === res) o.streak++; else o.streakDone = true; }
+      }
+      const opponents = Object.values(h).map(o => { const rr = this.one(`SELECT name, rating FROM players WHERE pid = ?`, o.pid); return { pid: o.pid, name: rr ? rr.name : o.name, rating: rr ? Math.round(rr.rating) : null, w: o.w, l: o.l, d: o.d, last: o.last, streak: o.streakRes === 'd' ? 0 : o.streak, streakRes: o.streakRes }; }).sort((a, b) => b.last - a.last);
+      return out({ me: me ? { ...me, rating: Math.round(me.rating) } : null, opponents, games: rows.slice(0, 50).map(r => this.gameOut(r)) });
+    }
+    if (p === '/game') {
+      const id = String(q.get('id') || '').toUpperCase();
+      const r = /^[A-Z0-9]{4,8}-\d+$/.test(id) ? this.one(`SELECT * FROM games WHERE id = ?`, id) : null;
+      return r ? out({ game: this.gameOut(r) }) : out({ error: 'not found' }, 404);
+    }
+    return out({ error: 'not found' }, 404);
+  }
 }

@@ -11,7 +11,7 @@ No install, no account, no server. Open the page and play.
 - **Friend on the same device.** Two players, one screen, with names, an auto-turning board and a chess clock (1 min up to 30 min, with increments).
 - **Fischer random (Chess960)**: in Custom mode and Online. The back pieces start shuffled; castle by moving your king onto your rook.
 - **Online**: find a player near you, or make a code and send it to a friend. Runs on a small Cloudflare Worker in `online/` (see `online/README.md`).
-- **Custom mode: Chess, but...** Broken-rules chess against Stockfish or a friend, starting with **the Area 51 Army**: your king plus ONE alien (a Clone, the Maw, the Watcher, the UFO or the Egg that hatches into the Overlord) against a full army.
+- **Custom mode: Chess, but...** Broken-rules chess against Stockfish or a friend, starting with **the Area 51 Army**: your king plus one of every alien (a Clone, the Maw, the Watcher, the UFO and the Egg that hatches into the Overlord) against a full army.
 - **Game review.** Paste any PGN, for example from chess.com or lichess. You get accuracy, a rating estimate, move labels (Brilliant to Blunder), an eval graph, retry-the-mistake and "show engine line".
 - **Highlights with Coach Ozzie.** A narrated replay of the key moments, with optional voice.
 - **Battle mode.** Captures become fights: spears, a pistol for en passant, sabers, a sniper rifle, cannons, a magic staff and a royal sword.

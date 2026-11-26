@@ -4265,28 +4265,28 @@ function a51Src(type, col, k) {
   }
   return A51_CACHE[key];
 }
+const A51_HATCH = 6; // cracks the Egg needs before it hatches (one crack every 2 moves)
 const A51 = {
-  id: 'area51', short: 'The Area 51 Army', card: 'Your king and ONE alien against a full army', oneSide: true,
-  title: 'Chess, but my whole army is one alien',
-  choose: { label: 'Your alien', options: [['egg', 'The Egg'], ['ufo', 'The UFO'], ['watcher', 'The Watcher'], ['maw', 'The Maw'], ['clone', 'A Clone']] },
-  setup(sides, unit) {
+  id: 'area51', short: 'The Area 51 Army', card: 'Your king and one of every alien against a full army', oneSide: true,
+  title: 'Chess, but my army is aliens',
+  // your side: UFO b1, Watcher c1, Egg d1, King e1, Maw f1, Clone d2 (mirrored on rank 8 for Black)
+  setup(sides) {
     const m = fenToMap(START_FEN);
     let cast = 'KQkq';
     for (const col of sides) {
-      const W = col === 'w', back = W ? '1' : '8', pawn = W ? '2' : '7';
+      const W = col === 'w', back = W ? '1' : '8', pawn = W ? '2' : '7', c = x => W ? x.toUpperCase() : x;
       for (const f of 'abcdefgh') { delete m[f + back]; delete m[f + pawn]; }
-      m['e' + back] = W ? 'K' : 'k';
-      const letter = { egg: 'q', ufo: 'r', watcher: 'b', maw: 'n', clone: 'p' }[unit] || 'q';
-      m[(unit === 'clone' ? 'd' + pawn : 'd' + back)] = W ? letter.toUpperCase() : letter;
+      m['b' + back] = c('r'); m['c' + back] = c('b'); m['d' + back] = c('q'); m['e' + back] = c('k'); m['f' + back] = c('n');
+      m['d' + pawn] = c('p');
       cast = cast.replace(W ? /[KQ]/g : /[kq]/g, '');
     }
     return buildFen(m, 'w', cast || '-', '-', 0, 1);
   },
-  text: 'Clones (pawns) leave a copy behind whenever they capture. The Maw (knights) swallows what it captures and can spit it back out as a missile. The Watcher (bishops) fires a laser that bounces off the walls. The UFO (rooks) is nearly invisible and abducts any enemy within 2 squares. The Egg (queen) cannot move and cracks every 2 moves. After 3 cracks it hatches into the Overlord: it moves like a queen and a knight, gets a bonus move after every capture, and mind-controls every enemy piece it lands next to. Purple dots show the powers.',
-  list: ['<b>Clones</b> (pawns): every capture leaves a copy behind.', '<b>The Maw</b> (knights): swallows what it captures, then spits it back out as a missile.', '<b>The Watcher</b> (bishops): a laser that bounces off the walls. Recharges in 3 moves.', '<b>The UFO</b> (rooks): nearly invisible, abducts any enemy within 2 squares. Recharges in 3 moves.', '<b>The Egg</b> (queen): cannot move, cracks every 2 moves. After 3 cracks it hatches into <b>the Overlord</b>: moves like a queen and a knight, gets a frenzy bonus move after a capture, and mind-controls every enemy piece it lands next to.', 'Your whole army is your king and the one alien you picked. Purple dots show its powers.'],
+  text: 'Clones (pawns) leave a copy behind whenever they capture. The Maw (knights) swallows what it captures and can spit it back out as a missile. The Watcher (bishops) fires a laser that bounces off the walls. The UFO (rooks) is nearly invisible and abducts any enemy within 2 squares. The Egg (queen) cannot move and cracks every 2 moves. After 6 cracks it hatches into the Overlord: it moves like a queen and a knight and mind-controls every enemy piece it lands next to. Purple dots show the powers.',
+  list: ['<b>Clones</b> (pawns): every capture leaves a copy behind.', '<b>The Maw</b> (knights): swallows what it captures, then spits it back out as a missile.', '<b>The Watcher</b> (bishops): a laser that bounces off the walls. Recharges in 3 moves.', '<b>The UFO</b> (rooks): nearly invisible, abducts any enemy within 2 squares. Recharges in 3 moves.', '<b>The Egg</b> (queen): cannot move, cracks every 2 moves. After 6 cracks it hatches into <b>the Overlord</b>: moves like a queen and a knight, and mind-controls every enemy piece it lands next to.', 'Your army is your king plus one of each alien. Purple dots show their powers.'],
   icon: () => `<img src="${a51Src('ufo', 'w')}" alt="">`,
-  init(G, sides, unit) {
-    if (unit === 'egg') for (const col of sides) G.tags[col === 'w' ? 'd1' : 'd8'] = { type: 'egg', cracks: 0, n: 0 };
+  init(G, sides) {
+    for (const col of sides) G.tags[col === 'w' ? 'd1' : 'd8'] = { type: 'egg', cracks: 0, n: 0 };
   },
   allowStd(G, from) { const t = G.tags[from]; return !(t && t.type === 'egg'); },
   power(G, from, col, m) {
@@ -4348,10 +4348,10 @@ const A51 = {
       if (tg.type !== 'egg' || !m[sq] || sideOfPiece(m[sq]) !== col) continue;
       tg.n = (tg.n || 0) + 1;
       if (tg.n % 2 === 0) tg.cracks++;
-      if (tg.cracks >= 3) { tg.type = 'overlord'; fx.hatch = sq; }
+      if (tg.cracks >= A51_HATCH) { tg.type = 'overlord'; fx.hatch = sq; }
     }
     const ov = !mv.shot && t[mv.to] && t[mv.to].type === 'overlord' && m[mv.to] ? mv.to : null;
-    if (ov) { // mind control everything it touches, then a frenzy bonus move after a capture
+    if (ov) { // mind control everything it touches
       const f0 = ov.charCodeAt(0) - 97, r0 = +ov[1];
       for (const [df, dr] of KG) {
         const f = f0 + df, r = r0 + dr;
@@ -4362,7 +4362,6 @@ const A51 = {
         delete t[sq];
         fx.convert.push({ sq });
       }
-      if (mv.captured && !G.frenzy) fx.again = ov;
     }
   },
   skin(G, sq, p, sides, inGame) {
@@ -4375,7 +4374,7 @@ const A51 = {
       case 'r': return { src: a51Src('ufo', p.color), cls: 'cloak' };
       case 'q':
         if (tg && tg.type === 'overlord') return { src: a51Src('overlord', p.color) };
-        if (tg && tg.type === 'egg') return { src: a51Src('egg', p.color, tg.cracks) };
+        if (tg && tg.type === 'egg') return { src: a51Src('egg', p.color, Math.floor(tg.cracks / 2)) }; // the art shows up to 3 crack lines
         if (!inGame && sq === (p.color === 'w' ? 'd1' : 'd8')) return { src: a51Src('egg', p.color, 0) };
         return null;
       default: return null;
@@ -4386,7 +4385,7 @@ const A51 = {
     for (const sq in G.tags) {
       const tg = G.tags[sq];
       if (!m[sq]) continue;
-      if (tg.type === 'egg') out[sq] = `${tg.cracks}/3`;
+      if (tg.type === 'egg') out[sq] = `${tg.cracks}/${A51_HATCH}`;
       else if (tg.cd) out[sq] = String(tg.cd);
       else if (tg.ammo) out[sq] = '×' + tg.ammo;
     }
@@ -4695,7 +4694,7 @@ function renderCustom(anim) {
   board.set(c, { lastMove: G.lastMove, animate: anim, labels: customLabels(G) });
   setEvalBar(false);
   renderPlayers(customPlayers(G, G.vs, G.userColor), G.orientation, c.fen(), G.over ? null : c.turn());
-  const who = rule.oneSide ? (G.vs === 'friend' ? `${pName('w')} (White) plays the alien. ${pName('b')} has a full army.` : 'Only you get the alien. Stockfish has its full army.') : rule.both ? 'This rule applies to both sides.' : G.vs === 'friend' ? 'Both players get this power.' : 'Only you get this power. Stockfish plays normal chess.';
+  const who = rule.oneSide ? (G.vs === 'friend' ? `${pName('w')} (White) plays the aliens. ${pName('b')} has a full army.` : 'Only you get the aliens. Stockfish has its full army.') : rule.both ? 'This rule applies to both sides.' : G.vs === 'friend' ? 'Both players get this power.' : 'Only you get this power. Stockfish plays normal chess.';
   $('#cBanner').innerHTML = `<span class="eyebrow">Custom rules</span><h3>${esc(rule.title)}</h3>${rule.list ? `<ul class="a51-pow">${rule.list.map(x => `<li>${x}</li>`).join('')}</ul>` : `<p class="small">${esc(rule.text)}</p>`}<span class="c-who">${esc(who)}</span>`;
   statusInto($('#cStatus'), customStatus(G));
   const sans = G.log.map(e => e.san), sheet = $('#cMoves');

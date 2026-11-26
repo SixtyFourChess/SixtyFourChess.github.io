@@ -424,19 +424,24 @@ textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 0; }
 .rp-board { position: relative; width: 100%; aspect-ratio: 1 / 1; background: repeating-conic-gradient(#8f9197 0 25%, #ececec 0 50%) 0 0 / 25% 25%; box-shadow: 0 30px 80px rgba(0,0,0,.6); }
 .rp-board > div { position: absolute; inset: 0; pointer-events: none; }
 .rp-board > .rp-hl { z-index: 0; } .rp-board > .rp-pcs { z-index: 1; }
-.rp-hl > i { position: absolute; width: 12.5%; height: 12.5%; background: rgba(255, 214, 70, .34); box-shadow: 0 0 calc(var(--rpw, 400px) * .03) calc(var(--rpw, 400px) * .004) rgba(255, 205, 70, .55); animation: rphl .5s ease-out both; }
-.rp-hl > i.to { background: rgba(255, 214, 70, .5); box-shadow: 0 0 calc(var(--rpw, 400px) * .05) calc(var(--rpw, 400px) * .01) rgba(255, 200, 60, .8), inset 0 0 calc(var(--rpw, 400px) * .02) rgba(255, 255, 255, .5); z-index: 1; }
+.rp-hl > i { position: absolute; width: 12.5%; height: 12.5%; --hc: 232,150,70; background: rgba(var(--hc), .38); box-shadow: 0 0 calc(var(--rpw, 400px) * .03) calc(var(--rpw, 400px) * .004) rgba(var(--hc), .55); animation: rphl .25s ease-out both; }
+.rp-hl > i.to { background: rgba(var(--hc), .55); box-shadow: 0 0 calc(var(--rpw, 400px) * .05) calc(var(--rpw, 400px) * .01) rgba(var(--hc), .8), inset 0 0 calc(var(--rpw, 400px) * .02) rgba(255, 255, 255, .45); z-index: 1; }
+.rp-hl > i.lock { background: repeating-linear-gradient(45deg, rgba(255,40,50,.45) 0 6%, rgba(255,40,50,.15) 6% 12%); box-shadow: inset 0 0 0 2px rgba(255,40,50,.7); animation: rphl .3s ease-out both; }
+.rp-dust > i { position: absolute; border-radius: 50%; background: #fff; animation: rpdust linear infinite; }
+@keyframes rpdust { from { transform: translate(0, 0); } 50% { transform: translate(14px, -40px); } to { transform: translate(-6px, -90px); } }
+.rp-vig { background: radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0) 45%, rgba(0,0,0,.7) 100%); z-index: 3; }
+.rp-dust { z-index: 4; overflow: hidden; }
 @keyframes rphl { from { opacity: 0; } to { opacity: 1; } }
 .rp-pcs > img { position: absolute; width: 12.5%; height: 12.5%; will-change: transform; }
 .rp-punch { position: relative; }
 .rp-punch > .rp-fx { position: absolute; inset: 0; pointer-events: none; }
 .rp-fx > * { position: absolute; }
-.rp-hl > i.chk { background: rgba(255, 35, 45, .55); box-shadow: 0 0 calc(var(--rpw, 400px) * .06) calc(var(--rpw, 400px) * .012) rgba(255, 30, 40, .85); animation: rpchk .45s ease-in-out infinite alternate; z-index: 1; }
+.rp-hl > i.chk { background: rgba(255, 35, 45, .75); box-shadow: 0 0 calc(var(--rpw, 400px) * .06) calc(var(--rpw, 400px) * .012) rgba(255, 30, 40, .85); animation: rpchk .45s ease-in-out infinite alternate; z-index: 1; }
 @keyframes rpchk { from { opacity: .55; } to { opacity: 1; } }
 .rp-card { position: absolute; inset: 0; z-index: 12; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: calc(var(--rpw, 400px) * .02); padding: 7%; text-align: center; background: radial-gradient(circle at 50% 45%, rgba(20,20,26,.84), rgba(4,4,6,.94) 75%); pointer-events: none; font-family: "Montserrat", var(--font-display); text-transform: uppercase; }
 .rp-card .k { font-weight: 800; font-size: calc(var(--rpw, 400px) * .038); letter-spacing: .14em; color: #111; background: #ffd23f; padding: .35em .9em; border-radius: 999px; }
 .rp-card .l1 { font-weight: 900; font-size: calc(var(--rpw, 400px) * .118); line-height: .98; color: #fff; letter-spacing: -.01em; text-shadow: 0 0 calc(var(--rpw, 400px) * .04) rgba(255,255,255,.28); overflow-wrap: anywhere; }
-.rp-card .l2 { font-weight: 900; font-size: calc(var(--rpw, 400px) * .085); line-height: 1; background: linear-gradient(90deg, #ffd23f, #ff3d6e 55%, #b84dff); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 calc(var(--rpw, 400px) * .03) rgba(255,61,110,.45)); overflow-wrap: anywhere; }
+.rp-card .l2 { font-weight: 900; font-size: calc(var(--rpw, 400px) * .07); line-height: 1.05; color: #33e0ff; text-shadow: 0 0 calc(var(--rpw, 400px) * .03) rgba(51,224,255,.55); overflow-wrap: anywhere; }
 .rp-scene > .rp-layer { position: absolute; inset: 0; pointer-events: none; }
 .rp-bar { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: #0d0d11; color: #ddd; font: 600 13px var(--font-body); }
 .rp-bar button { border: 1px solid #2a2a33; background: #17171d; color: #eee; border-radius: 8px; height: 34px; min-width: 38px; padding: 0 10px; font: inherit; cursor: pointer; }
@@ -5158,8 +5163,9 @@ function confirmResign() {
 
 /* ============================================================
    REPLAY: watch a reviewed game like a ChessGameShorts edit
-   Straight board, no tilt; White moves zoom in gently, Black moves zoom back out. Pieces glide smoothly;
-   a capturing piece lifts up and drops onto its target, spinning first if it comes from more than 4 squares away.
+   Inspired by ZaveeCHESS edits: white/grey board on a dark vignetted stage with floating dust, colour-coded squares and
+   badges, a still camera in the opening that then punches in and follows the action (never tilted), snappy moves that
+   lean into their direction, red check lines, an opening-name card, and a slow-motion checkmate where the king falls.
    ============================================================ */
 const RP = { el: null, token: 0, paused: false, speed: 1, anims: new Set(), camT: 'translate(0px,0px) scale(1)' };
 const RP_STOP = {};
@@ -5239,9 +5245,17 @@ async function rpStart() {
 }
 async function rpPlay(tok) {
   const g = R.game, el = RP.el, L = rpLayout();
-  const cam = el.querySelector('.rp-cam'), pcs = el.querySelector('.rp-pcs'), fx = el.querySelector('.rp-fx'), hl = el.querySelector('.rp-hl');
+  const scene = el.querySelector('.rp-scene'), cam = el.querySelector('.rp-cam'), punch = el.querySelector('.rp-punch');
+  const pcs = el.querySelector('.rp-pcs'), fx = el.querySelector('.rp-fx'), hl = el.querySelector('.rp-hl');
   const top = el.querySelector('.rp-top'), prog = el.querySelector('.rp-prog');
   pcs.innerHTML = ''; fx.innerHTML = ''; hl.innerHTML = ''; top.innerHTML = '';
+  // floating dust over everything (Zavee-style atmosphere)
+  if (!scene.querySelector('.rp-dust')) {
+    const d = document.createElement('div'); d.className = 'rp-layer rp-dust';
+    for (let i = 0; i < 34; i++) { const s2 = 1 + Math.random() * 2.5; d.insertAdjacentHTML('beforeend', `<i style="left:${Math.random() * 100}%;top:${Math.random() * 100}%;width:${s2}px;height:${s2}px;animation-duration:${9 + Math.random() * 12}s;animation-delay:${-Math.random() * 20}s;opacity:${0.25 + Math.random() * 0.5}"></i>`); }
+    scene.appendChild(d);
+    const v = document.createElement('div'); v.className = 'rp-layer rp-vig'; scene.appendChild(v);
+  }
   const orient = board.orientation === 'b' ? 'b' : 'w', q = L.B / 8;
   const xy = sq => { const f = sq.charCodeAt(0) - 97, r = +sq[1] - 1; return orient === 'w' ? { x: f, y: 7 - r } : { x: 7 - f, y: r }; };
   const ctr = sq => { const p = xy(sq); return { x: (p.x + 0.5) * q, y: (p.y + 0.5) * q }; };
@@ -5249,7 +5263,7 @@ async function rpPlay(tok) {
   const place = (img, sq) => { const p = xy(sq); img.style.left = p.x * 12.5 + '%'; img.style.top = p.y * 12.5 + '%'; };
   const els = {};
   { const m = fenToMap(g.positions[0].fen); for (const sq in m) { const i = document.createElement('img'); i.src = PIECE_URL[keyOf(m[sq])]; i.alt = ''; place(i, sq); pcs.appendChild(i); els[sq] = i; } }
-  // camera: straight board, gentle zoom
+  // camera: straight board (no tilt); still during the opening, then it punches in and follows the action
   const camTo = (sq, z, dur) => {
     let tx = 0, ty = 0;
     if (sq && z > 1) {
@@ -5258,73 +5272,91 @@ async function rpPlay(tok) {
       ty = clamp(L.H / 2 - L.oy - z * c.y, -L.oy, L.H - L.oy - z * L.B);
     }
     const t = `translate(${tx}px,${ty}px) scale(${z})`, from = RP.camT;
+    if (t === from) return Promise.resolve();
     RP.camT = t;
-    return rpRun(cam, [{ transform: from }, { transform: t }], { duration: dur, easing: 'cubic-bezier(.45,0,.25,1)' });
+    return rpRun(cam, [{ transform: from, filter: 'blur(0)' }, { filter: 'blur(1.5px)', offset: 0.5 }, { transform: t, filter: 'blur(0)' }], { duration: dur, easing: 'cubic-bezier(.3,0,.2,1)' });
   };
   cam.style.transform = RP.camT = 'translate(0px,0px) scale(1)';
   const mk = (css, tag, parent) => { const e = document.createElement(tag || 'div'); Object.assign(e.style, css || {}); (parent || fx).appendChild(e); return e; };
+  const gone = (e, kf, o) => rpRun(e, kf, o).then(() => e.remove());
   const smooth = t => { t = Math.max(0, Math.min(1, t)); return t * t * t * (t * (t * 6 - 15) + 10); };
-  const glowF = k => k > 0.01 ? `drop-shadow(0 ${q * 0.08 * k}px ${q * 0.1 * k}px rgba(0,0,0,${0.35 * k}))` : 'none'; // just a shadow under a lifted piece, no glow
-  // a soft glow that blooms on the landing square
-  const bloom = (P, col, size) => { const e = mk({ left: P.x - size / 2 + 'px', top: P.y - size / 2 + 'px', width: size + 'px', height: size + 'px', borderRadius: '50%', background: `radial-gradient(circle, ${col} 0%, rgba(0,0,0,0) 65%)`, mixBlendMode: 'screen', zIndex: 1 }); rpRun(e, [{ transform: 'scale(.5)', opacity: 0.95 }, { transform: 'scale(1.2)', opacity: 0 }], { duration: 900, easing: 'ease-out' }).then(() => e.remove()); };
-  // ordinary moves: one smooth glide with a gentle lift
-  const glide = (img, fr, to) => {
-    const a = xy(fr), b = xy(to), dx = (a.x - b.x) * q, dy = (a.y - b.y) * q, dist = Math.hypot(dx, dy) / q, kf = [];
-    for (let i = 0; i <= 24; i++) {
-      const u = i / 24, s = smooth(u), arc = Math.sin(Math.PI * s);
-      kf.push({ offset: u, transform: `translate(${dx * (1 - s)}px,${dy * (1 - s) - q * Math.min(0.16, 0.05 + 0.03 * dist) * arc}px) scale(${1 + 0.07 * arc})`, filter: glowF(arc) });
+  const shadowF = k => k > 0.01 ? `drop-shadow(0 ${q * 0.08 * k}px ${q * 0.1 * k}px rgba(0,0,0,${0.35 * k}))` : 'none';
+  const flash = (col, a, dur) => { const f = mk({ position: 'absolute', inset: 0, background: col, zIndex: 20, pointerEvents: 'none' }, 'div', top); gone(f, [{ opacity: a }, { opacity: 0 }], { duration: dur, easing: 'ease-out' }); };
+  const shake = (amp, dur) => rpRun(scene, [{ transform: 'translate(0,0)' }, { transform: `translate(${-amp}px,${amp * 0.4}px)` }, { transform: `translate(${amp}px,${-amp * 0.3}px)` }, { transform: `translate(${-amp * 0.5}px,${amp * 0.2}px)` }, { transform: 'translate(0,0)' }], { duration: dur, easing: 'ease-out', fill: 'none' });
+  const bump = P => { punch.style.transformOrigin = `${P.x}px ${P.y}px`; rpRun(punch, [{ transform: 'scale(1)' }, { transform: 'scale(1.07)', offset: 0.25 }, { transform: 'scale(1)' }], { duration: 300, easing: 'ease-out', fill: 'none' }); };
+  // square colour by move type (Zavee: book orange, best/great green, mistakes red, brilliant cyan)
+  const HC = { book: '232,150,70', brilliant: '40,210,220', great: '120,205,70', best: '120,205,70', excellent: '120,205,70', good: '120,205,70', inaccuracy: '245,190,50', mistake: '235,90,60', miss: '235,70,70', blunder: '230,40,40' };
+  // ordinary moves: snappy slide with a small tilt toward the direction of travel, overshoot and settle; a trail on long moves
+  const slide = (img, fr, to, slow) => {
+    const a = xy(fr), b = xy(to), dx = (a.x - b.x) * q, dy = (a.y - b.y) * q, dist = Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));
+    const tilt = Math.max(-9, Math.min(9, -dx / q * 3)), dur = slow ? 650 : 230 + Math.min(110, dist * 18);
+    if (dist >= 3) for (let k = 1; k <= 3; k++) { // ghost trail
+      const gh = mk({ position: 'absolute', left: xy(to).x * q + 'px', top: xy(to).y * q + 'px', width: q + 'px', height: q + 'px', opacity: '0', zIndex: 2 }, 'img'); gh.src = img.src;
+      gone(gh, [{ transform: `translate(${dx}px,${dy}px)`, opacity: 0 }, { transform: `translate(${dx * (1 - k * 0.22)}px,${dy * (1 - k * 0.22)}px)`, opacity: 0.32 - k * 0.07, offset: 0.35 + k * 0.08 }, { transform: 'translate(0,0)', opacity: 0 }], { duration: dur, easing: 'cubic-bezier(.2,.7,.3,1)' });
     }
-    return rpRun(img, kf, { duration: 520 + Math.min(220, dist * 40), easing: 'linear', fill: 'none' });
+    return rpRun(img, [{ transform: `translate(${dx}px,${dy}px) rotate(0)` }, { transform: `translate(${dx * 0.35}px,${dy * 0.35}px) rotate(${tilt}deg)`, offset: 0.45 }, { transform: `translate(${-dx / Math.max(1, Math.hypot(dx, dy)) * q * 0.06}px,${-dy / Math.max(1, Math.hypot(dx, dy)) * q * 0.06}px) rotate(${-tilt * 0.3}deg)`, offset: 0.8 }, { transform: 'translate(0,0) rotate(0)' }], { duration: dur, easing: 'cubic-bezier(.2,.8,.3,1)', fill: 'none' });
   };
-  // captures: the piece lifts up, travels over its target and drops straight onto it (spinning if it came from far away)
-  const pounce = (img, fr, to, victim) => {
+  // captures: lift up, travel over the target, drop straight onto it (a full spin first from more than 4 squares away)
+  const pounce = (img, fr, to, victim, slow) => {
     const a = xy(fr), b = xy(to), dx = (a.x - b.x) * q, dy = (a.y - b.y) * q, dist = Math.hypot(dx, dy) / q;
-    const spin = Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y)) > 4 ? 360 : 0; // from more than 4 squares away it spins
-    const T1 = spin ? 320 : 180, T2 = T1 + 440 + Math.min(220, dist * 40), T3 = T2, T = T3 + 150, Lh = q * 0.42, kf = [];
+    const spin = Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y)) > 4 ? 360 : 0;
+    const k = slow ? 1.6 : 1, T1 = (spin ? 300 : 130) * k, T2 = T1 + (260 + Math.min(160, dist * 30)) * k, T = T2 + 110 * k, Lh = q * 0.38, kf = [];
     for (let t = 0; t <= T; t += 15) {
-      let x = 0, y = 0, lift = 0, sc = 1, gl = 0;
-      let rot = spin;
-      if (t < T1) { const s = smooth(t / T1); x = dx; y = dy; lift = Lh * s; sc = 1 + 0.18 * s; gl = s; rot = spin * s; }
-      else if (t < T2) { const s = smooth((t - T1) / (T2 - T1)); x = dx * (1 - s); y = dy * (1 - s); lift = Lh + q * 0.1 * Math.sin(Math.PI * s); sc = 1.18; gl = 1; }
-      else { const s = ((t - T3) / (T - T3)) ** 2; lift = Lh * (1 - s); sc = 1.18 - 0.18 * s; gl = 1 - 0.4 * s; }
-      kf.push({ offset: Math.min(1, t / T), transform: `translate(${x}px,${y - lift}px) rotate(${rot}deg) scale(${sc})`, filter: glowF(gl) });
+      let x = 0, y = 0, lift = 0, sc = 1, sh = 0, rot = spin;
+      if (t < T1) { const s = smooth(t / T1); x = dx; y = dy; lift = Lh * s; sc = 1 + 0.16 * s; sh = s; rot = spin * s; }
+      else if (t < T2) { const s = smooth((t - T1) / (T2 - T1)); x = dx * (1 - s); y = dy * (1 - s); lift = Lh + q * 0.08 * Math.sin(Math.PI * s); sc = 1.16; sh = 1; }
+      else { const s = ((t - T2) / (T - T2)) ** 2; lift = Lh * (1 - s); sc = 1.16 - 0.16 * s; sh = 1 - 0.4 * s; }
+      kf.push({ offset: Math.min(1, t / T), transform: `translate(${x}px,${y - lift}px) rotate(${rot}deg) scale(${sc})`, filter: shadowF(sh) });
     }
     kf[kf.length - 1].offset = 1;
-    if (victim) { // the target shrinks away as the piece comes down on it
-      victim.style.zIndex = 1;
-      rpRun(victim, [{ transform: 'scale(1)' }, { transform: 'scale(1)', offset: T2 / T }, { transform: 'scale(.6)', opacity: 0 }], { duration: T, easing: 'linear', fill: 'forwards' });
-    }
+    if (victim) { victim.style.zIndex = 1; rpRun(victim, [{ transform: 'scale(1)' }, { transform: 'scale(1)', offset: T2 / T }, { transform: 'scale(.6)', opacity: 0 }], { duration: T, easing: 'linear', fill: 'forwards' }); }
     return rpRun(img, kf, { duration: T, easing: 'linear', fill: 'none' });
   };
   const badgeAt = (cls, sq, big) => {
     if (!BADGE_PNG[cls]) return null;
-    const p = xy(sq), sz = q * (big ? 0.62 : 0.5);
-    const col = { brilliant: '#26c2a3', great: '#5c8bb0', best: '#81b64c', inaccuracy: '#f7c631', mistake: '#ffa459', miss: '#ff7769', blunder: '#fa412d' }[cls] || '#fff';
-    const e = mk({ left: (p.x + 1) * q - sz * 0.62 + 'px', top: p.y * q - sz * 0.38 + 'px', width: sz + 'px', height: sz + 'px', zIndex: 7, filter: `drop-shadow(0 3px 6px rgba(0,0,0,.5)) drop-shadow(0 0 ${q * 0.15}px ${col})` }, 'img');
+    const p = xy(sq), sz = q * (big ? 0.6 : 0.48);
+    const e = mk({ position: 'absolute', left: (p.x + 1) * q - sz * 0.62 + 'px', top: p.y * q - sz * 0.38 + 'px', width: sz + 'px', height: sz + 'px', zIndex: 7, filter: 'drop-shadow(0 3px 6px rgba(0,0,0,.5))' }, 'img');
     e.src = 'data:image/png;base64,' + BADGE_PNG[cls];
-    rpRun(e, [{ transform: 'scale(.3)', opacity: 0 }, { transform: 'scale(1.1)', opacity: 1, offset: 0.6 }, { transform: 'scale(1)', opacity: 1 }], { duration: 320, easing: 'ease-out' });
+    rpRun(e, [{ transform: 'scale(0)' }, { transform: 'scale(1.3)', offset: 0.55 }, { transform: 'scale(.92)', offset: 0.8 }, { transform: 'scale(1)' }], { duration: 340, easing: 'ease-out' });
     return e;
   };
+  // check: red line from the checking piece to the king, and a red burst on the king
+  const checkFx = (A, K) => {
+    const len = Math.hypot(K.x - A.x, K.y - A.y);
+    const ln = mk({ position: 'absolute', left: A.x + 'px', top: A.y - q * 0.03 + 'px', width: len + 'px', height: q * 0.06 + 'px', background: 'linear-gradient(90deg, rgba(255,40,50,.2), #ff2a3c)', boxShadow: '0 0 10px rgba(255,40,60,.8)', transformOrigin: '0 50%', transform: `rotate(${Math.atan2(K.y - A.y, K.x - A.x)}rad)`, zIndex: 3, borderRadius: '99px' });
+    gone(ln, [{ clipPath: 'inset(0 100% 0 0)', opacity: 1 }, { clipPath: 'inset(0 0 0 0)', opacity: 1, offset: 0.3 }, { clipPath: 'inset(0 0 0 0)', opacity: 0 }], { duration: 900 });
+    const bs = mk({ position: 'absolute', left: K.x - q * 0.45 + 'px', top: K.y - q * 0.95 + 'px', width: q * 0.9 + 'px', height: q * 0.9 + 'px', zIndex: 6 });
+    bs.innerHTML = '<svg viewBox="0 0 100 100" width="100%" height="100%"><path d="M50 4 L58 34 L90 22 L68 48 L96 62 L62 64 L70 96 L50 72 L30 96 L38 64 L4 62 L32 48 L10 22 L42 34 Z" fill="#ff2a3c" stroke="#fff" stroke-width="4" stroke-linejoin="round"/></svg>';
+    gone(bs, [{ transform: 'scale(0) rotate(-30deg)', opacity: 1 }, { transform: 'scale(1.1) rotate(0)', opacity: 1, offset: 0.3 }, { transform: 'scale(1) rotate(0)', opacity: 1, offset: 0.75 }, { transform: 'scale(1.2)', opacity: 0 }], { duration: 950, easing: 'ease-out' });
+  };
+  // the cards: title, the opening's name, the result
   const card = async (kicker, l1, l2, hold) => {
     const e = mk({}, 'div', top);
     e.className = 'rp-card';
     e.innerHTML = (kicker ? `<div class="k">${esc(kicker)}</div>` : '') + `<div class="l1">${esc(l1)}</div>` + (l2 ? `<div class="l2">${esc(l2)}</div>` : '');
-    await rpRun(e, [{ opacity: 0, transform: 'scale(1.06)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 600, easing: 'ease-out' });
+    await rpRun(e, [{ opacity: 0, transform: 'scale(1.15)' }, { opacity: 1, transform: 'scale(.98)', offset: 0.7 }, { opacity: 1, transform: 'scale(1)' }], { duration: 420, easing: 'ease-out' });
     await rpWait(hold, tok);
-    await rpRun(e, [{ opacity: 1 }, { opacity: 0 }], { duration: 600, easing: 'ease-in' });
+    await rpRun(e, [{ opacity: 1 }, { opacity: 0 }], { duration: 380, easing: 'ease-in' });
     e.remove();
   };
   const h = g.headers || {}, wn = h.White && h.White !== '?' ? h.White : 'White', bn = h.Black && h.Black !== '?' ? h.Black : 'Black';
   const n = g.moves.length, last = mkChess(g.positions[n].fen), mated = last.in_checkmate();
+  const clsOf = i => (g.cls && g.cls[i] ? g.cls[i].cls : null);
+  const brill = [...Array(n).keys()].filter(i => clsOf(i) === 'brilliant').length;
+  let lastBook = -1; for (let i = 0; i < n; i++) if (clsOf(i) === 'book') lastBook = i;
+  // the hook line, like his titles
+  const hook = brill >= 2 ? `${brill} brilliant moves!` : brill === 1 ? 'One brilliant move!' : mated ? `Checkmate in ${Math.ceil(n / 2)} moves!` : (g.opening || 'Every move counts');
   prog.textContent = 'Starting…';
-  await card(h.Event && !/\?/.test(h.Event) ? h.Event : '', wn, 'vs ' + bn, 1300);
+  await card(`${wn} vs ${bn}`, hook, g.opening && hook !== g.opening ? g.opening : '', 1200);
   for (let i = 0; i < n; i++) {
-    const mv = g.moves[i], A = g.positions[i], Bp = g.positions[i + 1];
-    const cls = g.cls && g.cls[i] ? g.cls[i].cls : null;
+    const mv = g.moves[i], A = g.positions[i], Bp = g.positions[i + 1], cls = clsOf(i);
     const after = mkChess(Bp.fen), mate = after.in_checkmate(), check = after.in_check();
+    const opening = i <= lastBook || i < 6;
+    const big = cls === 'brilliant' || cls === 'great' || mate;
     prog.textContent = `Move ${Math.ceil((i + 1) / 2)} · ${i + 1}/${n}`;
-    if (mv.color === 'w') await camTo(mv.to, cls === 'brilliant' || cls === 'great' || mate ? 1.38 : 1.2, 500); else await camTo(null, 1, 500);
-    // which piece goes where (castling, en passant and promotion come from the two positions)
+    // camera
+    if (opening) await camTo(null, 1, 380);
+    else await camTo(mv.to, mate ? 1.7 : big ? 1.65 : 1.45, mate ? 650 : 300);
     const pm = fenToMap(A.fen), nm = fenToMap(Bp.fen);
     const vac = Object.keys(pm).filter(sq => pm[sq] !== nm[sq]), arr = Object.keys(nm).filter(sq => nm[sq] !== pm[sq]);
     const used = new Set(), pairs = [];
@@ -5333,15 +5365,14 @@ async function rpPlay(tok) {
       if (!fr && mv.uci && mv.uci[4] && !used.has(mv.from)) fr = mv.from;
       if (fr) { used.add(fr); pairs.push([fr, to]); }
     }
-    const capSqs = vac.filter(sq => !used.has(sq));
-    const victim = capSqs.length ? els[capSqs[0]] : null;
-    hl.innerHTML = '';
+    const capSqs = vac.filter(sq => !used.has(sq)), victim = capSqs.length ? els[capSqs[0]] : null;
+    const promo = !!(mv.uci && mv.uci[4]);
     const anims = pairs.map(([fr, to], k) => {
       const img = els[fr];
       if (!img) return Promise.resolve();
       place(img, to); img.style.zIndex = 4;
-      const pr = k === 0 && victim ? pounce(img, fr, to, victim) : glide(img, fr, to);
-      return pr.then(() => { img.src = PIECE_URL[keyOf(nm[to])]; img.style.zIndex = ''; });
+      const pr = k === 0 && victim ? pounce(img, fr, to, victim, mate) : slide(img, fr, to, mate);
+      return pr.then(() => { img.style.zIndex = ''; if (!promo) img.src = PIECE_URL[keyOf(nm[to])]; });
     });
     const next = {};
     for (const sq in els) if (!used.has(sq) && nm[sq] && pm[sq] === nm[sq]) next[sq] = els[sq];
@@ -5352,23 +5383,55 @@ async function rpPlay(tok) {
     Object.assign(els, next);
     moveSound(mv, after);
     const land = pairs.length ? pairs[0][1] : mv.to, P = ctr(land);
-    let marks = [mv.from, land].map((sq, k) => { const p = xy(sq); return `<i class="${k ? 'to' : ''}" style="left:${p.x * 12.5}%;top:${p.y * 12.5}%"></i>`; }).join('');
-    if (check) { const kq = Object.keys(nm).find(sq => nm[sq] === (mv.color === 'w' ? 'k' : 'K')); if (kq) { const p = xy(kq); marks += `<i class="chk" style="left:${p.x * 12.5}%;top:${p.y * 12.5}%"></i>`; } }
+    // promotion: the pawn flashes cyan and becomes its new piece
+    if (promo && els[land]) {
+      const im = els[land];
+      await rpRun(im, [{ filter: 'brightness(1)' }, { filter: 'brightness(3) sepia(1) hue-rotate(140deg) saturate(4)', offset: 0.6 }, { filter: 'brightness(4)' }], { duration: 260, fill: 'none' });
+      im.src = PIECE_URL[keyOf(nm[land])]; flash('rgba(60,220,230,.9)', 0.35, 220); bump(P);
+    }
+    // square highlights in the move's colour
+    const col = HC[cls] || '232,150,70';
+    let marks = [mv.from, land].map((sq, k) => { const p = xy(sq); return `<i class="${k ? 'to' : ''}" style="left:${p.x * 12.5}%;top:${p.y * 12.5}%;--hc:${col}"></i>`; }).join('');
+    const ksq = Object.keys(nm).find(sq => nm[sq] === (mv.color === 'w' ? 'k' : 'K'));
+    if (check && ksq) { const p = xy(ksq); marks += `<i class="chk" style="left:${p.x * 12.5}%;top:${p.y * 12.5}%"></i>`; }
+    if (mate && ksq) { // lock down every square around the king
+      const f0 = ksq.charCodeAt(0) - 97, r0 = +ksq[1];
+      for (let df = -1; df <= 1; df++) for (let dr = -1; dr <= 1; dr++) { if (!df && !dr) continue; const f = f0 + df, r = r0 + dr; if (f < 0 || f > 7 || r < 1 || r > 8) continue; const p = xy(String.fromCharCode(97 + f) + r); marks += `<i class="lock" style="left:${p.x * 12.5}%;top:${p.y * 12.5}%"></i>`; }
+    }
     hl.innerHTML = marks;
-    bloom(P, victim ? 'rgba(255,130,60,.85)' : 'rgba(255,220,120,.7)', q * (victim ? 2.6 : 2));
-    const showBadge = cls && !['book', 'forced', 'good', 'excellent'].includes(cls) && (cls !== 'best' || mate || !!victim || check);
-    const bdg = showBadge ? badgeAt(mate ? (cls === 'brilliant' ? 'brilliant' : 'best') : cls, land, cls === 'brilliant' || cls === 'great' || mate) : null;
-    await rpWait(mate ? 1800 : victim || check ? 650 : 420, tok);
-    if (bdg && !mate) rpRun(bdg, [{ opacity: 1 }, { opacity: 0 }], { duration: 250 }).then(() => bdg.remove());
+    // hits
+    if (cls === 'brilliant') { flash('rgba(40,220,230,.9)', 0.45, 260); shake(L.W * 0.016, 360); bump(P); }
+    else if (victim) { flash('#fff', 0.28, 120); bump(P); shake(L.W * (big ? 0.014 : 0.008), 260); }
+    if (check && ksq && !mate) { checkFx(P, ctr(ksq)); if (!victim) shake(L.W * 0.008, 240); }
+    const showBadge = cls && cls !== 'forced';
+    const bdg = showBadge ? badgeAt(mate ? (cls === 'brilliant' ? 'brilliant' : 'best') : cls, land, big) : null;
+    if (mate) {
+      // checkmate: flash overload, the king's square pulses red, then he falls over
+      flash('#fff', 0.8, 260); setTimeout(() => flash('rgba(255,30,50,.9)', 0.4, 400), 180); shake(L.W * 0.025, 480);
+      if (ksq) checkFx(P, ctr(ksq));
+      await rpWait(700, tok);
+      const kimg = ksq && els[ksq];
+      if (kimg) { kimg.style.transformOrigin = '50% 85%'; await rpRun(kimg, [{ transform: 'rotate(0)', filter: 'none' }, { transform: 'rotate(-6deg)', filter: 'sepia(1) saturate(6) hue-rotate(-40deg) brightness(1.1)', offset: 0.3 }, { transform: 'rotate(90deg)', filter: 'sepia(1) saturate(6) hue-rotate(-40deg) brightness(1.1)' }], { duration: 750, easing: 'ease-in' }); sfx('boom'); shake(L.W * 0.012, 260); }
+      await rpWait(1100, tok);
+      const black = mk({ position: 'absolute', inset: 0, background: '#000', zIndex: 15 }, 'div', top);
+      await rpRun(black, [{ opacity: 0 }, { opacity: 1 }], { duration: 600 });
+      hl.innerHTML = ''; fx.innerHTML = '';
+      rpRun(black, [{ opacity: 1 }, { opacity: 0 }], { duration: 500, delay: 900 }).then(() => black.remove());
+    } else {
+      // pace: steady in the opening, faster once the fight starts, a beat longer on the big ones
+      await rpWait(opening ? 620 : cls === 'brilliant' ? 950 : victim || check ? 420 : 260, tok);
+      if (bdg) rpRun(bdg, [{ opacity: 1 }, { opacity: 0 }], { duration: 200 }).then(() => bdg.remove());
+    }
+    // the opening's name, once the book moves are done
+    if (i === lastBook && lastBook >= 3 && g.opening && i < n - 1) { await camTo(null, 1, 300); await card('Opening', g.opening, '', 900); }
   }
-  await camTo(null, 1, 600);
+  await camTo(null, 1, 500);
   prog.textContent = 'Finished';
   const res = h.Result || '';
   const winner = mated ? (last.turn() === 'w' ? bn : wn) : res === '1-0' ? wn : res === '0-1' ? bn : '';
   await card(res && res !== '*' ? res : '', winner || (res === '1/2-1/2' ? 'Draw' : 'Game over'), winner ? (mated ? 'wins by checkmate' : 'wins') : '', 1700);
   prog.textContent = 'Finished · ⟲ to watch again';
 }
-
 /* ============================================================
    Ending and intro animations (respect the Animations setting)
    ============================================================ */

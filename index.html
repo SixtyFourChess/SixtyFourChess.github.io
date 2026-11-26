@@ -440,6 +440,17 @@ textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 0; }
 .fx-ghost { position: fixed; z-index: 60; pointer-events: none; filter: drop-shadow(0 8px 10px rgba(0, 0, 0, .35)); }
 
 /* online play */
+.o-chat { display: flex; flex-direction: column; gap: 8px; }
+.o-chat-head { display: flex; align-items: center; justify-content: space-between; }
+.o-chat-log { height: 170px; overflow-y: auto; padding: 10px 12px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px; font-size: 14px; overflow-wrap: anywhere; }
+.o-chat-log:empty::before { content: "No messages yet."; color: var(--muted); font-size: 13px; }
+.o-chat-log .cm { align-self: flex-start; max-width: 85%; padding: 6px 10px; border-radius: 10px 10px 10px 3px; background: var(--sunk); }
+.o-chat-log .cm.me { align-self: flex-end; border-radius: 10px 10px 3px 10px; background: var(--accent-soft); }
+.o-chat-log .cm b { display: block; font-size: 11.5px; color: var(--muted); font-weight: 700; }
+.o-chat-log .note { align-self: center; color: var(--muted); font-size: 12px; }
+.o-chat-form { display: flex; gap: 8px; }
+.o-chat-form input { flex: 1; min-width: 0; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 9px 11px; font: 500 14px var(--font-body); color: var(--ink); }
+.tab .o-unread { display: inline-block; min-width: 16px; padding: 0 4px; margin-left: 5px; border-radius: 8px; background: var(--c-blunder, #d9534f); color: #fff; font-size: 11px; line-height: 16px; text-align: center; }
 .o-code { font: 700 40px/1 var(--font-mono); letter-spacing: .18em; text-align: center; padding: 18px 10px; border-radius: 12px; background: var(--surface); border: 1px dashed var(--accent); user-select: all; }
 .o-join { display: flex; gap: 8px; }
 .o-join input { flex: 1; min-width: 0; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 9px 11px; font: 700 16px var(--font-mono); letter-spacing: .12em; text-transform: uppercase; }
@@ -659,6 +670,11 @@ textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 0; }
             <button class="btn primary" id="oRematch" type="button">Rematch</button>
             <button class="btn" id="oReview" type="button">Review game</button>
             <button class="btn" id="oLeave" type="button">New game</button>
+          </div>
+          <div class="o-chat" id="oChat">
+            <div class="o-chat-head"><span class="sec-label">Chat</span><button class="linkish" id="oMute" type="button">Mute opponent</button></div>
+            <div class="o-chat-log" id="oChatLog" aria-live="polite"></div>
+            <form class="o-chat-form" id="oChatForm" autocomplete="off"><input id="oChatIn" type="text" maxlength="200" placeholder="Say something…" aria-label="Chat message"><button class="btn" type="submit">Send</button></form>
           </div>
           <p class="small muted" id="oCodeNote"></p>
         </div>
@@ -4450,7 +4466,7 @@ const ONLINE = {
   thinking: false, job: null, hintJob: null,
   ws: null, lobbyWs: null, code: null, st: null, recvAt: 0, msg: '', msgErr: false, searchSince: 0, waiting: 0,
   name: store.get('s64.oname', store.get('s64.me', '') || ''), tcIdx: clamp(store.get('s64.otc2', 2) | 0, 0, OTCS.length - 1),
-  colorPref: store.get('s64.ocolor', 'r'), variant: store.get('s64.ovar', 'std') === '960' ? '960' : 'std', retry: 0, retryTimer: null, ping: null, flash: null
+  chat: [], unread: 0, colorPref: store.get('s64.ocolor', 'r'), variant: store.get('s64.ovar', 'std') === '960' ? '960' : 'std', retry: 0, retryTimer: null, ping: null, flash: null
 };
 function onlineServer() { return String(store.get('s64.server', '') || ONLINE_SERVER_DEFAULT || '').replace(/\/+$/, ''); }
 function onlineToken() {
@@ -4481,7 +4497,7 @@ function onlineSetMsg(m, err) { ONLINE.msg = m || ''; ONLINE.msgErr = !!err; if 
 function onlineConnect(code, pref, quiet) {
   const G = ONLINE;
   onlineClose();
-  G.code = code; G.st = null; G.over = null; G.chess = new Chess(); G.lastMove = null; G.retry = 0;
+  G.code = code; G.st = null; G.over = null; G.chess = new Chess(); G.lastMove = null; G.retry = 0; G.chat = []; G.unread = 0;
   G.phase = quiet ? 'lobby' : 'connecting';
   G.quiet = !!quiet;
   store.set('s64.ogame', { code });
@@ -4504,6 +4520,13 @@ function onlineOpen(pref) {
       G.phase = 'lobby'; G.code = null; G.st = null;
       if (!G.quiet) onlineSetMsg(m.msg, true); else if (S.tab === 'online') renderPlay();
     } else if (m.t === 'reject') { G.pendingPly = null; onlineSetMsg(m.msg, true); }
+    else if (m.t === 'chatlog') { G.chat = Array.isArray(m.chat) ? m.chat : []; renderChat(); }
+    else if (m.t === 'chat' && m.msg) {
+      G.chat.push(m.msg); if (G.chat.length > 60) G.chat.shift();
+      const mine = G.st && G.st.players[G.userColor] && m.msg.id === G.st.players[G.userColor].id;
+      if (!mine && !onlineMuted()) { if (S.tab !== 'online') G.unread++; if (document.hidden && G.flash) document.title = '💬 ' + G.flash; }
+      renderChat();
+    }
   };
   ws.onopen = () => { clearInterval(G.ping); G.ping = setInterval(() => { try { ws.send('{"t":"ping"}'); } catch (e) { /* closed */ } }, 25000); };
   ws.onclose = () => {
@@ -4526,7 +4549,7 @@ function onlineClose() {
 function onlineLeave() {
   const G = ONLINE;
   onlineClose();
-  G.code = null; G.st = null; G.phase = 'lobby'; G.over = null; G.lastMove = null; G.chess = new Chess();
+  G.code = null; G.st = null; G.phase = 'lobby'; G.over = null; G.lastMove = null; G.chess = new Chess(); G.chat = []; G.unread = 0; renderChat();
   store.set('s64.ogame', null);
   onlineSetMsg('');
 }
@@ -4768,11 +4791,43 @@ function renderOnline(anim) {
     rm.textContent = themR ? 'Accept rematch' : meR ? 'Rematch sent…' : 'Rematch';
     rm.disabled = meR || !opp.online;
     $('#oReview').disabled = sans.length < 2;
+    renderChat();
     $('#oCodeNote').textContent = G.over && themR ? `${opp.name} wants a rematch!` : `Game code ${st.code}`;
   }
 }
 
+function onlineMuted() { const m = store.get('s64.omute', {}) || {}; return !!(ONLINE.code && m[ONLINE.code]); }
+function renderChat() {
+  const G = ONLINE, log = $('#oChatLog'), tab = $('#tabOnline');
+  if (S.tab === 'online') G.unread = 0;
+  tab.innerHTML = 'Online' + (G.unread ? `<span class="o-unread">${G.unread > 9 ? '9+' : G.unread}</span>` : '');
+  if (!log) return;
+  const st = G.st, myId = st && st.players[G.userColor] ? st.players[G.userColor].id : null, muted = onlineMuted();
+  const opp = st && st.players[oOpp()] ? st.players[oOpp()].name : 'your opponent';
+  const atBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 30;
+  let hidden = 0;
+  log.innerHTML = G.chat.map(c => {
+    const mine = c.id === myId;
+    if (!mine && muted) { hidden++; return ''; }
+    return `<div class="cm${mine ? ' me' : ''}"><b>${mine ? 'You' : esc(c.name)}</b>${esc(c.text)}</div>`;
+  }).join('') + (muted ? `<div class="note">You muted ${esc(opp)}${hidden ? ` (${hidden} hidden)` : ''}.</div>` : '');
+  if (atBottom) log.scrollTop = log.scrollHeight;
+  $('#oMute').textContent = muted ? 'Unmute' : 'Mute opponent';
+}
 function wireOnline() {
+  $('#oChatForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const inp = $('#oChatIn'), text = inp.value.trim();
+    if (!text) return;
+    if (onlineSend({ t: 'chat', text })) { inp.value = ''; $('#oChatLog').scrollTop = 1e9; }
+    else onlineSetMsg("Couldn't send, reconnecting…", true);
+  });
+  $('#oMute').addEventListener('click', () => {
+    const m = store.get('s64.omute', {}) || {};
+    if (!ONLINE.code) return;
+    if (m[ONLINE.code]) delete m[ONLINE.code]; else m[ONLINE.code] = true;
+    store.set('s64.omute', m); renderChat();
+  });
   $('#oTc').innerHTML = OTCS.map((t, i) => `<button type="button" class="chip" data-tc="${i}" title="${esc(t[3] || t[2])}">${esc(t[2])}${t[3] ? ` <span class="muted">${esc(t[3])}</span>` : ''}</button>`).join('');
   $('#oTc').addEventListener('click', e => { const b = e.target.closest('[data-tc]'); if (!b) return; ONLINE.tcIdx = +b.dataset.tc; store.set('s64.otc2', ONLINE.tcIdx); renderPlay(); });
   $('#oVar').addEventListener('click', e => { const b = e.target.closest('[data-v]'); if (!b) return; ONLINE.variant = b.dataset.v; store.set('s64.ovar', ONLINE.variant); renderPlay(); });
@@ -4818,6 +4873,7 @@ function setTab(t) {
   $('#ladderPanel').hidden = t !== 'ladder';
   $('#customPanel').hidden = t !== 'custom';
   $('#onlinePanel').hidden = t !== 'online';
+  if (t === 'online') { ONLINE.unread = 0; renderChat(); }
   $('#reviewPanel').hidden = t !== 'review';
   hideSayPop();
   if (t === 'review') renderReview();

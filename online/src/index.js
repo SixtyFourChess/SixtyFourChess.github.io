@@ -135,7 +135,7 @@ export class Game {
         clock: { w: base, b: base, running: null, since: 0 }, gone: { w: null, b: null }, created: Date.now()
       };
       this.newStart(this.g);
-      if (o.reserved) for (const c of ['w', 'b']) this.g.seats[c] = { token: o.reserved[c].token, name: cleanName(o.reserved[c].name), info: o.reserved[c].info || '' };
+      if (o.reserved) for (const c of ['w', 'b']) this.g.seats[c] = { token: o.reserved[c].token, id: crypto.randomUUID().slice(0, 8), name: cleanName(o.reserved[c].name), info: o.reserved[c].info || '' };
       await this.save();
       return new Response('ok');
     }
@@ -156,15 +156,17 @@ export class Game {
       if (!free.length) return fail('That game already has two players.');
       if (free.length === 2) { const pref = url.searchParams.get('pref'); color = pref === 'w' || pref === 'b' ? pref : (Math.random() < 0.5 ? 'w' : 'b'); }
       else color = free[0];
-      g.seats[color] = { token, name: cleanName(url.searchParams.get('name')), info: '' };
+      g.seats[color] = { token, id: crypto.randomUUID().slice(0, 8), name: cleanName(url.searchParams.get('name')), info: '' };
     } else if (url.searchParams.get('name')) {
       g.seats[color].name = cleanName(url.searchParams.get('name'));
     }
+    if (!g.seats[color].id) g.seats[color].id = crypto.randomUUID().slice(0, 8);
     server.serializeAttachment({ token });
     g.gone[color] = null;
     this.checkClock(g);
     await this.save();
     this.broadcast();
+    server.send(JSON.stringify({ t: 'chatlog', chat: g.chat || [] }));
     return new Response(null, { status: 101, webSocket: client });
   }
 
@@ -231,7 +233,7 @@ export class Game {
 
   stateFor(color) {
     const g = this.g, now = Date.now();
-    const pl = c => g.seats[c] ? { name: g.seats[c].name, online: this.online(c), info: g.seats[c].info || '', away: !!g.gone[c] } : null;
+    const pl = c => g.seats[c] ? { id: g.seats[c].id, name: g.seats[c].name, online: this.online(c), info: g.seats[c].info || '', away: !!g.gone[c] } : null;
     return {
       t: 'state', code: g.code, you: color, round: g.round, tc: g.tc, variant: g.variant || 'std', startFen: g.startFen || null, n960: g.n960 ?? null, players: { w: pl('w'), b: pl('b') },
       moves: g.moves, over: g.over, drawOffer: g.drawOffer, rematch: g.rematch,
@@ -254,6 +256,21 @@ export class Game {
     if (!g) return;
     const color = this.colorOf(ws);
     if (!color) return;
+    if (m.t === 'chat') {
+      const text = String(m.text || '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 200);
+      if (!text) return;
+      const now = Date.now();
+      this.spam = this.spam || {};
+      const seen = this.spam[color] = (this.spam[color] || []).filter(t => now - t < 10_000); // at most 6 messages per 10 seconds
+      if (seen.length >= 6) { ws.send(JSON.stringify({ t: 'reject', msg: 'Slow down, you are sending messages too fast.' })); return; }
+      seen.push(now);
+      const msg = { id: g.seats[color].id, name: g.seats[color].name, text, ts: now };
+      g.chat = (g.chat || []).concat(msg).slice(-60);
+      await this.ctx.storage.put('g', g);
+      const out = JSON.stringify({ t: 'chat', msg });
+      for (const s of this.ctx.getWebSockets()) { try { s.send(out); } catch (e) { /* closed */ } }
+      return;
+    }
     const opp = other(color), both = g.seats.w && g.seats.b;
     this.checkClock(g);
     const reject = msg => { ws.send(JSON.stringify({ t: 'reject', msg })); ws.send(JSON.stringify(this.stateFor(color))); };

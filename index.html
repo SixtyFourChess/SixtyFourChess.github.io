@@ -646,6 +646,7 @@ textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 0; }
           <div id="ladResult" hidden></div>
           <div class="sheet" id="ladMoves" data-empty="Moves will appear here."></div>
           <div class="btn-row">
+            <button class="btn" id="ladUndo" type="button">Take back</button>
             <button class="btn" id="ladFlip" type="button">Flip</button>
             <button class="btn" id="ladResign" type="button">Resign</button>
             <button class="btn" id="ladLeave" type="button">Opponents</button>
@@ -3647,6 +3648,7 @@ function renderLadder(anim) {
   sheet.innerHTML = sheetHTML(sans, sans.length, 'w', 1, null, false);
   scrollCurrent(sheet);
   $('#ladResign').disabled = !!G.over || !sans.length;
+  $('#ladUndo').disabled = !G.chess.history().some((m, i) => (i % 2 === 0) === (fenTurn(G.startFen || START_FEN) === G.userColor)); // you have a move to take back
   const rs = $('#ladResult');
   rs.hidden = !G.over;
   rs.innerHTML = ladderResultHTML();
@@ -5622,6 +5624,7 @@ function wire() {
   });
   $('#ladFlip').addEventListener('click', () => { LADDER.orientation = LADDER.orientation === 'w' ? 'b' : 'w'; savePlay(); renderPlay(); });
   $('#ladResign').addEventListener('click', resignPlay);
+  $('#ladUndo').addEventListener('click', undoPlay);
   $('#ladLeave').addEventListener('click', () => { pauseBot(LADDER); LADDER.phase = 'lobby'; savePlay(); renderPlay(); });
   $('#ladResult').addEventListener('click', e => {
     const b = e.target.closest('[data-lad]');

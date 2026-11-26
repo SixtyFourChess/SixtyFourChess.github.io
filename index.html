@@ -416,43 +416,18 @@ textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 0; }
 .bt-slash { border-radius: 50%; background: linear-gradient(90deg, rgba(255, 255, 255, 0), #fff 45%, #fff 55%, rgba(255, 255, 255, 0)); box-shadow: 0 0 10px rgba(255, 255, 255, .9); }
 
 /* ---------- Replay (ChessGameShorts-style edit) ---------- */
-.rp { position: fixed; inset: 0; z-index: 3000; background: #040406; display: flex; align-items: center; justify-content: center; }
+.rp { position: fixed; inset: 0; z-index: 3000; background: #111114; display: flex; align-items: center; justify-content: center; }
 .rp-frame { position: relative; height: 100vh; height: 100dvh; max-width: 100vw; aspect-ratio: 9 / 16; display: flex; flex-direction: column; }
 @media (max-aspect-ratio: 9/17) { .rp-frame { height: auto; width: 100vw; } }
-.rp-scene { position: relative; flex: 1; overflow: hidden; background: radial-gradient(circle at 50% 45%, #26262c, #0c0c0f 72%); }
-.rp-cam { position: absolute; left: 0; width: 100%; transform-origin: 0 0; will-change: transform; }
-.rp-scene { perspective: calc(var(--rpw, 400px) * 1.7); }
-.rp-3d { position: absolute; inset: 0; transform-origin: 50% 50%; will-change: transform, filter; }
-.rp-ring { border-radius: 50%; border: calc(var(--rpw, 400px) * .008) solid #fff; pointer-events: none; z-index: 8; }
-.rp-glitch { position: absolute; inset: 0; z-index: 19; pointer-events: none; mix-blend-mode: difference; }
-.rp-vig2 { background: radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0) 30%, rgba(0,0,0,.92) 100%); z-index: 3; opacity: 0; }
-.rp-board { position: relative; width: 100%; aspect-ratio: 1 / 1; background: repeating-conic-gradient(#8f9197 0 25%, #ececec 0 50%) 0 0 / 25% 25%; box-shadow: 0 30px 80px rgba(0,0,0,.6); }
+.rp-scene { position: relative; flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.rp-board { position: relative; width: 100%; aspect-ratio: 1 / 1; background: repeating-conic-gradient(#8f9197 0 25%, #ececec 0 50%) 0 0 / 25% 25%; }
 .rp-board > div { position: absolute; inset: 0; pointer-events: none; }
 .rp-board > .rp-hl { z-index: 0; } .rp-board > .rp-pcs { z-index: 1; }
-.rp-hl > i { position: absolute; width: 12.5%; height: 12.5%; --hc: 232,150,70; background: rgba(var(--hc), .38); box-shadow: 0 0 calc(var(--rpw, 400px) * .03) calc(var(--rpw, 400px) * .004) rgba(var(--hc), .55); animation: rphl .25s ease-out both; }
-.rp-hl > i.to { background: rgba(var(--hc), .55); box-shadow: 0 0 calc(var(--rpw, 400px) * .05) calc(var(--rpw, 400px) * .01) rgba(var(--hc), .8), inset 0 0 calc(var(--rpw, 400px) * .02) rgba(255, 255, 255, .45); z-index: 1; }
-.rp-hl > i.lock { background: repeating-linear-gradient(45deg, rgba(255,40,50,.45) 0 6%, rgba(255,40,50,.15) 6% 12%); box-shadow: inset 0 0 0 2px rgba(255,40,50,.7); animation: rphl .3s ease-out both; }
-.rp-dust > i { position: absolute; border-radius: 50%; background: #fff; animation: rpdust linear infinite; }
-@keyframes rpdust { from { transform: translate(0, 0); } 50% { transform: translate(14px, -40px); } to { transform: translate(-6px, -90px); } }
-.rp-vig { background: radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0) 45%, rgba(0,0,0,.7) 100%); z-index: 3; }
-.rp-dust { z-index: 4; overflow: hidden; }
-@keyframes rphl { from { opacity: 0; } to { opacity: 1; } }
-.rp-pcs > img { position: absolute; width: 12.5%; height: 12.5%; will-change: transform; }
-.rp-punch { position: relative; }
-.rp-punch > .rp-fx { position: absolute; inset: 0; pointer-events: none; }
-.rp-fx > * { position: absolute; }
-.rp-hl > i.chk { background: rgba(255, 35, 45, .75); box-shadow: 0 0 calc(var(--rpw, 400px) * .06) calc(var(--rpw, 400px) * .012) rgba(255, 30, 40, .85); animation: rpchk .45s ease-in-out infinite alternate; z-index: 1; }
-@keyframes rpchk { from { opacity: .55; } to { opacity: 1; } }
-.rp-card { position: absolute; inset: 0; z-index: 12; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: calc(var(--rpw, 400px) * .02); padding: 7%; text-align: center; background: radial-gradient(circle at 50% 45%, rgba(20,20,26,.84), rgba(4,4,6,.94) 75%); pointer-events: none; font-family: "Montserrat", var(--font-display); text-transform: uppercase; }
-.rp-card .k { font-weight: 800; font-size: calc(var(--rpw, 400px) * .038); letter-spacing: .14em; color: #111; background: #ffd23f; padding: .35em .9em; border-radius: 999px; }
-.rp-card .l1 { font-weight: 900; font-size: calc(var(--rpw, 400px) * .118); line-height: .98; color: #fff; letter-spacing: -.01em; text-shadow: 0 0 calc(var(--rpw, 400px) * .04) rgba(255,255,255,.28); overflow-wrap: anywhere; }
-.rp-card .l2 { font-weight: 900; font-size: calc(var(--rpw, 400px) * .07); line-height: 1.05; color: #33e0ff; text-shadow: 0 0 calc(var(--rpw, 400px) * .03) rgba(51,224,255,.55); overflow-wrap: anywhere; }
-.rp-scene > .rp-layer { position: absolute; inset: 0; pointer-events: none; }
+.rp-hl > i { position: absolute; width: 12.5%; height: 12.5%; background: rgba(255, 214, 90, .45); }
+.rp-pcs > img { position: absolute; width: 12.5%; height: 12.5%; }
 .rp-bar { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: #0d0d11; color: #ddd; font: 600 13px var(--font-body); }
 .rp-bar button { border: 1px solid #2a2a33; background: #17171d; color: #eee; border-radius: 8px; height: 34px; min-width: 38px; padding: 0 10px; font: inherit; cursor: pointer; }
 .rp-bar button:hover { background: #22222a; }
-.rp-bar button.off { opacity: .55; }
-.rp-bar .rp-song { border: 1px solid #2a2a33; background: #17171d; color: #eee; border-radius: 8px; height: 34px; padding: 0 6px; font: inherit; max-width: 96px; }
 .rp-bar .rp-prog { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-align: center; opacity: .75; font-variant-numeric: tabular-nums; }
 
 /* ---------- Secret army ---------- */
@@ -5169,185 +5144,13 @@ function confirmResign() {
 
 
 /* ============================================================
-   REPLAY: watch a reviewed game like a ChessGameShorts edit
-   Inspired by ZaveeCHESS edits: white/grey board on a dark vignetted stage with floating dust, colour-coded squares and
-   badges, a still camera in the opening that then punches in and follows the action (never tilted), snappy moves that
-   lean into their direction, red check lines, an opening-name card, and a slow-motion checkmate where the king falls.
+   REPLAY: watch a reviewed game play itself out, move by move, on a plain board
    ============================================================ */
-/* Replay music: the owner's phonk tracks with fixed-tempo beat maps (per = seconds per beat, t0 = first beat,
-   drop = beat index of the main drop, breaks = beat indices of later drops after a break, end = last loud beat,
-   hit = bass-hit strength 0-9 per beat). The replay is planned onto this grid, and the song's playback clock drives it. */
-const RP_SONGS = [{"name":"Phonk 1","src":"audio/phonk1.mp3","per":0.51282,"t0":0.3123,"drop":36,"breaks":[68,132,164],"end":195,"hit":"946274954242252333763353454346444445979999999899989999999699999999599999999999999899999997999999959996195428732992298438752664386334999998999999999999999899999999549999969999999999999998999999995673522221"},{"name":"Phonk 2","src":"audio/phonk2.mp3","per":0.54545,"t0":0.04,"drop":32,"breaks":[96],"end":127,"hit":"001593219559832493693714482342489999999999999999999999998999999843696369955461558635736447324262999999999999799569999999799998979263482575634659"},{"name":"Phonk 3","src":"audio/phonk3.mp3","per":0.70305,"t0":0.0377,"drop":21,"breaks":[44,85,107],"end":125,"hit":"095247669923969297934968997484879976423999353829979529699954884799767869995384669695384999444336998752899684336698763669957355481"},{"name":"Phonk 4","src":"audio/phonk4.mp3","per":0.6001,"t0":0.3152,"drop":25,"breaks":[89,137],"end":152,"hit":"06445644323434445353656533425778673546655432923764338996926443357552785658526376959995996938429499139937655877694639944646467746649535765696656999844469586635849544498430"},{"name":"Phonk 5","src":"audio/phonk5.mp3","per":0.34698,"t0":0.0174,"drop":64,"breaks":[94,127],"end":191,"hit":"077334637433562209859454624791711927543267545163234391357669498893385345955569445649768945786999394568553557586679786585365759998575874736559667875473374665969967759369958557487979959777756964476545655553465574446464558435555950"},{"name":"Phonk 6","src":"audio/phonk6.mp3","per":0.46154,"t0":0.0462,"drop":32,"breaks":[48,151],"end":217,"hit":"567457562573499427683953956774579999999989987548989799979778998999958999999599969867799999869999999699999975936894345673946664549999999899959386495559799789999996999997998599869996999799649989868599919886989799779737540"}];
-const RPM = { ctx: null, bufs: {}, src: null, gain: null, lp: null, base: 0, t0: 0, rate: 1, audio: false, paused: false, song: null, last: -1 };
-const rpmMusicOn = () => store.get('s64.rpMusic', true) !== false;
-function rpmCtx() {
-  if (!RPM.ctx) {
-    const C = window.AudioContext || window.webkitAudioContext;
-    if (!C) return null;
-    RPM.ctx = new C();
-    RPM.lp = RPM.ctx.createBiquadFilter(); RPM.lp.type = 'lowpass'; RPM.lp.frequency.value = 20000;
-    RPM.gain = RPM.ctx.createGain(); RPM.gain.gain.value = 0.62;
-    RPM.lp.connect(RPM.gain); RPM.gain.connect(RPM.ctx.destination);
-  }
-  return RPM.ctx;
-}
-async function rpmLoad(song) {
-  if (RPM.bufs[song.src]) return RPM.bufs[song.src];
-  const ctx = rpmCtx();
-  if (!ctx) return null;
-  const ab = await (await fetch(song.src)).arrayBuffer();
-  const buf = await new Promise((ok, no) => { const p = ctx.decodeAudioData(ab, ok, no); if (p && p.catch) p.catch(no); });
-  RPM.bufs[song.src] = buf;
-  return buf;
-}
-const rpmLoopLen = song => 8 * Math.floor((song.end - song.drop) / 8);
-const rpmBeat = (song, k) => song.t0 + k * song.per;
-const rpmHit = (song, k) => {
-  if (k !== Math.floor(k)) return 0;
-  const L = rpmLoopLen(song), j = k < song.drop + L ? k : song.drop + ((k - song.drop) % L);
-  return +song.hit[j] || 0;
-};
-// the clock, in song seconds (unwrapped across loops); runs from the audio when there is music, else from a virtual clock
-function rpmNow() {
-  if (RPM.audio) return RPM.base + (RPM.ctx.currentTime - RPM.t0) * RPM.rate;
-  return RPM.base + (RPM.paused ? 0 : (performance.now() / 1000 - RPM.t0)) * RPM.rate;
-}
-function rpmStop() {
-  if (RPM.src) { try { RPM.src.stop(); } catch (e) { /* ignore */ } RPM.src.disconnect(); RPM.src = null; }
-  RPM.audio = false;
-}
-async function rpmStart(song, at, rate, buf) {
-  rpmStop();
-  RPM.song = song; RPM.rate = rate; RPM.paused = false;
-  const ctx = buf && rpmCtx();
-  if (ctx) {
-    if (ctx.state !== 'running') { try { await ctx.resume(); } catch (e) { /* ignore */ } }
-    const s = ctx.createBufferSource();
-    s.buffer = buf; s.loop = true;
-    s.loopStart = rpmBeat(song, song.drop); s.loopEnd = rpmBeat(song, song.drop + rpmLoopLen(song));
-    s.playbackRate.value = rate;
-    s.connect(RPM.lp);
-    RPM.lp.frequency.cancelScheduledValues(0); RPM.lp.frequency.value = 20000;
-    RPM.gain.gain.cancelScheduledValues(0); RPM.gain.gain.value = rpmMusicOn() ? 0.62 : 0;
-    const off = Math.max(0, at);
-    s.start(0, off);
-    RPM.src = s; RPM.audio = true; RPM.t0 = ctx.currentTime; RPM.base = at;
-  } else { RPM.t0 = performance.now() / 1000; RPM.base = at; }
-}
-function rpmRate(r) {
-  RPM.base = rpmNow(); RPM.t0 = RPM.audio ? RPM.ctx.currentTime : performance.now() / 1000; RPM.rate = r;
-  if (RPM.src) RPM.src.playbackRate.value = r;
-}
-function rpmPause(on) {
-  if (on === RPM.paused) return;
-  if (RPM.audio) { RPM.paused = on; on ? RPM.ctx.suspend() : RPM.ctx.resume(); return; }
-  if (on) { RPM.base = rpmNow(); RPM.paused = true; } else { RPM.t0 = performance.now() / 1000; RPM.paused = false; }
-}
-const rpmVol = () => (rpmMusicOn() ? 0.62 : 0);
-// the pre-drop cut: muffle and drop the music, then slam it back on the landing
-function rpmDuck(on) {
-  if (!RPM.audio) return;
-  const t = RPM.ctx.currentTime, gn = RPM.gain.gain, f = RPM.lp.frequency;
-  gn.cancelScheduledValues(t); f.cancelScheduledValues(t);
-  if (on) { gn.setTargetAtTime(rpmVol() * 0.18, t, 0.05); f.setTargetAtTime(320, t, 0.06); }
-  else { gn.setValueAtTime(rpmVol(), t); f.setValueAtTime(20000, t); }
-}
-// before the drop: the music opens up from muffled (a build) and then cuts to near silence until the drop lands
-function rpmBuild(fromT, cutT) {
-  if (!RPM.audio) return;
-  const now = rpmNow(), at = t => RPM.ctx.currentTime + Math.max(0, t - now) / RPM.rate;
-  const gn = RPM.gain.gain, f = RPM.lp.frequency, t0 = at(fromT), t1 = at(cutT);
-  gn.cancelScheduledValues(0); f.cancelScheduledValues(0);
-  f.setValueAtTime(20000, RPM.ctx.currentTime);
-  if (t1 - t0 > 0.6) { f.setValueAtTime(380, t0); f.exponentialRampToValueAtTime(14000, t1); }
-  gn.setValueAtTime(rpmVol(), RPM.ctx.currentTime); gn.setValueAtTime(rpmVol(), t1); gn.linearRampToValueAtTime(rpmVol() * 0.04, t1 + 0.04);
-}
-function rpmFade(sec) {
-  if (!RPM.audio) return;
-  const t = RPM.ctx.currentTime, gn = RPM.gain.gain;
-  gn.cancelScheduledValues(t); gn.setValueAtTime(gn.value, t); gn.linearRampToValueAtTime(0, t + sec);
-  const s = RPM.src; setTimeout(() => { if (RPM.src === s) rpmStop(); }, sec * 1000 + 100);
-}
-function rpmMute(on) {
-  store.set('s64.rpMusic', !on);
-  if (RPM.audio) { const t = RPM.ctx.currentTime; RPM.gain.gain.cancelScheduledValues(t); RPM.gain.gain.setValueAtTime(rpmVol(), t); }
-}
-// piece animation lengths (ms), shared by the planner and the replay
-const rpCheb = (a, b) => Math.max(Math.abs(a.charCodeAt(0) - b.charCodeAt(0)), Math.abs(+a[1] - +b[1]));
-const rpEuc = (a, b) => Math.hypot(a.charCodeAt(0) - b.charCodeAt(0), +a[1] - +b[1]);
-const rpSlideMs = (fr, to, slow) => (slow ? 650 : 230 + Math.min(110, rpCheb(fr, to) * 18));
-function rpPounceMs(fr, to, slow) {
-  const spin = rpCheb(fr, to) > 4, k = slow ? 1.6 : 1, T1 = (spin ? 300 : 130) * k, T2 = T1 + (260 + Math.min(160, rpEuc(fr, to) * 30)) * k;
-  return { T1, T2, T: T2 + 110 * k, spin };
-}
-const rpLeadMs = (mv, slow) => (mv.captured ? rpPounceMs(mv.from, mv.to, slow).T : rpSlideMs(mv.from, mv.to, slow));
-/* Plan the whole replay on the song's beats:
-   title card over the build-up -> opening moves on slow beats -> opening card -> first real move ON the drop ->
-   one move per beat (captures and checks snap to the hardest bass hit) -> music cuts out -> mate slams on a bar (a
-   natural drop if one is close) -> the king hits the floor on a later beat. Times are song seconds (when a move LANDS). */
-function rpPlan(g, song, o) {
-  const n = g.moves.length, per = song.per, B = k => rpmBeat(song, k);
-  const kO = Math.max(1, Math.round(0.9 / per)), kM = per >= 0.4 ? 1 : 2;
-  const lead = g.moves.map((mv, i) => rpLeadMs(mv, o.mated && i === n - 1) / 1000);
-  let ob = o.ob;
-  if (o.mated && ob > n - 1) ob = n - 1;
-  const card = o.card && ob < n && ob >= 1;
-  const cardBeats = Math.ceil(2.1 / per);
-  let anchor = song.drop, kk = [], startT;
-  for (let tries = 0; tries < 40; tries++) {
-    kk = [];
-    // opening moves on slow beats, ending one card-length before the drop (if the game is all theory, its last move hits the drop)
-    for (let j = 0; j < Math.min(ob, n); j++) kk[j] = ob >= n ? anchor - (n - 1 - j) * kO : anchor - (card ? cardBeats : 0) - (ob - j) * kO;
-    startT = B(kk[0] !== undefined ? kk[0] : anchor) - (lead[0] || 0.3) - 2.6;
-    if (startT >= 0) break;
-    anchor += 4; // not enough intro: push everything one bar later
-  }
-  if (startT < 0) startT = 0;
-  let k = anchor;
-  for (let i = ob; i < n; i++) {
-    const mv = g.moves[i], last = i === n - 1;
-    if (i === ob) k = anchor;
-    else {
-      const prev = g.moves[i - 1], extra = (o.cls[i - 1] === 'brilliant' ? kM : 0) + (prev.uci && prev.uci[4] ? 0.3 : 0);
-      const gap = lead[i] + 0.1 + extra * per + (o.mated && last ? 0.65 + Math.max(0.7, per * 2) : 0);
-      let nk = k + kM; while (B(nk) - B(k) < gap) nk += kM;
-      if (o.mated && last) {
-        while ((nk - song.drop) % 4) nk++; // land on a bar
-        const L = rpmLoopLen(song);
-        const nat = song.breaks.flatMap(b => [0, 1, 2, 3].map(m => b + m * L)).filter(b => b >= nk && b <= nk + 8);
-        if (nat.length) nk = Math.min(...nat);
-      } else if ((mv.captured || /\+|#/.test(mv.san || '')) && rpmHit(song, nk + 1) > rpmHit(song, nk) + 2) nk += 1;
-      k = nk;
-    }
-    kk[i] = k;
-  }
-  const land = kk.map(B);
-  const plan = { land, lead, startT, ob, card, per, kM };
-  plan.titleUntil = (land[0] !== undefined ? land[0] - lead[0] : B(anchor)) - 0.15;
-  if (card) plan.cardUntil = land[ob] - lead[ob] - 0.05;
-  if (o.mated) {
-    const km = kk[n - 1], prevLand = n > 1 ? land[n - 2] : startT;
-    plan.duckT = Math.max(prevLand + 0.15, land[n - 1] - lead[n - 1] - 0.65 - Math.max(0.5, per * 2));
-    let nb = 2; while (nb * per < 1.4) nb += 2;
-    plan.fallT = B(km + nb);
-  }
-  return plan;
-}
-// wait until the song clock reaches t (pauses and speed changes are handled by the clock itself)
-async function rpAt(t, tok) {
-  for (;;) {
-    if (tok !== RP.token) throw RP_STOP;
-    const left = t - rpmNow();
-    if (left <= 0) return;
-    await sleep(Math.max(4, Math.min(40, (left * 1000) / RPM.rate - 4)));
-  }
-}
-const RP = { el: null, token: 0, paused: false, speed: 1, anims: new Set(), camT: 'translate(0px,0px) scale(1)' };
+const RP = { el: null, token: 0, paused: false, speed: 1, anims: new Set() };
 const RP_STOP = {};
 function rpRun(el, kf, opt) {
   const a = el.animate(kf, Object.assign({ fill: 'forwards' }, opt));
   a.playbackRate = RP.speed;
-  if (RP.skip > 0) a.currentTime = RP.skip; // started late (a slow frame): jump ahead so it still lands on the beat
   if (RP.paused) a.pause();
   RP.anims.add(a);
   return a.finished.catch(() => {}).finally(() => RP.anims.delete(a));
@@ -5367,7 +5170,6 @@ function closeReplay() {
   RP.token++;
   for (const a of RP.anims) { try { a.cancel(); } catch (e) { /* ignore */ } }
   RP.anims.clear();
-  rpmStop();
   if (RP.el) { RP.el.remove(); RP.el = null; }
   document.removeEventListener('keydown', rpKeys, true);
 }
@@ -5378,7 +5180,6 @@ function rpKeys(e) {
 }
 function rpPause(on) {
   RP.paused = on;
-  rpmPause(on);
   for (const a of RP.anims) { try { on ? a.pause() : a.play(); } catch (e) { /* ignore */ } }
   if (RP.el) RP.el.querySelector('[data-rp="pause"]').textContent = on ? '▶' : '❚❚';
 }
@@ -5386,14 +5187,11 @@ function startReplay() {
   const g = R.game;
   if (!g || !g.moves.length) return;
   closeReplay();
-  RP.paused = false; RP.si = null;
+  RP.paused = false;
   const el = document.createElement('div');
   el.className = 'rp';
-  el.innerHTML = `<div class="rp-frame"><div class="rp-scene">
-      <div class="rp-3d"><div class="rp-cam"><div class="rp-punch"><div class="rp-board"><div class="rp-hl"></div><div class="rp-pcs"></div></div><div class="rp-fx"></div></div></div></div>
-      <div class="rp-layer rp-top"></div>
-    </div>
-    <div class="rp-bar"><button type="button" data-rp="restart" title="Restart">⟲</button><button type="button" data-rp="pause" title="Pause (space)">❚❚</button><button type="button" data-rp="speed" title="Speed">1×</button><button type="button" data-rp="music" title="Music on/off">♪</button><button type="button" data-rp="fx" title="Wild: 3D camera and effects. Calm: flat board, light effects">FX</button><select class="rp-song" title="Song"><option value="auto">Auto</option>${RP_SONGS.map((s2, i) => `<option value="${i}">${esc(s2.name)}</option>`).join('')}</select><span class="rp-prog"></span><button type="button" data-rp="close" title="Close (Esc)">✕</button></div></div>`;
+  el.innerHTML = `<div class="rp-frame"><div class="rp-scene"><div class="rp-board"><div class="rp-hl"></div><div class="rp-pcs"></div></div></div>
+    <div class="rp-bar"><button type="button" data-rp="restart" title="Restart">⟲</button><button type="button" data-rp="pause" title="Pause (space)">❚❚</button><button type="button" data-rp="speed" title="Speed">1×</button><span class="rp-prog"></span><button type="button" data-rp="close" title="Close (Esc)">✕</button></div></div>`;
   document.body.appendChild(el);
   RP.el = el;
   el.querySelector('.rp-bar').addEventListener('click', e => {
@@ -5403,218 +5201,35 @@ function startReplay() {
     if (k === 'close') closeReplay();
     else if (k === 'pause') rpPause(!RP.paused);
     else if (k === 'restart') { rpPause(false); rpStart(); }
-    else if (k === 'speed') { RP.speed = RP.speed === 1 ? 1.5 : RP.speed === 1.5 ? 2 : 1; b.textContent = RP.speed + '×'; for (const a of RP.anims) a.playbackRate = RP.speed; rpmRate(RP.speed); }
-    else if (k === 'music') { rpmMute(rpmMusicOn()); rpMusicBtn(); }
-    else if (k === 'fx') { store.set('s64.rpFx', rpWild() ? 'calm' : 'wild'); rpMusicBtn(); rpPause(false); rpStart(); }
+    else if (k === 'speed') { RP.speed = RP.speed === 1 ? 1.5 : RP.speed === 1.5 ? 2 : 1; b.textContent = RP.speed + '×'; for (const a of RP.anims) a.playbackRate = RP.speed; }
   });
-  const sel = el.querySelector('.rp-song');
-  sel.value = String(store.get('s64.rpSong', 'auto'));
-  if (!sel.value) sel.value = 'auto';
-  sel.addEventListener('change', () => { store.set('s64.rpSong', sel.value); RP.si = null; rpPause(false); rpStart(); sel.blur(); });
   el.querySelector('[data-rp="speed"]').textContent = RP.speed + '×';
-  rpMusicBtn();
   document.addEventListener('keydown', rpKeys, true);
   rpStart();
-}
-const rpWild = () => store.get('s64.rpFx', 'wild') !== 'calm';
-function rpMusicBtn() {
-  const b = RP.el && RP.el.querySelector('[data-rp="music"]');
-  if (b) { const on = rpmMusicOn(); b.textContent = on ? '♪' : '♪̸'; b.classList.toggle('off', !on); }
-  const f = RP.el && RP.el.querySelector('[data-rp="fx"]');
-  if (f) { f.textContent = rpWild() ? 'FX: Wild' : 'FX: Calm'; f.classList.toggle('off', !rpWild()); }
-}
-function rpLayout() {
-  const sc = RP.el.querySelector('.rp-scene'), W = sc.clientWidth, H = sc.clientHeight;
-  RP.el.querySelector('.rp-cam').style.top = (H - W) / 2 + 'px';
-  RP.el.style.setProperty('--rpw', W + 'px');
-  return { W, H, B: W, oy: (H - W) / 2 };
 }
 async function rpStart() {
   const tok = ++RP.token;
   for (const a of RP.anims) { try { a.cancel(); } catch (e) { /* ignore */ } }
   RP.anims.clear();
-  rpmStop();
   try { await rpPlay(tok); } catch (e) { if (e !== RP_STOP) console.error(e); }
 }
 async function rpPlay(tok) {
-  const g = R.game, el = RP.el, L = rpLayout();
-  const scene = el.querySelector('.rp-scene'), cam = el.querySelector('.rp-cam'), punch = el.querySelector('.rp-punch');
-  const pcs = el.querySelector('.rp-pcs'), fx = el.querySelector('.rp-fx'), hl = el.querySelector('.rp-hl');
-  const top = el.querySelector('.rp-top'), prog = el.querySelector('.rp-prog');
-  pcs.innerHTML = ''; fx.innerHTML = ''; hl.innerHTML = ''; top.innerHTML = '';
-  // floating dust over everything (Zavee-style atmosphere)
-  if (!scene.querySelector('.rp-dust')) {
-    const d = document.createElement('div'); d.className = 'rp-layer rp-dust';
-    for (let i = 0; i < 34; i++) { const s2 = 1 + Math.random() * 2.5; d.insertAdjacentHTML('beforeend', `<i style="left:${Math.random() * 100}%;top:${Math.random() * 100}%;width:${s2}px;height:${s2}px;animation-duration:${9 + Math.random() * 12}s;animation-delay:${-Math.random() * 20}s;opacity:${0.25 + Math.random() * 0.5}"></i>`); }
-    scene.appendChild(d);
-    const v = document.createElement('div'); v.className = 'rp-layer rp-vig'; scene.appendChild(v);
-    const v2 = document.createElement('div'); v2.className = 'rp-layer rp-vig2'; scene.appendChild(v2);
-  }
-  const orient = board.orientation === 'b' ? 'b' : 'w', q = L.B / 8;
+  const g = R.game, el = RP.el;
+  const pcs = el.querySelector('.rp-pcs'), hl = el.querySelector('.rp-hl'), prog = el.querySelector('.rp-prog');
+  pcs.innerHTML = ''; hl.innerHTML = '';
+  const orient = board.orientation === 'b' ? 'b' : 'w';
   const xy = sq => { const f = sq.charCodeAt(0) - 97, r = +sq[1] - 1; return orient === 'w' ? { x: f, y: 7 - r } : { x: 7 - f, y: r }; };
-  const ctr = sq => { const p = xy(sq); return { x: (p.x + 0.5) * q, y: (p.y + 0.5) * q }; };
   const keyOf = ch => (ch === ch.toUpperCase() ? 'w' : 'b') + ch.toUpperCase();
   const place = (img, sq) => { const p = xy(sq); img.style.left = p.x * 12.5 + '%'; img.style.top = p.y * 12.5 + '%'; };
   const els = {};
   { const m = fenToMap(g.positions[0].fen); for (const sq in m) { const i = document.createElement('img'); i.src = PIECE_URL[keyOf(m[sq])]; i.alt = ''; place(i, sq); pcs.appendChild(i); els[sq] = i; } }
-  // camera: straight board (no tilt); still during the opening, then it punches in and follows the action
-  const W3 = rpWild(), d3 = el.querySelector('.rp-3d');
-  const camTo = (sq, z, dur, ease) => {
-    let tx = 0, ty = 0;
-    if (sq && z > 1) {
-      const c = typeof sq === 'string' ? ctr(sq) : sq;
-      tx = clamp(L.W / 2 - z * c.x, L.W - z * L.B, 0);
-      ty = clamp(L.H / 2 - L.oy - z * c.y, -L.oy, L.H - L.oy - z * L.B);
-    }
-    const t = `translate(${tx}px,${ty}px) scale(${z})`, from = RP.camT;
-    if (t === from) return Promise.resolve();
-    RP.camT = t;
-    return rpRun(cam, [{ transform: from, filter: 'blur(0)' }, { filter: 'blur(1.5px)', offset: 0.5 }, { transform: t, filter: 'blur(0)' }], { duration: dur, easing: ease || 'cubic-bezier(.3,0,.2,1)' });
-  };
-  // Wild mode (ZaveeCHESS): the board tips back into 3D on the drop and swings Dutch angles on every hit
-  const EXPO = 'cubic-bezier(.16,1,.3,1)';
-  // clear any finished (fill-forwards) camera, tilt and vignette animations from a previous run
-  for (const e of [cam, d3, pcs, scene.querySelector('.rp-vig2'), punch, scene]) if (e && e.getAnimations) e.getAnimations().forEach(a => a.cancel());
-  RP.tilt = 'rotateX(0deg) rotateZ(0deg)'; d3.style.transform = RP.tilt; d3.style.filter = '';
-  const tiltTo = (rx, rz, dur, ease) => {
-    const t = `rotateX(${rx}deg) rotateZ(${rz}deg)`, from = RP.tilt;
-    if (t === from) return Promise.resolve();
-    RP.tilt = t;
-    return rpRun(d3, [{ transform: from }, { transform: t }], { duration: dur, easing: ease || EXPO });
-  };
-  const rgb = (px, dur) => rpRun(pcs, [{ filter: `drop-shadow(${-px}px 0 0 rgba(255,0,60,.75)) drop-shadow(${px}px 0 0 rgba(0,230,255,.75))` }, { filter: `drop-shadow(${-px * 0.4}px 0 0 rgba(255,0,60,.5)) drop-shadow(${px * 0.4}px 0 0 rgba(0,230,255,.5))`, offset: 0.4 }, { filter: 'drop-shadow(0 0 0 rgba(0,0,0,0)) drop-shadow(0 0 0 rgba(0,0,0,0))' }], { duration: dur, easing: 'ease-out', fill: 'none' });
-  const ring = (P, colr, size, dur) => { const r0 = q * 0.5; const e = mk({ left: P.x - r0 + 'px', top: P.y - r0 + 'px', width: 2 * r0 + 'px', height: 2 * r0 + 'px', borderColor: colr }); e.className = 'rp-ring'; gone(e, [{ transform: 'scale(.2)', opacity: 1 }, { transform: `scale(${size})`, opacity: 0 }], { duration: dur || 480, easing: 'cubic-bezier(.1,.7,.3,1)' }); };
-  const squash = img => img && rpRun(img, [{ transform: 'scale(1.16,.84)' }, { transform: 'scale(.95,1.06)', offset: 0.5 }, { transform: 'scale(1)' }], { duration: 170, easing: 'ease-out', fill: 'none' });
-  const glitch = (colr, dur) => {
-    const e = mk({}, 'div', top); e.className = 'rp-glitch';
-    const bars = [...Array(7)].map(() => { const y = Math.random() * 100, hh = 1 + Math.random() * 5; return `transparent ${y}%, ${colr} ${y}%, ${colr} ${y + hh}%, transparent ${y + hh}%`; });
-    e.style.background = `linear-gradient(180deg, ${bars.sort((a, b) => parseFloat(a.split(' ')[1]) - parseFloat(b.split(' ')[1])).join(', ')})`;
-    gone(e, [{ opacity: 1, transform: 'translateX(-3%)' }, { opacity: 1, transform: 'translateX(4%)', offset: 0.35 }, { opacity: 0.8, transform: 'translateX(-2%)', offset: 0.7 }, { opacity: 0, transform: 'translateX(0)' }], { duration: dur || 160, easing: 'steps(4)' });
-  };
-  let dutch = 1;
-  const hitTilt = (deg, dur) => { dutch = -dutch; return tiltTo(24, dutch * deg, dur || 220); };
-  // on beats with no move: the camera still punches and a ring fires from the last piece (his "cowbell" pulses)
-  const pulsesUntil = async (tEnd, sq, colr) => {
-    if (!W3) return;
-    const per = song.per;
-    let k = Math.floor((rpmNow() - song.t0) / per + 0.5) + 1;
-    for (; rpmBeat(song, k) < tEnd - 0.12; k++) {
-      await rpAt(rpmBeat(song, k), tok);
-      const P2 = ctr(sq); bump(P2); ring(P2, colr || 'rgba(255,255,255,.9)', 2.2, 420); shake(L.W * 0.006, 160);
-    }
-  };
-  cam.style.transform = RP.camT = 'translate(0px,0px) scale(1)';
-  const mk = (css, tag, parent) => { const e = document.createElement(tag || 'div'); Object.assign(e.style, css || {}); (parent || fx).appendChild(e); return e; };
-  const gone = (e, kf, o) => rpRun(e, kf, o).then(() => e.remove());
-  const smooth = t => { t = Math.max(0, Math.min(1, t)); return t * t * t * (t * (t * 6 - 15) + 10); };
-  const shadowF = k => k > 0.01 ? `drop-shadow(0 ${q * 0.08 * k}px ${q * 0.1 * k}px rgba(0,0,0,${0.35 * k}))` : 'none';
-  const flash = (col, a, dur) => { const f = mk({ position: 'absolute', inset: 0, background: col, zIndex: 20, pointerEvents: 'none' }, 'div', top); gone(f, [{ opacity: a }, { opacity: 0 }], { duration: dur, easing: 'ease-out' }); };
-  const shake = (amp, dur) => rpRun(scene, [{ transform: 'translate(0,0)' }, { transform: `translate(${-amp}px,${amp * 0.4}px)` }, { transform: `translate(${amp}px,${-amp * 0.3}px)` }, { transform: `translate(${-amp * 0.5}px,${amp * 0.2}px)` }, { transform: 'translate(0,0)' }], { duration: dur, easing: 'ease-out', fill: 'none' });
-  const bump = P => { punch.style.transformOrigin = `${P.x}px ${P.y}px`; rpRun(punch, [{ transform: 'scale(1)' }, { transform: 'scale(1.07)', offset: 0.25 }, { transform: 'scale(1)' }], { duration: 300, easing: 'ease-out', fill: 'none' }); };
-  // square colour by move type (Zavee: book orange, best/great green, mistakes red, brilliant cyan)
-  const HC = { book: '232,150,70', brilliant: '40,210,220', great: '120,205,70', best: '120,205,70', excellent: '120,205,70', good: '120,205,70', inaccuracy: '245,190,50', mistake: '235,90,60', miss: '235,70,70', blunder: '230,40,40' };
-  // ordinary moves: snappy slide with a small tilt toward the direction of travel, overshoot and settle; a trail on long moves
-  const slide = (img, fr, to, slow) => {
-    const a = xy(fr), b = xy(to), dx = (a.x - b.x) * q, dy = (a.y - b.y) * q, dist = Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));
-    const tilt = Math.max(-9, Math.min(9, -dx / q * 3)), dur = rpSlideMs(fr, to, slow);
-    if (dist >= 3) for (let k = 1; k <= 3; k++) { // ghost trail
-      const gh = mk({ position: 'absolute', left: xy(to).x * q + 'px', top: xy(to).y * q + 'px', width: q + 'px', height: q + 'px', opacity: '0', zIndex: 2 }, 'img'); gh.src = img.src;
-      gone(gh, [{ transform: `translate(${dx}px,${dy}px)`, opacity: 0 }, { transform: `translate(${dx * (1 - k * 0.22)}px,${dy * (1 - k * 0.22)}px)`, opacity: 0.32 - k * 0.07, offset: 0.35 + k * 0.08 }, { transform: 'translate(0,0)', opacity: 0 }], { duration: dur, easing: 'cubic-bezier(.2,.7,.3,1)' });
-    }
-    return rpRun(img, [{ transform: `translate(${dx}px,${dy}px) rotate(0)` }, { transform: `translate(${dx * 0.35}px,${dy * 0.35}px) rotate(${tilt}deg)`, offset: 0.45 }, { transform: `translate(${-dx / Math.max(1, Math.hypot(dx, dy)) * q * 0.06}px,${-dy / Math.max(1, Math.hypot(dx, dy)) * q * 0.06}px) rotate(${-tilt * 0.3}deg)`, offset: 0.8 }, { transform: 'translate(0,0) rotate(0)' }], { duration: dur, easing: 'cubic-bezier(.2,.8,.3,1)', fill: 'none' });
-  };
-  // captures: lift up, travel over the target, drop straight onto it (a full spin first from more than 4 squares away)
-  const pounce = (img, fr, to, victim, slow) => {
-    const a = xy(fr), b = xy(to), dx = (a.x - b.x) * q, dy = (a.y - b.y) * q;
-    const PM = rpPounceMs(fr, to, slow), spin = PM.spin ? 360 : 0, T1 = PM.T1, T2 = PM.T2, T = PM.T, Lh = q * 0.38, kf = [];
-    for (let t = 0; t <= T; t += 15) {
-      let x = 0, y = 0, lift = 0, sc = 1, sh = 0, rot = spin;
-      if (t < T1) { const s = smooth(t / T1); x = dx; y = dy; lift = Lh * s; sc = 1 + 0.16 * s; sh = s; rot = spin * s; }
-      else if (t < T2) { const s = smooth((t - T1) / (T2 - T1)); x = dx * (1 - s); y = dy * (1 - s); lift = Lh + q * 0.08 * Math.sin(Math.PI * s); sc = 1.16; sh = 1; }
-      else { const s = ((t - T2) / (T - T2)) ** 2; lift = Lh * (1 - s); sc = 1.16 - 0.16 * s; sh = 1 - 0.4 * s; }
-      kf.push({ offset: Math.min(1, t / T), transform: `translate(${x}px,${y - lift}px) rotate(${rot}deg) scale(${sc})`, filter: shadowF(sh) });
-    }
-    kf[kf.length - 1].offset = 1;
-    if (victim) { victim.style.zIndex = 1; rpRun(victim, [{ transform: 'scale(1)' }, { transform: 'scale(1)', offset: T2 / T }, { transform: 'scale(.6)', opacity: 0 }], { duration: T, easing: 'linear', fill: 'forwards' }); }
-    return rpRun(img, kf, { duration: T, easing: 'linear', fill: 'none' });
-  };
-  const badgeAt = (cls, sq, big) => {
-    if (!BADGE_PNG[cls]) return null;
-    const p = xy(sq), sz = q * (big ? 0.6 : 0.48);
-    const e = mk({ position: 'absolute', left: (p.x + 1) * q - sz * 0.62 + 'px', top: p.y * q - sz * 0.38 + 'px', width: sz + 'px', height: sz + 'px', zIndex: 7, filter: 'drop-shadow(0 3px 6px rgba(0,0,0,.5))' }, 'img');
-    e.src = 'data:image/png;base64,' + BADGE_PNG[cls];
-    rpRun(e, [{ transform: 'scale(0)' }, { transform: 'scale(1.3)', offset: 0.55 }, { transform: 'scale(.92)', offset: 0.8 }, { transform: 'scale(1)' }], { duration: 340, easing: 'ease-out' });
-    return e;
-  };
-  // check: red line from the checking piece to the king, and a red burst on the king
-  const checkFx = (A, K) => {
-    const len = Math.hypot(K.x - A.x, K.y - A.y);
-    const ln = mk({ position: 'absolute', left: A.x + 'px', top: A.y - q * 0.03 + 'px', width: len + 'px', height: q * 0.06 + 'px', background: 'linear-gradient(90deg, rgba(255,40,50,.2), #ff2a3c)', boxShadow: '0 0 10px rgba(255,40,60,.8)', transformOrigin: '0 50%', transform: `rotate(${Math.atan2(K.y - A.y, K.x - A.x)}rad)`, zIndex: 3, borderRadius: '99px' });
-    gone(ln, [{ clipPath: 'inset(0 100% 0 0)', opacity: 1 }, { clipPath: 'inset(0 0 0 0)', opacity: 1, offset: 0.3 }, { clipPath: 'inset(0 0 0 0)', opacity: 0 }], { duration: 900 });
-    const bs = mk({ position: 'absolute', left: K.x - q * 0.45 + 'px', top: K.y - q * 0.95 + 'px', width: q * 0.9 + 'px', height: q * 0.9 + 'px', zIndex: 6 });
-    bs.innerHTML = '<svg viewBox="0 0 100 100" width="100%" height="100%"><path d="M50 4 L58 34 L90 22 L68 48 L96 62 L62 64 L70 96 L50 72 L30 96 L38 64 L4 62 L32 48 L10 22 L42 34 Z" fill="#ff2a3c" stroke="#fff" stroke-width="4" stroke-linejoin="round"/></svg>';
-    gone(bs, [{ transform: 'scale(0) rotate(-30deg)', opacity: 1 }, { transform: 'scale(1.1) rotate(0)', opacity: 1, offset: 0.3 }, { transform: 'scale(1) rotate(0)', opacity: 1, offset: 0.75 }, { transform: 'scale(1.2)', opacity: 0 }], { duration: 950, easing: 'ease-out' });
-  };
-  // the cards: title, the opening's name, the result
-  const card = async (kicker, l1, l2, hold, until) => {
-    const e = mk({}, 'div', top);
-    e.className = 'rp-card';
-    e.innerHTML = (kicker ? `<div class="k">${esc(kicker)}</div>` : '') + `<div class="l1">${esc(l1)}</div>` + (l2 ? `<div class="l2">${esc(l2)}</div>` : '');
-    await rpRun(e, [{ opacity: 0, transform: 'scale(1.15)' }, { opacity: 1, transform: 'scale(.98)', offset: 0.7 }, { opacity: 1, transform: 'scale(1)' }], { duration: 420, easing: 'ease-out' });
-    if (until != null) await rpAt(until - 0.38, tok); else await rpWait(hold, tok);
-    await rpRun(e, [{ opacity: 1 }, { opacity: 0 }], { duration: 380, easing: 'ease-in' });
-    e.remove();
-  };
-  const h = g.headers || {}, wn = h.White && h.White !== '?' ? h.White : 'White', bn = h.Black && h.Black !== '?' ? h.Black : 'Black';
-  const n = g.moves.length, last = mkChess(g.positions[n].fen), mated = last.in_checkmate();
-  const clsOf = i => (g.cls && g.cls[i] ? g.cls[i].cls : null);
-  const brill = [...Array(n).keys()].filter(i => clsOf(i) === 'brilliant').length;
-  let lastBook = -1; for (let i = 0; i < n; i++) if (clsOf(i) === 'book') lastBook = i;
-  // the hook line, like his titles
-  const hook = brill >= 2 ? `${brill} brilliant moves!` : brill === 1 ? 'One brilliant move!' : mated ? `Checkmate in ${Math.ceil(n / 2)} moves!` : (g.opening || 'Every move counts');
-  // plan the replay on a song's beats, then let the song's clock drive it
-  const po = { ob: Math.min(n, Math.max(lastBook + 1, 6)), card: lastBook >= 3 && !!g.opening, mated, cls: [...Array(n).keys()].map(clsOf) };
-  const fits = i => { const sg = RP_SONGS[i], pl = rpPlan(g, sg, po); return pl.land[n - 1] + 3 <= rpmBeat(sg, sg.drop + rpmLoopLen(sg)); };
-  if (RP.si == null) {
-    const pref = store.get('s64.rpSong', 'auto');
-    if (pref !== 'auto' && RP_SONGS[+pref]) RP.si = +pref;
-    else {
-      let pool = RP_SONGS.map((_, i) => i).filter(i => i !== RPM.last && fits(i));
-      if (!pool.length) pool = RP_SONGS.map((_, i) => i).filter(i => i !== RPM.last);
-      RP.si = pool[Math.floor(Math.random() * pool.length)];
-    }
-  }
-  RPM.last = RP.si;
-  const song = RP_SONGS[RP.si], plan = rpPlan(g, song, po);
-  RP.plan = plan;
-  prog.textContent = 'Loading music…';
-  let buf = null;
-  try { buf = await rpmLoad(song); } catch (e) { buf = null; }
-  if (tok !== RP.token) throw RP_STOP;
-  prog.textContent = song.name;
-  await rpmStart(song, plan.startT, RP.speed, buf);
-  await card(`${wn} vs ${bn}`, hook, g.opening && hook !== g.opening ? g.opening : '', 1200, plan.titleUntil);
+  const n = g.moves.length;
+  prog.textContent = 'Start';
+  await rpWait(600, tok);
   for (let i = 0; i < n; i++) {
-    const mv = g.moves[i], A = g.positions[i], Bp = g.positions[i + 1], cls = clsOf(i);
-    const after = mkChess(Bp.fen), mate = after.in_checkmate(), check = after.in_check();
-    const opening = i < plan.ob && !(mate && i === n - 1);
-    const landT = plan.land[i], lead = plan.lead[i];
-    const big = cls === 'brilliant' || cls === 'great' || mate;
+    const mv = g.moves[i], A = g.positions[i], Bp = g.positions[i + 1];
     prog.textContent = `Move ${Math.ceil((i + 1) / 2)} · ${i + 1}/${n}`;
-    // camera (it glides while the piece moves, so the piece lands on the beat)
-    if (mate) {
-      if (plan.duckT != null) { await rpAt(plan.duckT, tok); rpmDuck(true); }
-      await rpAt(landT - lead - 0.65 - 0.02, tok);
-      await camTo(mv.to, 1.7, 650);
-    } else {
-      await rpAt(landT - lead - 0.02, tok); // start a frame early: the landing is reported a frame late
-      const bad = cls === 'blunder' || cls === 'mistake' || cls === 'miss';
-      if (opening) {
-        // opening: flat top-down, a slow drift-zoom toward the action (Wild) or a still board (Calm)
-        if (W3) { const a2 = ctr(mv.from), b2 = ctr(mv.to); camTo({ x: (a2.x + b2.x) / 2, y: (a2.y + b2.y) / 2 }, 1.12, 900, 'ease-in-out'); } else camTo(null, 1, 380);
-      } else if (W3) camTo(mv.to, bad ? 2.2 : big ? 1.85 : 1.6, Math.max(160, lead * 1000), EXPO); // snap zooms
-      else camTo(mv.to, big ? 1.65 : 1.45, Math.max(180, lead * 1000));
-    }
+    // work out which pieces moved (castling moves two), which one was taken, and animate them
     const pm = fenToMap(A.fen), nm = fenToMap(Bp.fen);
     const vac = Object.keys(pm).filter(sq => pm[sq] !== nm[sq]), arr = Object.keys(nm).filter(sq => nm[sq] !== pm[sq]);
     const used = new Set(), pairs = [];
@@ -5623,99 +5238,29 @@ async function rpPlay(tok) {
       if (!fr && mv.uci && mv.uci[4] && !used.has(mv.from)) fr = mv.from;
       if (fr) { used.add(fr); pairs.push([fr, to]); }
     }
-    const capSqs = vac.filter(sq => !used.has(sq)), victim = capSqs.length ? els[capSqs[0]] : null;
-    const promo = !!(mv.uci && mv.uci[4]);
-    RP.skip = Math.max(0, Math.min(lead * 1000 * 0.5, (rpmNow() - (landT - lead)) * 1000));
-    const anims = pairs.map(([fr, to], k) => {
+    const capSqs = vac.filter(sq => !used.has(sq));
+    const anims = pairs.map(([fr, to]) => {
       const img = els[fr];
       if (!img) return Promise.resolve();
-      place(img, to); img.style.zIndex = 4;
-      const pr = k === 0 && victim ? pounce(img, fr, to, victim, mate) : slide(img, fr, to, mate);
-      return pr.then(() => { img.style.zIndex = ''; if (!promo) img.src = PIECE_URL[keyOf(nm[to])]; });
+      const a = xy(fr), b = xy(to);
+      place(img, to); img.style.zIndex = 2;
+      return rpRun(img, [{ transform: `translate(${(a.x - b.x) * 100}%,${(a.y - b.y) * 100}%)` }, { transform: 'translate(0,0)' }], { duration: 280, easing: 'cubic-bezier(.3,0,.2,1)', fill: 'none' })
+        .then(() => { img.style.zIndex = ''; img.src = PIECE_URL[keyOf(nm[to])]; });
     });
     const next = {};
     for (const sq in els) if (!used.has(sq) && nm[sq] && pm[sq] === nm[sq]) next[sq] = els[sq];
     for (const [fr, to] of pairs) next[to] = els[fr];
-    RP.skip = 0;
     await Promise.all(anims);
-    if (mate) rpmDuck(false); // the music slams back in on the mate
-    else if (i === plan.ob && plan.ob < n) rpmDuck(false); // ...and on the drop
-    if (RP.log) RP.log.push(rpmNow());
     for (const sq of capSqs) if (els[sq]) els[sq].remove();
     for (const k in els) delete els[k];
     Object.assign(els, next);
-    moveSound(mv, after);
-    const land = pairs.length ? pairs[0][1] : mv.to, P = ctr(land);
-    // promotion: the pawn flashes cyan and becomes its new piece
-    if (promo && els[land]) {
-      const im = els[land];
-      await rpRun(im, [{ filter: 'brightness(1)' }, { filter: 'brightness(3) sepia(1) hue-rotate(140deg) saturate(4)', offset: 0.6 }, { filter: 'brightness(4)' }], { duration: 260, fill: 'none' });
-      im.src = PIECE_URL[keyOf(nm[land])]; flash('rgba(60,220,230,.9)', 0.35, 220); bump(P);
-    }
-    // square highlights in the move's colour
-    const col = HC[cls] || '232,150,70';
-    let marks = [mv.from, land].map((sq, k) => { const p = xy(sq); return `<i class="${k ? 'to' : ''}" style="left:${p.x * 12.5}%;top:${p.y * 12.5}%;--hc:${col}"></i>`; }).join('');
-    const ksq = Object.keys(nm).find(sq => nm[sq] === (mv.color === 'w' ? 'k' : 'K'));
-    if (check && ksq) { const p = xy(ksq); marks += `<i class="chk" style="left:${p.x * 12.5}%;top:${p.y * 12.5}%"></i>`; }
-    if (mate && ksq) { // lock down every square around the king
-      const f0 = ksq.charCodeAt(0) - 97, r0 = +ksq[1];
-      for (let df = -1; df <= 1; df++) for (let dr = -1; dr <= 1; dr++) { if (!df && !dr) continue; const f = f0 + df, r = r0 + dr; if (f < 0 || f > 7 || r < 1 || r > 8) continue; const p = xy(String.fromCharCode(97 + f) + r); marks += `<i class="lock" style="left:${p.x * 12.5}%;top:${p.y * 12.5}%"></i>`; }
-    }
-    hl.innerHTML = marks;
-    // hits
-    const drop = i === plan.ob && plan.ob < n;
-    if (W3 && !opening) {
-      // every landing after the drop: squash, a Dutch-angle swing, a micro shake
-      squash(els[land]);
-      if (drop) { // THE DROP: the board tips into 3D, 2-frame white flash, RGB split, big ring, the vignette closes in
-        flash('#fff', 0.95, 90); rgb(L.W * 0.03, 420); ring(P, '#fff', 4.5, 620); shake(L.W * 0.02, 380); hitTilt(11, 260);
-        const v2 = scene.querySelector('.rp-vig2'); if (v2) rpRun(v2, [{ opacity: 0 }, { opacity: 1 }], { duration: 400 });
-      } else hitTilt(mate ? 14 : big ? 11 : 7, 220);
-      if (!drop) shake(L.W * (victim || big ? 0.012 : 0.006), 170);
-    }
-    if (cls === 'brilliant') { flash('rgba(40,220,230,.9)', 0.45, 260); shake(L.W * 0.016, 360); bump(P); if (W3) { rgb(L.W * 0.022, 360); ring(P, 'rgb(40,225,235)', 3.6, 560); } }
-    else if (victim) { flash('#fff', W3 ? 0.4 : 0.28, W3 ? 70 : 120); bump(P); shake(L.W * (big ? 0.014 : 0.008), 260); if (W3) { rgb(L.W * 0.012, 240); ring(P, '#fff', 2.8, 420); } }
-    if (W3 && !opening && (cls === 'blunder' || cls === 'mistake' || cls === 'miss')) { flash('rgba(255,30,40,.9)', 0.35, 260); glitch('rgba(255,40,60,.9)', 180); }
-    if (check && ksq && !mate) { checkFx(P, ctr(ksq)); if (!victim) shake(L.W * 0.008, 240); }
-    const showBadge = cls && cls !== 'forced';
-    const bdg = showBadge ? badgeAt(mate ? (cls === 'brilliant' ? 'brilliant' : 'best') : cls, land, big) : null;
-    if (mate) {
-      // checkmate: flash overload, the king's square pulses red, then he falls over
-      flash('#fff', 0.8, 260); setTimeout(() => flash('rgba(255,30,50,.9)', 0.4, 400), 180); shake(L.W * 0.025, 480);
-      if (W3) { rgb(L.W * 0.035, 520); ring(P, '#fff', 5, 700); if (ksq) ring(ctr(ksq), 'rgb(255,40,55)', 4, 700); glitch('rgba(255,255,255,.85)', 150); }
-      if (ksq) checkFx(P, ctr(ksq));
-      if (ksq) await pulsesUntil(plan.fallT - 0.75, ksq, 'rgba(255,45,60,.95)');
-      await rpAt(plan.fallT - 0.75, tok); // the king hits the floor on a beat
-      const kimg = ksq && els[ksq];
-      if (kimg) { kimg.style.transformOrigin = '50% 85%'; await rpRun(kimg, [{ transform: 'rotate(0)', filter: 'none' }, { transform: 'rotate(-6deg)', filter: 'sepia(1) saturate(6) hue-rotate(-40deg) brightness(1.1)', offset: 0.3 }, { transform: 'rotate(90deg)', filter: 'sepia(1) saturate(6) hue-rotate(-40deg) brightness(1.1)' }], { duration: 750, easing: 'ease-in' }); sfx('boom'); shake(L.W * 0.012, 260); }
-      if (W3) { rgb(L.W * 0.02, 300); if (ksq) ring(ctr(ksq), 'rgb(255,40,55)', 3, 500); }
-      await rpWait(1100, tok);
-      const black = mk({ position: 'absolute', inset: 0, background: '#000', zIndex: 15 }, 'div', top);
-      await rpRun(black, [{ opacity: 0 }, { opacity: 1 }], { duration: 600 });
-      hl.innerHTML = ''; fx.innerHTML = '';
-      rpRun(black, [{ opacity: 1 }, { opacity: 0 }], { duration: 500, delay: 900 }).then(() => black.remove());
-    } else {
-      // the pace comes from the beat plan; the badge fades on its own
-      if (bdg) rpRun(bdg, [{ opacity: 1 }, { opacity: 0 }], { duration: 200, delay: Math.min(700, Math.max(250, ((plan.land[i + 1] || landT + 1) - landT) * 1000 - 150)) }).then(() => bdg.remove());
-      if (!opening && i + 1 < n && !(plan.card && i === plan.ob - 1)) {
-        const nmate = i + 1 === n - 1 && mated, nStart = plan.land[i + 1] - plan.lead[i + 1];
-        // before the mate the pulses stop where the music cuts out
-        await pulsesUntil(nmate ? (plan.duckT != null ? plan.duckT : nStart - 0.67) : nStart, land, cls === 'brilliant' ? 'rgb(40,225,235)' : null);
-      }
-    }
-    // the opening's name, once the book moves are done
-    if (i === plan.ob - 1 && plan.ob < n) rpmBuild(landT + 0.15, plan.land[plan.ob] - Math.max(song.per, 0.4) - (plan.card ? 0 : 0));
-    if (plan.card && i === plan.ob - 1) await card('Opening', g.opening, '', 900, plan.cardUntil);
+    moveSound(mv, mkChess(Bp.fen));
+    // last-move highlight
+    hl.innerHTML = [mv.from, pairs.length ? pairs[0][1] : mv.to].map(sq => { const p = xy(sq); return `<i style="left:${p.x * 12.5}%;top:${p.y * 12.5}%"></i>`; }).join('');
+    await rpWait(750, tok);
   }
-  tiltTo(0, 0, 500, 'ease-in-out');
-  { const v2 = scene.querySelector('.rp-vig2'); if (v2) rpRun(v2, [{ opacity: 1 }, { opacity: 0 }], { duration: 500 }); }
-  await camTo(null, 1, 500);
-  prog.textContent = 'Finished';
-  const res = h.Result || '';
-  const winner = mated ? (last.turn() === 'w' ? bn : wn) : res === '1-0' ? wn : res === '0-1' ? bn : '';
-  await card(res && res !== '*' ? res : '', winner || (res === '1/2-1/2' ? 'Draw' : 'Game over'), winner ? (mated ? 'wins by checkmate' : 'wins') : '', 1700);
-  rpmFade(1.6);
-  prog.textContent = 'Finished · ⟲ to watch again';
+  const res = (g.headers && g.headers.Result) || '';
+  prog.textContent = (res && res !== '*' ? res + ' · ' : '') + 'Finished · ⟲ to watch again';
 }
 /* ============================================================
    Ending and intro animations (respect the Animations setting)

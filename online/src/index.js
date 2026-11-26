@@ -329,19 +329,41 @@ export class Game {
     const color = this.colorOf(ws);
     const att = ws.deserializeAttachment() || {};
     if (!color && !att.watch) return;
+    // a picture someone missed (they reconnected, or joined to watch)
+    if (m.t === 'img') {
+      const id = String(m.id || '');
+      if (!/^[a-f0-9]{12}$/.test(id)) return;
+      ws.send(JSON.stringify({ t: 'imgdata', id, data: (await this.ctx.storage.get('img:' + id)) || null }));
+      return;
+    }
     if (m.t === 'chat') {
       const text = String(m.text || '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 200);
-      if (!text) return;
+      // pictures arrive already shrunk by the browser; anything big or not an image is refused
+      let img = null;
+      if (m.img != null) {
+        img = String(m.img);
+        if (img.length > 700_000 || !/^data:image\/(jpeg|png|gif|webp);base64,[A-Za-z0-9+/=]+$/.test(img)) { ws.send(JSON.stringify({ t: 'reject', msg: "That picture couldn't be sent (too big or not an image)." })); return; }
+      }
+      if (!text && !img) return;
       const now = Date.now();
       this.spam = this.spam || {};
       const who = color || 'watch:' + att.token;
       const seen = this.spam[who] = (this.spam[who] || []).filter(t => now - t < 10_000); // at most 6 messages per 10 seconds
       if (seen.length >= 6) { ws.send(JSON.stringify({ t: 'reject', msg: 'Slow down, you are sending messages too fast.' })); return; }
+      if (img) {
+        const pics = this.spam['pic:' + who] = (this.spam['pic:' + who] || []).filter(t => now - t < 30_000); // and at most 3 pictures per 30 seconds
+        if (pics.length >= 3) { ws.send(JSON.stringify({ t: 'reject', msg: 'Slow down, wait a bit before sending another picture.' })); return; }
+        pics.push(now);
+      }
       seen.push(now);
       const msg = color ? { id: g.seats[color].id, name: g.seats[color].name, text, ts: now } : { id: 'w-' + att.token.slice(0, 6), name: att.name, watcher: true, text, ts: now };
-      g.chat = (g.chat || []).concat(msg).slice(-60);
+      if (img) { msg.img = crypto.randomUUID().replace(/-/g, '').slice(0, 12); await this.ctx.storage.put('img:' + msg.img, img); }
+      const all = (g.chat || []).concat(msg);
+      const dropped = all.slice(0, Math.max(0, all.length - 60)).filter(x => x.img).map(x => 'img:' + x.img);
+      if (dropped.length) await this.ctx.storage.delete(dropped);
+      g.chat = all.slice(-60);
       await this.ctx.storage.put('g', g);
-      const out = JSON.stringify({ t: 'chat', msg });
+      const out = JSON.stringify({ t: 'chat', msg: img ? { ...msg, data: img } : msg });
       for (const s of this.ctx.getWebSockets()) { try { s.send(out); } catch (e) { /* closed */ } }
       return;
     }

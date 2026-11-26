@@ -18,6 +18,7 @@ No install, no account, no server. Open the page and play.
   - **Daily games**: a fresh day for every move. Leave and come back; your daily games are listed in the Online lobby with whose move it is.
   - **Head-to-head and leaderboard**: every finished game counts. See your record against each friend (and who's on a streak) and a rating leaderboard that starts everyone at 1200.
   - **My games**: finished online games are saved automatically. Open one in Review, or share a link that opens it for anyone.
+  - **Pictures in chat**: tap 📷 or paste a picture into the chat box. Pictures are shrunk before sending and are deleted with the game.
   - **Watch live**: see who's playing right now and watch (and chat) without playing, or watch by game code.
 - **Puzzles from your mistakes**: every blunder, mistake and missed win of yours in a reviewed game becomes a "find the move you missed" puzzle (Game review tab).
 - **Custom mode: Chess, but...** Broken-rules chess against Stockfish or a friend, starting with **the Area 51 Army**: your king plus one of every alien (a Clone, the Maw, the Watcher, the UFO and the Egg that hatches into the Overlord) against a full army.

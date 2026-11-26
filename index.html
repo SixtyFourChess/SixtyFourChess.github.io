@@ -516,13 +516,19 @@ textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 0; }
 /* online play */
 .o-chat { display: flex; flex-direction: column; gap: 8px; }
 .o-chat-head { display: flex; align-items: center; justify-content: space-between; }
-.o-chat-log { height: 170px; overflow-y: auto; padding: 10px 12px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px; font-size: 14px; overflow-wrap: anywhere; }
+.o-chat-log { height: 210px; overflow-y: auto; padding: 10px 12px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px; font-size: 14px; overflow-wrap: anywhere; }
 .o-chat-log:empty::before { content: "No messages yet."; color: var(--muted); font-size: 13px; }
 .o-chat-log .cm { align-self: flex-start; max-width: 85%; padding: 6px 10px; border-radius: 10px 10px 10px 3px; background: var(--sunk); }
 .o-chat-log .cm.me { align-self: flex-end; border-radius: 10px 10px 3px 10px; background: var(--accent-soft); }
 .o-chat-log .cm b { display: block; font-size: 11.5px; color: var(--muted); font-weight: 700; }
 .o-chat-log .note { align-self: center; color: var(--muted); font-size: 12px; }
 .o-chat-form { display: flex; gap: 8px; }
+.o-chat-pic { position: relative; padding: 0 12px; cursor: pointer; display: inline-flex; align-items: center; }
+.o-chat-pic input { position: absolute; inset: 0; opacity: 0; width: 100%; cursor: pointer; }
+.o-chat-log .cm-img { display: block; max-width: 100%; max-height: 150px; border-radius: 8px; margin-top: 4px; cursor: zoom-in; }
+.o-chat-log .cm-wait { display: block; font-size: 12px; color: var(--muted); margin-top: 2px; }
+.img-box { position: fixed; inset: 0; z-index: 4000; background: rgba(0, 0, 0, .86); display: flex; align-items: center; justify-content: center; cursor: zoom-out; }
+.img-box img { max-width: 94vw; max-height: 92vh; border-radius: 6px; }
 .o-chat-form input { flex: 1; min-width: 0; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 9px 11px; font: 500 14px var(--font-body); color: var(--ink); }
 .tab .o-unread { display: inline-block; min-width: 16px; padding: 0 4px; margin-left: 5px; border-radius: 8px; background: var(--c-blunder, #d9534f); color: #fff; font-size: 11px; line-height: 16px; text-align: center; }
 .o-code { font: 700 40px/1 var(--font-mono); letter-spacing: .18em; text-align: center; padding: 18px 10px; border-radius: 12px; background: var(--surface); border: 1px dashed var(--accent); user-select: all; }
@@ -765,7 +771,7 @@ textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 0; }
           <div class="o-chat" id="oChat">
             <div class="o-chat-head"><span class="sec-label">Chat</span><button class="linkish" id="oMute" type="button">Mute opponent</button></div>
             <div class="o-chat-log" id="oChatLog" aria-live="polite"></div>
-            <form class="o-chat-form" id="oChatForm" autocomplete="off"><input id="oChatIn" type="text" maxlength="200" placeholder="Say something…" aria-label="Chat message"><button class="btn" type="submit">Send</button></form>
+            <form class="o-chat-form" id="oChatForm" autocomplete="off"><input id="oChatIn" type="text" maxlength="200" placeholder="Say something…" aria-label="Chat message"><label class="btn o-chat-pic" title="Send a picture (you can also paste one)">📷<input id="oChatFile" type="file" accept="image/*" aria-label="Send a picture"></label><button class="btn" type="submit">Send</button></form>
           </div>
           <p class="small muted" id="oCodeNote"></p>
         </div>
@@ -4958,7 +4964,7 @@ const ONLINE = {
   thinking: false, job: null, hintJob: null,
   ws: null, lobbyWs: null, code: null, st: null, recvAt: 0, msg: '', msgErr: false, searchSince: 0, waiting: 0,
   name: store.get('s64.oname', store.get('s64.me', '') || ''), tcIdx: clamp(store.get('s64.otc2', 2) | 0, 0, OTCS.length - 1),
-  chat: [], unread: 0, colorPref: store.get('s64.ocolor', 'r'), variant: store.get('s64.ovar', 'std') === '960' ? '960' : 'std', retry: 0, retryTimer: null, ping: null, flash: null
+  chat: [], imgs: {}, unread: 0, colorPref: store.get('s64.ocolor', 'r'), variant: store.get('s64.ovar', 'std') === '960' ? '960' : 'std', retry: 0, retryTimer: null, ping: null, flash: null
 };
 function onlineServer() { return String(store.get('s64.server', '') || ONLINE_SERVER_DEFAULT || '').replace(/\/+$/, ''); }
 function onlineToken() {
@@ -4991,7 +4997,7 @@ function onlineSetMsg(m, err) { ONLINE.msg = m || ''; ONLINE.msgErr = !!err; if 
 function onlineConnect(code, pref, quiet, watch) {
   const G = ONLINE;
   onlineClose();
-  G.code = code; G.st = null; G.over = null; G.chess = new Chess(); G.lastMove = null; G.retry = 0; G.chat = []; G.unread = 0;
+  G.code = code; G.st = null; G.over = null; G.chess = new Chess(); G.lastMove = null; G.retry = 0; G.chat = []; G.imgs = {}; G.unread = 0;
   G.phase = quiet ? 'lobby' : 'connecting';
   G.quiet = !!quiet; G.watch = !!watch; G.watching = false; G.h2h = null;
   board.premove = null; board.preSel = null;
@@ -5016,8 +5022,13 @@ function onlineOpen(pref) {
       G.phase = 'lobby'; G.code = null; G.st = null;
       if (!G.quiet) onlineSetMsg(m.msg, true); else if (S.tab === 'online') renderPlay();
     } else if (m.t === 'reject') { G.pendingPly = null; onlineSetMsg(m.msg, true); }
-    else if (m.t === 'chatlog') { G.chat = Array.isArray(m.chat) ? m.chat : []; renderChat(); }
+    else if (m.t === 'chatlog') {
+      G.chat = Array.isArray(m.chat) ? m.chat : []; renderChat();
+      for (const c of G.chat) if (c.img && !G.imgs[c.img]) onlineSend({ t: 'img', id: c.img }); // fetch pictures we missed
+    }
+    else if (m.t === 'imgdata') { G.imgs[m.id] = m.data || 'gone'; renderChat(); }
     else if (m.t === 'chat' && m.msg) {
+      if (m.msg.img && m.msg.data) { G.imgs[m.msg.img] = m.msg.data; delete m.msg.data; }
       G.chat.push(m.msg); if (G.chat.length > 60) G.chat.shift();
       const mine = m.msg.id === myChatId();
       if (!mine && !onlineMuted()) { if (S.tab !== 'online') G.unread++; if (document.hidden && G.flash) document.title = '💬 ' + G.flash; }
@@ -5512,12 +5523,64 @@ function renderChat() {
   log.innerHTML = G.chat.map(c => {
     const mine = c.id === myId;
     if (!mine && muted) { hidden++; return ''; }
-    return `<div class="cm${mine ? ' me' : ''}${c.watcher && !mine ? ' watch' : ''}"><b>${mine ? 'You' : esc(c.name)}</b>${esc(c.text)}</div>`;
+    const d = c.img ? G.imgs[c.img] : null;
+    const pic = !c.img ? '' : d && d !== 'gone' && /^data:image\//.test(d) ? `<img class="cm-img" data-img="${esc(c.img)}" src="${d}" alt="Picture">` : `<span class="cm-wait">${d === 'gone' ? 'Picture expired' : 'Loading picture…'}</span>`;
+    return `<div class="cm${mine ? ' me' : ''}${c.watcher && !mine ? ' watch' : ''}"><b>${mine ? 'You' : esc(c.name)}</b>${esc(c.text)}${pic}</div>`;
   }).join('') + (muted ? `<div class="note">You muted ${esc(opp)}${hidden ? ` (${hidden} hidden)` : ''}.</div>` : '');
-  if (atBottom) log.scrollTop = log.scrollHeight;
+  if (atBottom) { log.scrollTop = log.scrollHeight; log.querySelectorAll('img').forEach(i => i.addEventListener('load', () => { log.scrollTop = log.scrollHeight; }, { once: true })); }
   $('#oMute').textContent = muted ? 'Unmute' : 'Mute opponent';
 }
+// shrink a picture in the browser before sending: up to 1280 px, JPEG, under ~480 KB (small GIFs stay animated)
+const readAsUrl = f => new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = no; r.readAsDataURL(f); });
+async function shrinkImage(file) {
+  if (file.type === 'image/gif' && file.size <= 450_000) return readAsUrl(file);
+  const url = await readAsUrl(file);
+  const img = await new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = url; });
+  let max = 1280, q = 0.82, out = null;
+  for (let k = 0; k < 8; k++) {
+    const sc = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+    const cv = document.createElement('canvas');
+    cv.width = Math.max(1, Math.round(img.naturalWidth * sc)); cv.height = Math.max(1, Math.round(img.naturalHeight * sc));
+    const cx = cv.getContext('2d');
+    cx.fillStyle = '#fff'; cx.fillRect(0, 0, cv.width, cv.height); // transparent PNGs get a white background in JPEG
+    cx.drawImage(img, 0, 0, cv.width, cv.height);
+    out = cv.toDataURL('image/jpeg', q);
+    if (out.length <= 480_000) return out;
+    if (q > 0.55) q -= 0.13; else max = Math.round(max * 0.75);
+  }
+  return out;
+}
+async function onlineSendPicture(file) {
+  if (!file || !/^image\//.test(file.type)) return;
+  const G = ONLINE;
+  if (!G.ws || G.ws.readyState !== 1) { onlineSetMsg("Couldn't send, reconnecting…", true); return; }
+  onlineSetMsg('Sending picture…');
+  try {
+    const img = await shrinkImage(file);
+    if (!img || img.length > 690_000) { onlineSetMsg('That picture is too big to send.', true); return; }
+    const inp = $('#oChatIn'), text = inp.value.trim();
+    if (onlineSend({ t: 'chat', text, img })) { inp.value = ''; onlineSetMsg(''); }
+    else onlineSetMsg("Couldn't send, reconnecting…", true);
+  } catch (e) { onlineSetMsg("Couldn't read that picture.", true); }
+}
 function wireOnline() {
+  $('#oChatFile').addEventListener('change', e => { const f = e.target.files && e.target.files[0]; e.target.value = ''; onlineSendPicture(f); });
+  $('#oChatIn').addEventListener('paste', e => {
+    const f = [...((e.clipboardData && e.clipboardData.files) || [])].find(x => /^image\//.test(x.type));
+    if (f) { e.preventDefault(); onlineSendPicture(f); }
+  });
+  $('#oChatLog').addEventListener('click', e => {
+    const im = e.target.closest('.cm-img');
+    if (!im) return;
+    const box = document.createElement('div');
+    box.className = 'img-box';
+    box.innerHTML = `<img src="${im.src}" alt="Picture">`;
+    const close = () => { box.remove(); document.removeEventListener('keydown', esc2, true); };
+    const esc2 = ev => { if (ev.key === 'Escape') { ev.stopPropagation(); close(); } };
+    box.addEventListener('click', close);
+    document.addEventListener('keydown', esc2, true);
+    document.body.appendChild(box);
+  });
   $('#oChatForm').addEventListener('submit', e => {
     e.preventDefault();
     const inp = $('#oChatIn'), text = inp.value.trim();

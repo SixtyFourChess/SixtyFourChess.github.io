@@ -3,7 +3,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&family=Pirata+One&family=Grenze+Gotisch:wght@500;700&display=swap">
 <style>
 /* Layout: board-first study table — the wooden board and eval bar on the left, a scoresheet/coach rail on the right; stacks on phones */
 :root {
@@ -415,6 +415,31 @@ textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 0; }
 .bt-scope svg { display: block; width: 100%; height: 100%; }
 .bt-slash { border-radius: 50%; background: linear-gradient(90deg, rgba(255, 255, 255, 0), #fff 45%, #fff 55%, rgba(255, 255, 255, 0)); box-shadow: 0 0 10px rgba(255, 255, 255, .9); }
 
+/* ---------- Replay (ChessGameShorts-style edit) ---------- */
+.rp { position: fixed; inset: 0; z-index: 3000; background: #040406; display: flex; align-items: center; justify-content: center; }
+.rp-frame { position: relative; height: 100vh; height: 100dvh; max-width: 100vw; aspect-ratio: 9 / 16; display: flex; flex-direction: column; }
+@media (max-aspect-ratio: 9/17) { .rp-frame { height: auto; width: 100vw; } }
+.rp-scene { position: relative; flex: 1; overflow: hidden; background: radial-gradient(circle at 50% 45%, #26262c, #0c0c0f 72%); }
+.rp-cam { position: absolute; left: 0; width: 100%; transform-origin: 0 0; will-change: transform; }
+.rp-board { position: relative; width: 100%; aspect-ratio: 1 / 1; background: repeating-conic-gradient(#8f9197 0 25%, #ececec 0 50%) 0 0 / 25% 25%; box-shadow: 0 30px 80px rgba(0,0,0,.6); }
+.rp-board > div { position: absolute; inset: 0; pointer-events: none; }
+.rp-hl > i { position: absolute; width: 12.5%; height: 12.5%; background: rgba(255, 214, 70, .38); }
+.rp-pcs > img { position: absolute; width: 12.5%; height: 12.5%; will-change: transform; }
+.rp-wm { display: flex; align-items: center; justify-content: center; font: 800 calc(var(--rpw, 400px) * .105) var(--font-display); color: #000; opacity: .06; letter-spacing: -.02em; white-space: nowrap; }
+.rp-fx > * { position: absolute; }
+.rp-scene > .rp-layer { position: absolute; inset: 0; pointer-events: none; }
+.rp-badge { width: 7.5%; z-index: 5; filter: drop-shadow(0 3px 6px rgba(0,0,0,.5)); }
+.rp-slam { position: absolute; left: 50%; top: 50%; z-index: 9; white-space: nowrap; font: 400 calc(var(--rpw, 400px) * .16)/1 "Pirata One", var(--font-display); color: #fff; letter-spacing: .02em; text-shadow: 0 0 2px #000, 0 6px 0 #b3001b, 0 10px 40px rgba(255,30,60,.7); }
+.rp-poster { position: absolute; inset: 0; z-index: 12; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: calc(var(--rpw, 400px) * .03); text-align: center; padding: 8%; background: radial-gradient(circle at 50% 45%, rgba(30,28,36,.92), rgba(4,4,6,.97) 75%); color: #f4f1ea; pointer-events: none; }
+.rp-poster .t { font: 400 calc(var(--rpw, 400px) * .135)/1.02 "Pirata One", var(--font-display); text-shadow: 0 4px 30px rgba(255,255,255,.18); }
+.rp-poster .vs { font: 400 calc(var(--rpw, 400px) * .07)/1 "Pirata One", var(--font-display); opacity: .6; }
+.rp-poster .sub { font: 500 calc(var(--rpw, 400px) * .06)/1.2 "Grenze Gotisch", serif; color: #d9c9a3; }
+.rp-poster img { width: 34%; filter: drop-shadow(0 10px 30px rgba(0,0,0,.7)); }
+.rp-bar { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: #0d0d11; color: #ddd; font: 600 13px var(--font-body); }
+.rp-bar button { border: 1px solid #2a2a33; background: #17171d; color: #eee; border-radius: 8px; height: 34px; min-width: 38px; padding: 0 10px; font: inherit; cursor: pointer; }
+.rp-bar button:hover { background: #22222a; }
+.rp-bar .rp-prog { flex: 1; text-align: center; opacity: .75; font-variant-numeric: tabular-nums; }
+
 /* ---------- Secret army ---------- */
 .secret-cover { position: absolute; inset: 0; z-index: 30; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 24px; text-align: center; background: radial-gradient(circle at 50% 40%, #2c2440, #120e1c 75%); color: #f3eefc; }
 .secret-cover[hidden] { display: none; }
@@ -743,6 +768,7 @@ textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 0; }
           </div>
           <div class="sheet" id="rvMoves"></div>
           <button class="btn wide" id="hlBtn" type="button" data-act="highlights">Watch highlights with Coach Ozzie</button>
+          <button class="btn wide" type="button" data-act="replay">🎬 Replay like an edit</button>
           <button class="btn wide" type="button" data-act="newReview">Review another game</button>
         </div>
       </div>
@@ -3427,7 +3453,7 @@ function summaryHTML() {
     </div>
     <div class="counts">${rows}</div>
     <div class="est"><span class="v">${s.w.est || '—'}</span><span class="l">Game rating<br>estimate</span><span class="v">${s.b.est || '—'}</span></div>
-    <div class="btn-row"><button class="btn primary" type="button" data-act="start">Start review</button><button class="btn" type="button" data-act="highlights">${avatar(OZZIE.av, 'happy')}Highlights</button></div>
+    <div class="btn-row"><button class="btn primary" type="button" data-act="start">Start review</button><button class="btn" type="button" data-act="highlights">${avatar(OZZIE.av, 'happy')}Highlights</button><button class="btn" type="button" data-act="replay">🎬 Replay</button></div>
   </div>`;
 }
 function exploreHTML() {
@@ -5281,6 +5307,258 @@ function confirmResign() {
   return false;
 }
 
+
+/* ============================================================
+   REPLAY: watch a reviewed game like a ChessGameShorts edit
+   Straight board; White moves zoom in gently, Black moves zoom back out. Calm moves glide clean;
+   big moves (brilliant, great, queen captures, mate) explode.
+   ============================================================ */
+const RP = { el: null, token: 0, paused: false, speed: 1, anims: new Set(), camT: 'translate(0px,0px) scale(1)' };
+const RP_STROBE = ['rgb(60,140,255)', 'rgb(80,235,110)', 'rgb(255,50,70)', 'rgb(255,70,190)'];
+const RP_BEAT = 430, RP_DRAMA = 3.5, RP_HIT = 1500;
+const RP_STOP = {};
+function rpRun(el, kf, opt) {
+  const a = el.animate(kf, Object.assign({ fill: 'forwards' }, opt));
+  a.playbackRate = RP.speed;
+  if (RP.paused) a.pause();
+  RP.anims.add(a);
+  return a.finished.catch(() => {}).finally(() => RP.anims.delete(a));
+}
+async function rpWait(ms, tok) {
+  let left = ms;
+  while (left > 0) {
+    if (tok !== RP.token) throw RP_STOP;
+    if (RP.paused) { await sleep(80); continue; }
+    const st = Math.min(40, left / RP.speed);
+    await sleep(st);
+    left -= st * RP.speed;
+  }
+  if (tok !== RP.token) throw RP_STOP;
+}
+function closeReplay() {
+  RP.token++;
+  for (const a of RP.anims) { try { a.cancel(); } catch (e) { /* ignore */ } }
+  RP.anims.clear();
+  if (RP.el) { RP.el.remove(); RP.el = null; }
+  document.removeEventListener('keydown', rpKeys, true);
+}
+function rpKeys(e) {
+  if (!RP.el) return;
+  if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closeReplay(); }
+  else if (e.key === ' ') { e.preventDefault(); e.stopPropagation(); rpPause(!RP.paused); }
+}
+function rpPause(on) {
+  RP.paused = on;
+  for (const a of RP.anims) { try { on ? a.pause() : a.play(); } catch (e) { /* ignore */ } }
+  if (RP.el) RP.el.querySelector('[data-rp="pause"]').textContent = on ? '▶' : '❚❚';
+}
+function startReplay() {
+  const g = R.game;
+  if (!g || !g.moves.length) return;
+  closeReplay();
+  RP.paused = false;
+  const el = document.createElement('div');
+  el.className = 'rp';
+  el.innerHTML = `<div class="rp-frame"><div class="rp-scene">
+      <div class="rp-cam"><div class="rp-board"><div class="rp-hl"></div><div class="rp-wm">ChessGameShorts</div><div class="rp-pcs"></div><div class="rp-fx"></div></div></div>
+      <div class="rp-layer rp-strobe"></div><div class="rp-layer rp-flash"></div><div class="rp-layer rp-top"></div>
+    </div>
+    <div class="rp-bar"><button type="button" data-rp="restart" title="Restart">⟲</button><button type="button" data-rp="pause" title="Pause (space)">❚❚</button><button type="button" data-rp="speed" title="Speed">1×</button><span class="rp-prog"></span><button type="button" data-rp="close" title="Close (Esc)">✕</button></div></div>`;
+  document.body.appendChild(el);
+  RP.el = el;
+  el.querySelector('.rp-bar').addEventListener('click', e => {
+    const b = e.target.closest('[data-rp]');
+    if (!b) return;
+    const k = b.dataset.rp;
+    if (k === 'close') closeReplay();
+    else if (k === 'pause') rpPause(!RP.paused);
+    else if (k === 'restart') { rpPause(false); rpStart(); }
+    else if (k === 'speed') { RP.speed = RP.speed === 1 ? 1.5 : RP.speed === 1.5 ? 2 : 1; b.textContent = RP.speed + '×'; for (const a of RP.anims) a.playbackRate = RP.speed; }
+  });
+  el.querySelector('[data-rp="speed"]').textContent = RP.speed + '×';
+  document.addEventListener('keydown', rpKeys, true);
+  rpStart();
+}
+function rpLayout() {
+  const sc = RP.el.querySelector('.rp-scene'), W = sc.clientWidth, H = sc.clientHeight;
+  const cam = RP.el.querySelector('.rp-cam');
+  cam.style.top = (H - W) / 2 + 'px';
+  RP.el.style.setProperty('--rpw', W + 'px');
+  return { W, H, B: W, oy: (H - W) / 2 };
+}
+async function rpStart() {
+  const tok = ++RP.token;
+  for (const a of RP.anims) { try { a.cancel(); } catch (e) { /* ignore */ } }
+  RP.anims.clear();
+  try { await rpPlay(tok); } catch (e) { if (e !== RP_STOP) console.error(e); }
+}
+async function rpPlay(tok) {
+  const g = R.game, el = RP.el, L = rpLayout();
+  const scene = el.querySelector('.rp-scene'), cam = el.querySelector('.rp-cam'), brd = el.querySelector('.rp-board');
+  const pcs = el.querySelector('.rp-pcs'), fx = el.querySelector('.rp-fx'), hl = el.querySelector('.rp-hl');
+  const strobe = el.querySelector('.rp-strobe'), flashL = el.querySelector('.rp-flash'), top = el.querySelector('.rp-top');
+  const prog = el.querySelector('.rp-prog');
+  pcs.innerHTML = ''; fx.innerHTML = ''; hl.innerHTML = ''; top.innerHTML = ''; scene.style.filter = '';
+  const orient = board.orientation === 'b' ? 'b' : 'w', q = L.B / 8;
+  const xy = sq => { const f = sq.charCodeAt(0) - 97, r = +sq[1] - 1; return orient === 'w' ? { x: f, y: 7 - r } : { x: 7 - f, y: r }; };
+  const ctr = sq => { const p = xy(sq); return { x: (p.x + 0.5) * q, y: (p.y + 0.5) * q }; };
+  const keyOf = ch => (ch === ch.toUpperCase() ? 'w' : 'b') + ch.toUpperCase();
+  const place = (img, sq) => { const p = xy(sq); img.style.left = p.x * 12.5 + '%'; img.style.top = p.y * 12.5 + '%'; img.dataset.sq = sq; };
+  const els = {};
+  const draw = fen => { pcs.innerHTML = ''; const m = fenToMap(fen); for (const sq in m) { const i = document.createElement('img'); i.src = PIECE_URL[keyOf(m[sq])]; i.alt = ''; place(i, sq); pcs.appendChild(i); els[sq] = i; } };
+  for (const k in els) delete els[k];
+  draw(g.positions[0].fen);
+  // camera
+  const camTo = (sq, z, dur) => {
+    let tx = 0, ty = 0;
+    if (sq && z > 1) {
+      const c = ctr(sq);
+      tx = clamp(L.W / 2 - z * c.x, L.W - z * L.B, 0);
+      ty = clamp(L.H / 2 - L.oy - z * c.y, -L.oy, L.H - L.oy - z * L.B);
+    }
+    const t = `translate(${tx}px,${ty}px) scale(${z})`;
+    const from = RP.camT; RP.camT = t;
+    return rpRun(cam, [{ transform: from }, { transform: t }], { duration: dur, easing: 'cubic-bezier(.45,0,.25,1)' });
+  };
+  cam.style.transform = RP.camT = 'translate(0px,0px) scale(1)';
+  // effect helpers (in board coordinates, so they zoom with the camera)
+  const mk = (css, tag, parent) => { const e = document.createElement(tag || 'div'); Object.assign(e.style, css || {}); (parent || fx).appendChild(e); return e; };
+  const box = (P, w, h) => ({ left: P.x - w / 2 + 'px', top: P.y - h / 2 + 'px', width: w + 'px', height: h + 'px' });
+  const gone = (e, kf, o) => rpRun(e, kf, o).then(() => e.remove());
+  const flash = (color, a, dur) => { const f = mk({ inset: 0, background: color }, 'div', flashL); gone(f, [{ opacity: a }, { opacity: 0 }], { duration: dur, easing: 'ease-out' }); };
+  const shake = (amp, dur) => rpRun(scene, [{ transform: 'translateX(0)', filter: 'blur(0)' }, { transform: `translateX(${-amp}px)`, filter: 'blur(1.6px)' }, { transform: `translateX(${amp}px)`, filter: 'blur(1.6px)' }, { transform: `translateX(${-amp * 0.6}px)`, filter: 'blur(1px)' }, { transform: `translateX(${amp * 0.3}px)`, filter: 'blur(.5px)' }, { transform: 'translateX(0)', filter: 'blur(0)' }], { duration: dur, easing: 'ease-out', fill: 'none' });
+  const sparkles = (P, n, spread, color = '#fff') => { for (let i = 0; i < n; i++) { const sz = q * (0.04 + Math.random() * 0.07), e = mk(Object.assign(box(P, sz, sz), { borderRadius: '50%', background: color, boxShadow: `0 0 ${sz * 2}px ${color}` })); const a = Math.random() * Math.PI * 2, d = spread * (0.35 + Math.random() * 0.9); gone(e, [{ transform: 'translate(0,0) scale(1)', opacity: 1 }, { transform: `translate(${Math.cos(a) * d}px,${Math.sin(a) * d}px) scale(.3)`, opacity: 1, offset: 0.6 }, { transform: `translate(${Math.cos(a) * d * 1.1}px,${Math.sin(a) * d * 1.1}px) scale(0)`, opacity: 0 }], { duration: 700 + Math.random() * 800, easing: 'cubic-bezier(.1,.8,.3,1)' }); } };
+  const debris = (P, white, n) => { for (let i = 0; i < n; i++) { const sz = q * (0.08 + Math.random() * 0.14), e = mk(Object.assign(box(P, sz, sz * (0.6 + Math.random() * 0.6)), { background: white ? '#f6f6f6' : '#0e0e10', clipPath: 'polygon(50% 0, 100% 80%, 0 100%)', boxShadow: 'none', outline: `1px solid ${white ? '#3c3c3c' : '#e6e6e6'}`, zIndex: 3 })); const a = -Math.PI / 2 + (Math.random() - 0.5) * 3.2, v = q * (0.9 + Math.random() * 1.4); gone(e, [{ transform: 'translate(0,0) rotate(0)', opacity: 1 }, { transform: `translate(${Math.cos(a) * v * 0.7}px,${Math.sin(a) * v * 0.7}px) rotate(${(Math.random() - 0.5) * 540}deg)`, opacity: 1, offset: 0.45 }, { transform: `translate(${Math.cos(a) * v}px,${Math.sin(a) * v + q * 1.4}px) rotate(${(Math.random() - 0.5) * 900}deg)`, opacity: 0 }], { duration: 1100 + Math.random() * 500, easing: 'cubic-bezier(.2,.6,.5,1)' }); } };
+  const ring = (P, color, size, dur) => { const e = mk(Object.assign(box(P, size, size), { borderRadius: '50%', border: `${Math.max(2, q * 0.06)}px solid ${color}`, boxShadow: `0 0 ${q * 0.3}px ${color}`, zIndex: 2 })); gone(e, [{ transform: 'scale(.2)', opacity: 1 }, { transform: 'scale(1.6)', opacity: 0 }], { duration: dur, easing: 'cubic-bezier(.1,.7,.3,1)' }); };
+  const glowOrb = (P, color) => { const e = mk(Object.assign(box(P, q * 2.6, q * 2.6), { borderRadius: '50%', background: `radial-gradient(circle, #fff 0%, ${color} 22%, rgba(0,0,0,0) 68%)`, mixBlendMode: 'screen', zIndex: 2 })); gone(e, [{ transform: 'scale(.3)', opacity: 1 }, { transform: 'scale(1)', opacity: 0.9, offset: 0.2 }, { transform: 'scale(1.3)', opacity: 0 }], { duration: RP_HIT, easing: 'ease-out' }); };
+  const octagon = (P, color) => { const sz = q * 2.3, e = mk(box(P, sz, sz), 'div'); e.innerHTML = `<svg viewBox="0 0 100 100" width="100%" height="100%"><polygon points="30,4 70,4 96,30 96,70 70,96 30,96 4,70 4,30" fill="none" stroke="${color}" stroke-width="3"/></svg>`; const dir = Math.random() < 0.5 ? 1 : -1; gone(e, [{ transform: 'rotate(0) scale(.4)', opacity: 1 }, { transform: `rotate(${dir * 90}deg) scale(1.15)`, opacity: 0.8, offset: 0.5 }, { transform: `rotate(${dir * 160}deg) scale(1.5)`, opacity: 0 }], { duration: RP_HIT, easing: 'ease-out' }); };
+  const rays = P => { const sz = q * 6, e = mk(Object.assign(box(P, sz, sz), { borderRadius: '50%', background: 'repeating-conic-gradient(rgba(255,255,255,.55) 0 4deg, rgba(255,255,255,0) 4deg 22deg)', maskImage: 'radial-gradient(circle, #000 10%, transparent 68%)', WebkitMaskImage: 'radial-gradient(circle, #000 10%, transparent 68%)', mixBlendMode: 'screen', zIndex: 1 })); gone(e, [{ transform: 'rotate(0) scale(.5)', opacity: 0 }, { transform: 'rotate(25deg) scale(1)', opacity: 1, offset: 0.25 }, { transform: 'rotate(70deg) scale(1.1)', opacity: 0 }], { duration: RP_HIT + 300, easing: 'linear' }); };
+  const speedLines = P => { const sz = q * 9, e = mk(box(P, sz, sz)); let ls = ''; for (let i = 0; i < 28; i++) { const a = (i / 28) * Math.PI * 2 + Math.random() * 0.1, r0 = 14 + Math.random() * 6, r1 = 46 + Math.random() * 4; ls += `<line x1="${50 + Math.cos(a) * r0}" y1="${50 + Math.sin(a) * r0}" x2="${50 + Math.cos(a) * r1}" y2="${50 + Math.sin(a) * r1}" stroke="#fff" stroke-width="${0.3 + Math.random() * 0.6}" stroke-linecap="round"/>`; } e.innerHTML = `<svg viewBox="0 0 100 100" width="100%" height="100%">${ls}</svg>`; e.style.zIndex = 4; gone(e, [{ transform: 'scale(.6)', opacity: 0.95 }, { transform: 'scale(1.15)', opacity: 0 }], { duration: 650, easing: 'ease-out' }); };
+  const lightning = (A, K) => { const sz = 'width:100%;height:100%', e = mk({ inset: 0, zIndex: 6 }); let d = `M${A.x} ${A.y}`; const n = 7; for (let i = 1; i < n; i++) { const t = i / n, jx = (Math.random() - 0.5) * q * 0.7, jy = (Math.random() - 0.5) * q * 0.7; d += ` L${A.x + (K.x - A.x) * t + jx} ${A.y + (K.y - A.y) * t + jy}`; } d += ` L${K.x} ${K.y}`; e.innerHTML = `<svg style="${sz};overflow:visible"><path d="${d}" fill="none" stroke="#bfe6ff" stroke-width="${q * 0.07}" stroke-linejoin="round" style="filter:drop-shadow(0 0 ${q * 0.12}px #6fc3ff)"/><path d="${d}" fill="none" stroke="#fff" stroke-width="${q * 0.025}"/></svg>`; gone(e, [{ opacity: 1 }, { opacity: 0.2, offset: 0.15 }, { opacity: 1, offset: 0.3 }, { opacity: 0.1, offset: 0.5 }, { opacity: 0.9, offset: 0.6 }, { opacity: 0 }], { duration: 750, easing: 'linear' }); };
+  const ghost = (src, P) => { const e = mk(Object.assign(box(P, q, q), { zIndex: 4 }), 'img'); e.src = src; gone(e, [{ transform: 'scale(1)', opacity: 0.8, filter: 'brightness(2)' }, { transform: 'scale(2.1)', opacity: 0, filter: 'brightness(3) blur(2px)' }], { duration: 800, easing: 'ease-out' }); };
+  const drama = async () => { // dark high-contrast grade with a colour strobe on every beat
+    scene.style.filter = 'contrast(1.45) saturate(1.6) brightness(.8)';
+    const beats = Math.round(RP_DRAMA * 2);
+    for (let i = 0; i < beats; i++) {
+      if (tok !== RP.token) return;
+      strobe.style.background = RP_STROBE[i % RP_STROBE.length];
+      strobe.style.mixBlendMode = 'color';
+      rpRun(strobe, [{ opacity: 0.38 }, { opacity: 0.12 }], { duration: RP_BEAT / 2, easing: 'ease-out' });
+      try { await rpWait(RP_BEAT / 2, tok); } catch (e) { return; }
+    }
+    rpRun(strobe, [{ opacity: 0.12 }, { opacity: 0 }], { duration: 300 });
+    scene.style.filter = '';
+  };
+  const badgeAt = (cls, sq, big) => {
+    if (!BADGE_PNG[cls]) return;
+    const p = xy(sq), sz = q * (big ? 0.72 : 0.52);
+    const e = mk({ left: (p.x + 1) * q - sz * 0.62 + 'px', top: p.y * q - sz * 0.38 + 'px', width: sz + 'px', height: sz + 'px', zIndex: 7, filter: 'drop-shadow(0 3px 6px rgba(0,0,0,.5))' }, 'img');
+    e.src = 'data:image/png;base64,' + BADGE_PNG[cls];
+    rpRun(e, [{ transform: 'scale(0) rotate(-30deg)' }, { transform: 'scale(1.25) rotate(8deg)', offset: 0.6 }, { transform: 'scale(1) rotate(0)' }], { duration: 380, easing: 'cubic-bezier(.2,.8,.3,1.3)' });
+    return e;
+  };
+  const poster = async (title, sub, img, hold) => {
+    const e = mk({}, 'div', top);
+    e.className = 'rp-poster';
+    e.innerHTML = (img ? `<img src="${img}" alt="">` : '') + `<div class="t">${title}</div>` + (sub ? `<div class="sub">${esc(sub)}</div>` : '');
+    await rpRun(e, [{ opacity: 0 }, { opacity: 1 }], { duration: 600, easing: 'ease-out' });
+    await rpWait(hold, tok);
+    await rpRun(e, [{ opacity: 1 }, { opacity: 0 }], { duration: 600, easing: 'ease-in' });
+    e.remove();
+  };
+  // title card
+  const h = g.headers || {}, wn = h.White || 'White', bn = h.Black || 'Black', res = h.Result && h.Result !== '*' ? h.Result : '';
+  const n = g.moves.length;
+  const last = mkChess(g.positions[n].fen), mated = last.in_checkmate();
+  prog.textContent = 'Starting…';
+  await poster(`${esc(wn)}<div class="vs">vs</div>${esc(bn)}`, h.Event && !/\?/.test(h.Event) ? h.Event : '', PIECE_URL[(mated ? (last.turn() === 'w' ? 'b' : 'w') : 'w') + 'K'], 900);
+  // the moves
+  for (let i = 0; i < n; i++) {
+    const mv = g.moves[i], A = g.positions[i], Bp = g.positions[i + 1];
+    const cls = g.cls && g.cls[i] ? g.cls[i].cls : null;
+    const after = mkChess(Bp.fen), mate = after.in_checkmate(), check = after.in_check();
+    const big = mate || cls === 'brilliant' || cls === 'great' || mv.captured === 'q';
+    const medium = !big && (!!mv.captured || check);
+    prog.textContent = `Move ${Math.ceil((i + 1) / 2)} · ${i + 1}/${n}`;
+    if (mate) { // a drained, dark silence before the finale
+      await rpRun(scene, [{ filter: 'grayscale(0) brightness(1)' }, { filter: 'grayscale(.9) brightness(.55)' }], { duration: 500, fill: 'none' });
+      scene.style.filter = 'grayscale(.9) brightness(.55)';
+      await rpWait(900, tok);
+      scene.style.filter = '';
+      rpRun(scene, [{ filter: 'grayscale(.9) brightness(.55)' }, { filter: 'grayscale(0) brightness(1)' }], { duration: 250, fill: 'none' });
+    }
+    // camera: White moves zoom in on the move, Black moves zoom out to the whole board
+    if (mv.color === 'w') await camTo(mv.to, big ? 1.44 : 1.2, 500); else await camTo(null, 1, 500);
+    // slide the pieces (works out castling, en passant and promotion from the two positions)
+    const pm = fenToMap(A.fen), nm = fenToMap(Bp.fen);
+    const vac = Object.keys(pm).filter(sq => pm[sq] !== nm[sq]), arr = Object.keys(nm).filter(sq => nm[sq] !== pm[sq]);
+    const used = new Set(), moves = [];
+    for (const to of arr.sort((a, b) => (a === mv.to ? -1 : 0) - (b === mv.to ? -1 : 0))) {
+      let fr = vac.find(sq => !used.has(sq) && pm[sq] === nm[to] && sq === mv.from) || vac.find(sq => !used.has(sq) && pm[sq] === nm[to]);
+      if (!fr && mv.uci && mv.uci[4] && !used.has(mv.from)) fr = mv.from;
+      if (fr) { used.add(fr); moves.push([fr, to]); }
+    }
+    const capturedEls = vac.filter(sq => !used.has(sq)).map(sq => ({ sq, el: els[sq], white: pm[sq] === pm[sq].toUpperCase() }));
+    // pieces landing on an occupied square: the old occupant is captured
+    for (const [, to] of moves) if (els[to] && !used.has(to) && !capturedEls.some(c => c.sq === to)) capturedEls.push({ sq: to, el: els[to], white: pm[to] === pm[to].toUpperCase() });
+    const slides = moves.map(([fr, to]) => {
+      const img = els[fr];
+      if (!img) return Promise.resolve();
+      const a = xy(fr), b = xy(to);
+      place(img, to);
+      img.src = PIECE_URL[keyOf(nm[to])];
+      img.style.zIndex = 3;
+      return rpRun(img, [{ transform: `translate(${(a.x - b.x) * 100}%,${(a.y - b.y) * 100}%)`, filter: 'blur(0)' }, { transform: `translate(${(a.x - b.x) * 50}%,${(a.y - b.y) * 50}%)`, filter: 'blur(1.4px)', offset: 0.5 }, { transform: 'translate(0,0)', filter: 'blur(0)' }], { duration: 420, easing: 'cubic-bezier(.65,0,.35,1)', fill: 'none' }).then(() => { img.style.zIndex = ''; });
+    });
+    const newEls = {};
+    for (const sq in els) if (!used.has(sq) && !capturedEls.some(c => c.sq === sq)) newEls[sq] = els[sq];
+    for (const [fr, to] of moves) newEls[to] = els[fr];
+    await Promise.all(slides);
+    for (const c of capturedEls) if (c.el && c.el !== newEls[c.sq]) c.el.remove();
+    for (const k in els) delete els[k];
+    Object.assign(els, newEls);
+    // land
+    moveSound(mv, after);
+    hl.innerHTML = [mv.from, moves.length ? moves[0][1] : mv.to].map(sq => { const p = xy(sq); return `<i style="left:${p.x * 12.5}%;top:${p.y * 12.5}%"></i>`; }).join('');
+    const land = moves.length ? moves[0][1] : mv.to, P = ctr(land);
+    const cap = capturedEls[0];
+    if (big) {
+      sfx('boom');
+      flash('#fff', 0.9, 200);
+      setTimeout(() => { if (tok === RP.token) { scene.style.filter = 'invert(1)'; setTimeout(() => { if (tok === RP.token && scene.style.filter === 'invert(1)') scene.style.filter = ''; drama(); }, 60 / RP.speed); } }, 70 / RP.speed);
+      shake(L.W * 0.022, 450);
+      rpRun(brd, [{ filter: 'drop-shadow(0 0 0 transparent)' }, { filter: `drop-shadow(${q * 0.08}px 0 0 rgba(255,0,60,.7)) drop-shadow(${-q * 0.08}px 0 0 rgba(0,210,255,.7))`, offset: 0.2 }, { filter: 'drop-shadow(0 0 0 transparent)' }], { duration: 420, fill: 'none' });
+      rpRun(brd, [{ transform: 'scale(1)' }, { transform: 'scale(1.045)', offset: 0.2 }, { transform: 'scale(1)' }], { duration: 320, fill: 'none', easing: 'ease-out' });
+      speedLines(P); glowOrb(P, cls === 'brilliant' ? '#26c2a3' : cls === 'great' ? '#5c8bb0' : '#ff8a3c'); ring(P, '#fff', q * 2.2, 900); octagon(P, '#fff'); rays(P); sparkles(P, 26, q * 1.8);
+      if (cap) debris(P, cap.white, 18);
+      if (els[land]) ghost(els[land].src, P);
+      if (check) { const ks = Object.keys(nm).find(sq => nm[sq] === (mv.color === 'w' ? 'k' : 'K')); if (ks) lightning(P, ctr(ks)); }
+    } else if (medium) {
+      ring(P, cap ? '#ffffff' : '#ffd84a', q * 1.6, 700);
+      if (cap) { debris(P, cap.white, 9); shake(L.W * 0.008, 260); }
+      if (check) { const ks = Object.keys(nm).find(sq => nm[sq] === (mv.color === 'w' ? 'k' : 'K')); if (ks) lightning(P, ctr(ks)); }
+    }
+    const showBadge = cls && cls !== 'book' && cls !== 'forced' && cls !== 'good' && cls !== 'excellent' && (cls !== 'best' || big || medium);
+    const bdg = showBadge ? badgeAt(mate ? (cls === 'brilliant' ? 'brilliant' : 'best') : cls, land, big) : null;
+    if (mate) {
+      const slam = mk({}, 'div', top);
+      slam.className = 'rp-slam';
+      slam.textContent = 'CHECKMATE';
+      await rpRun(slam, [{ transform: 'translate(-50%,-50%) scale(3) rotate(-10deg)', opacity: 0 }, { transform: 'translate(-50%,-50%) scale(.92) rotate(-5deg)', opacity: 1, offset: 0.7 }, { transform: 'translate(-50%,-50%) scale(1) rotate(-5deg)', opacity: 1 }], { duration: 360, easing: 'cubic-bezier(.2,.8,.3,1.2)' });
+      shake(L.W * 0.03, 520); sfx('boom');
+      await rpWait(RP_BEAT * 7, tok);
+      await rpRun(slam, [{ opacity: 1 }, { opacity: 0 }], { duration: 400 });
+      slam.remove();
+    } else await rpWait(big ? RP_HIT + 300 : medium ? 650 : 380, tok);
+    if (bdg) gone(bdg, [{ opacity: 1 }, { opacity: 0 }], { duration: 250 });
+  }
+  await camTo(null, 1, 600);
+  prog.textContent = 'Finished';
+  const resTxt = mated ? `${(last.turn() === 'w' ? bn : wn)} wins by checkmate` : res === '1-0' ? `${wn} wins` : res === '0-1' ? `${bn} wins` : res === '1/2-1/2' ? 'Draw' : '';
+  await poster(esc(resTxt || 'Game over'), res, null, 1600);
+  prog.textContent = 'Finished · ⟲ to watch again';
+}
+
 /* ============================================================
    Tabs, wiring, boot
    ============================================================ */
@@ -5499,6 +5777,7 @@ function wire() {
       case 'flip': R.orientation = R.orientation === 'w' ? 'b' : 'w'; renderReview(false); break;
       case 'start': goPly(1); break;
       case 'highlights': startHighlights(); break;
+      case 'replay': startReplay(); break;
       case 'retry': startRetry(R.ply - 1); break;
       case 'line': showLine(R.retry ? R.retry.i : R.ply - 1); break;
       case 'exitExplore': { const base = R.explore ? R.explore.base : R.ply; if (R.liveJob) R.liveJob.cancel(); R.explore = null; R.ply = base; renderReview(false); break; }

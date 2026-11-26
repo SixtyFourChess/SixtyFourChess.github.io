@@ -524,7 +524,7 @@ textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 0; }
     </nav>
     <div class="top-right">
       <span class="pill" id="enginePill" data-state="loading" title="Chess engine status"><i></i><span>Loading engine…</span></span>
-      <label class="battle-btn fin-pick" title="Animation that plays on checkmate"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 2.5c-4 0-6.5 2.6-6.5 6 0 2.2 1.1 3.6 2.5 4.4V15.5h8v-2.6c1.4-.8 2.5-2.2 2.5-4.4 0-3.4-2.5-6-6.5-6z"/><circle cx="7.5" cy="9" r="1.4" fill="currentColor"/><circle cx="12.5" cy="9" r="1.4" fill="currentColor"/><path d="M8.5 15.5v2M11.5 15.5v2"/></svg><span>Finisher:</span><select id="finSel" aria-label="Checkmate finisher"><option value="random">Random</option><option value="gun">Gun</option><option value="purple">Hollow purple</option><option value="sword">Sword</option><option value="shadow">Silhouette</option><option value="off">Off</option></select></label>
+      <label class="battle-btn fin-pick" title="Animation that plays on checkmate"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 2.5c-4 0-6.5 2.6-6.5 6 0 2.2 1.1 3.6 2.5 4.4V15.5h8v-2.6c1.4-.8 2.5-2.2 2.5-4.4 0-3.4-2.5-6-6.5-6z"/><circle cx="7.5" cy="9" r="1.4" fill="currentColor"/><circle cx="12.5" cy="9" r="1.4" fill="currentColor"/><path d="M8.5 15.5v2M11.5 15.5v2"/></svg><span>Finisher:</span><select id="finSel" aria-label="Checkmate finisher"><option value="gun">Gun</option><option value="off">Off</option></select></label>
       <button class="icon-btn" id="soundBtn" type="button" aria-label="Sound on" title="Sound"></button>
     </div>
   </header>
@@ -1478,10 +1478,8 @@ const BWD = {
 };
 const bsvg = (w, h, defs, body) => `<svg viewBox='0 0 ${w} ${h}'><defs>${defs.map(d => BWD[d]).join('')}</defs>${body}</svg>`;
 const WPN = {
-  sword: { vb: [260, 44], svg: bsvg(260, 44, ['gold', 'steel'], `<circle cx='7' cy='22' r='7' fill='url(#bw-gold)'/><circle cx='7' cy='22' r='3' fill='#c0392b'/><rect x='13' y='17' width='34' height='10' rx='3' fill='#3b2314'/><path d='M18 17l5 10M25 17l5 10M32 17l5 10M39 17l5 10' stroke='#1e1009' stroke-width='1.5'/><path d='M47 4Q53 22 47 40H56Q62 22 56 4Z' fill='url(#bw-gold)' stroke='#7a5a12' stroke-width='.8'/><circle cx='51.5' cy='22' r='3.4' fill='#2e86de' stroke='#fff' stroke-opacity='.6' stroke-width='.8'/><path d='M57 15L238 18.2L260 22L238 25.8L57 29Z' fill='url(#bw-steel)' stroke='#4f5864' stroke-width='.8'/><path d='M62 22H222' stroke='#8994a3' stroke-width='2.2'/><path d='M62 18.6H230' stroke='#fff' stroke-opacity='.7' stroke-width='.8'/>`) },
   pistol: { vb: [110, 80], svg: bsvg(110, 80, ['dark'], `<path d='M24 46H46L40 80H16Z' fill='#23272d'/><path d='M22 50l18 2M21 56l18 2M20 62l18 2M19 68l18 2' stroke='#14171a' stroke-width='1.2'/><rect x='22' y='31' width='84' height='15' rx='2.5' fill='url(#bw-dark)'/><path d='M30 33v11M33.5 33v11M37 33v11M40.5 33v11' stroke='#0e1013' stroke-width='1.1'/><rect x='104' y='35.5' width='6' height='9' rx='1' fill='#0e1013'/><rect x='98' y='28' width='3' height='4' fill='#2c3138'/><rect x='26' y='28' width='5' height='4' fill='#2c3138'/><path d='M28 46H92V51H42Z' fill='#2c3138'/><path d='M53 46q0 14-12 14h-4' stroke='#2c3138' stroke-width='3.5' fill='none'/><path d='M47 48q2 6-2 9' stroke='#0e1013' stroke-width='2' fill='none'/><path d='M24 32.5H104' stroke='#fff' stroke-opacity='.25' stroke-width='1'/><rect x='62' y='34' width='14' height='6' rx='1' fill='#15181c'/>`) },
 };
-const FIN_GUN = 'data:image/webp;base64,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';
 // squares of `by` pieces that attack `sq` (map: square -> 'wQ' style keys)
 function attackersOf(map, sq, by) {
   const f0 = sq.charCodeAt(0) - 97, r0 = +sq[1] - 1, out = [];
@@ -1550,6 +1548,16 @@ class Board {
       for (const sq of new Set(Object.keys(prevMap).concat(Object.keys(this.pieceMap)))) if (prevMap[sq] !== this.pieceMap[sq]) changed++;
       if (changed) this.fxToken = (this.fxToken || 0) + 1;
       if ((o.animate || dragged) && this.lastMove && changed && changed <= 3) this.captureFx(prevMap, this.pieceMap, slid);
+      // a pawn that just promoted powers up into its new piece
+      const lm = this.lastMove, was = lm && prevMap[lm.from], now = lm && this.pieceMap[lm.to];
+      if ((o.animate || dragged) && was && now && was[1] === 'P' && now[1] !== 'P' && was[0] === now[0] && !reduceMotion && (!this.opts.finisherOk || this.opts.finisherOk())) {
+        const fen = chess.fen();
+        this.hideSq = lm.to; this.hideFen = fen;
+        const real = this.pcs.querySelector(`[data-sq="${lm.to}"]`);
+        if (real) real.style.visibility = 'hidden';
+        this.fxUntil = performance.now() + 4000;
+        setTimeout(() => this.promoteFx(lm.to, now, fen).catch(() => {}), slid ? 230 : 30);
+      }
     }
     // a different position cancels a finisher that is still playing
     if (this.finStage && this.finStage.dataset.fen !== chess.fen()) { this.finStage.remove(); this.finStage = null; this.fxUntil = 0; if (this.hideFen !== chess.fen()) this.hideSq = null; }
@@ -1558,8 +1566,7 @@ class Board {
     this.wantFinisher = false;
     if (fresh && S.fin !== 'off' && !reduceMotion && (!this.opts.finisherOk || this.opts.finisherOk()) && this.finFen !== chess.fen() && chess.in_checkmate()) {
       this.finFen = chess.fen();
-      const fen = this.finFen, kinds = ['gun', 'purple', 'sword', 'shadow'];
-      const kind = S.fin === 'random' || !kinds.includes(S.fin) ? kinds[Math.floor(Math.random() * kinds.length)] : S.fin;
+      const fen = this.finFen, kind = 'gun';
       const go = () => {
         if (!this.chess || this.chess.fen() !== fen) return;
         if ((this.fxUntil || 0) > performance.now() || (this.hideSq && this.hideFen === fen)) { setTimeout(go, 120); return; }
@@ -1637,135 +1644,43 @@ class Board {
     run(dim, [{ opacity: 0 }, { opacity: 1 }], { duration: 300 });
     let king = img(KURL, Object.assign(box(K, q, q), { zIndex: 6 }));
     try {
-      if (kind === 'gun') {
-        // the checking piece pulls out a gun, aims at the king and fires
-        const gw = q * 1.75, gh = gw * 300 / 198;
-        const side = ux >= 0 ? 1 : -1;
-        const G0 = { x: clamp(A.x + ux * q * 1.1, gw * 0.45, W - gw * 0.45), y: clamp(A.y + uy * q * 1.1 - q * 0.3, gh * 0.45, H - gh * 0.45) };
-        const gun = img(FIN_GUN, Object.assign(box(G0, gw, gh), { zIndex: 7, transformOrigin: '50% 70%', filter: 'drop-shadow(0 6px 10px rgba(0,0,0,.55))' }));
-        const aim = `perspective(${q * 8}px) rotateY(${-side * 38}deg) rotate(${uy * 18}deg)`;
-        sfx('lock');
-        await run(gun, [{ transform: `${aim} translateY(${q * 0.6}px) scale(.3)`, opacity: 0 }, { transform: `${aim} scale(1.08)`, opacity: 1, offset: 0.7 }, { transform: `${aim} scale(1)`, opacity: 1 }], { duration: 380, easing: 'cubic-bezier(.2,.8,.3,1.3)' });
-        if (!alive()) return;
-        await wait(450);
-        // muzzle is near the top-left of the picture; work out where that lands
-        const M = { x: G0.x + (0.215 - 0.5) * gw * 0.79, y: G0.y + (0.36 - 0.5) * gh };
-        sfx('shot');
-        glow(M, q * 1.3, 'radial-gradient(circle, #fff 0%, #ffe27a 30%, rgba(255,140,40,.85) 55%, rgba(255,80,0,0) 72%)', 220);
-        flash('#fff', 0.45, 160);
-        run(gun, [{ transform: `${aim} scale(1)` }, { transform: `${aim} translateY(${-q * 0.25}px) rotate(${-side * 14}deg) scale(1.05)`, offset: 0.25 }, { transform: `${aim} scale(1)` }], { duration: 420, easing: 'ease-out' });
-        const len = Math.hypot(K.x - M.x, K.y - M.y), a2 = Math.atan2(K.y - M.y, K.x - M.x);
-        const tr = mk('fn-dim', { left: M.x + 'px', top: M.y - 2 + 'px', width: len + 'px', height: '4px', inset: 'auto', background: 'linear-gradient(90deg, rgba(255,240,180,0), #fff6c8)', boxShadow: '0 0 12px 3px rgba(255,230,150,.6)', transformOrigin: '0 50%', zIndex: 8 });
-        run(tr, [{ transform: `rotate(${a2}rad) scaleX(0)`, opacity: 1 }, { transform: `rotate(${a2}rad) scaleX(1)`, opacity: 1, offset: 0.4 }, { transform: `rotate(${a2}rad) scaleX(1)`, opacity: 0 }], { duration: 260 }).then(() => tr.remove());
-        await wait(90);
-        glow(K, q * 1.4, 'radial-gradient(circle, #fff 0%, #ffcf4a 35%, rgba(255,90,0,0) 70%)', 300);
-        sparks(K, 16, '#ffd36b', q * 0.9);
-        blood(K, 10, q * 0.5, Math.cos(a2));
-        shake(9);
-        const kx = Math.cos(a2) * q * 2.4, ky = Math.sin(a2) * q * 2.4 - q * 0.6;
-        run(king, [{ transform: 'translate(0,0) rotate(0)', opacity: 1 }, { transform: `translate(${kx * 0.5}px, ${ky * 0.5 - q * 0.5}px) rotate(${(kx >= 0 ? 1 : -1) * 220}deg)`, opacity: 1, offset: 0.45 }, { transform: `translate(${kx}px, ${ky + q * 1.6}px) rotate(${(kx >= 0 ? 1 : -1) * 430}deg)`, opacity: 0 }], { duration: 1000, easing: 'cubic-bezier(.25,.6,.45,1)' });
-        await wait(500);
-        run(gun, [{ opacity: 1 }, { opacity: 0 }], { duration: 500, delay: 600 });
-        await banner();
-      } else if (kind === 'purple') {
-        // a blue orb and a red orb meet, become purple, and wipe the king out
-        const B = { x: A.x - uy * q * 1.3, y: A.y + ux * q * 1.3 }, R = { x: A.x + uy * q * 1.3, y: A.y - ux * q * 1.3 };
-        run(dim, [{ background: dim.style.background }, { background: 'rgba(6,2,16,.82)' }], { duration: 600 });
-        const orb = (P, c1, c2) => mk('fn-orb', Object.assign(box(P, q * 0.8, q * 0.8), { background: `radial-gradient(circle, #fff 0%, ${c1} 30%, ${c2} 60%, rgba(0,0,0,0) 72%)`, boxShadow: `0 0 ${q * 0.4}px ${c1}`, zIndex: 7 }));
-        const blue = orb(B, '#7fd8ff', 'rgba(30,110,255,.85)'), red = orb(R, '#ff8a8a', 'rgba(230,20,40,.85)');
-        sfx('charge');
-        const pulse = [{ transform: 'scale(.2)', opacity: 0 }, { transform: 'scale(1.15)', opacity: 1, offset: 0.6 }, { transform: 'scale(1)', opacity: 1 }];
-        run(blue, pulse, { duration: 500, easing: 'ease-out' }); await run(red, pulse, { duration: 500, easing: 'ease-out' });
-        if (!alive()) return;
-        sparks(B, 10, '#8fe8ff', q * 0.6, 4); sparks(R, 10, '#ff7a7a', q * 0.6, 4);
-        await wait(350);
-        run(blue, [{ transform: 'translate(0,0) scale(1)' }, { transform: `translate(${A.x - B.x}px, ${A.y - B.y}px) scale(.8)` }], { duration: 520, easing: 'cubic-bezier(.6,0,.4,1)' });
-        await run(red, [{ transform: 'translate(0,0) scale(1)' }, { transform: `translate(${A.x - R.x}px, ${A.y - R.y}px) scale(.8)` }], { duration: 520, easing: 'cubic-bezier(.6,0,.4,1)' });
-        blue.remove(); red.remove();
-        if (!alive()) return;
-        sfx('zap'); flash('#b26bff', 0.5, 220); shake(5);
-        const pur = mk('fn-orb', Object.assign(box(A, q * 1.5, q * 1.5), { background: 'radial-gradient(circle, #fff 0%, #e2b8ff 22%, #a24bff 48%, rgba(90,20,200,.8) 62%, rgba(60,0,140,0) 72%)', boxShadow: `0 0 ${q * 0.6}px #a24bff, 0 0 ${q * 1.2}px rgba(162,75,255,.6)`, zIndex: 7 }));
-        await run(pur, [{ transform: 'scale(.3)' }, { transform: 'scale(1.25)', offset: 0.7 }, { transform: 'scale(1)' }], { duration: 520, easing: 'ease-out' });
-        for (let i = 0; i < 3; i++) glow(A, q * 2.2, 'radial-gradient(circle, rgba(0,0,0,0) 50%, rgba(190,120,255,.7) 58%, rgba(0,0,0,0) 66%)', 600, 0.3, 1.4);
-        await wait(500);
-        if (!alive()) return;
-        // fire: it travels through the king and off the board, erasing a path
-        const far = Math.hypot(W, H) * 1.2, E = { x: A.x + ux * far, y: A.y + uy * far };
-        const trail = mk('fn-dim', { left: A.x + 'px', top: A.y - q * 0.6 + 'px', width: far + 'px', height: q * 1.2 + 'px', inset: 'auto', background: 'linear-gradient(180deg, rgba(120,40,255,0), rgba(200,140,255,.85) 35%, #fff 50%, rgba(200,140,255,.85) 65%, rgba(120,40,255,0))', transformOrigin: '0 50%', zIndex: 6, filter: 'blur(1px)' });
-        sfx('boom');
-        run(trail, [{ transform: 'rotate(' + rad + 'rad) scaleX(0)', opacity: 1 }, { transform: 'rotate(' + rad + 'rad) scaleX(1)', opacity: 1, offset: 0.45 }, { transform: 'rotate(' + rad + 'rad) scaleX(1)', opacity: 0 }], { duration: 1300, easing: 'cubic-bezier(.4,0,.2,1)' }).then(() => trail.remove());
-        run(pur, [{ transform: 'translate(0,0) scale(1)' }, { transform: `translate(${E.x - A.x}px, ${E.y - A.y}px) scale(1.5)` }], { duration: 700, easing: 'cubic-bezier(.5,0,.8,.6)' });
-        await wait(700 * Math.min(1, Math.hypot(K.x - A.x, K.y - A.y) / far) * 2.2);
-        flash('#d7b0ff', 0.6, 300); shake(12, 500);
-        sparks(K, 26, '#c79bff', q * 1.3, 6);
-        run(king, [{ transform: 'scale(1)', opacity: 1, filter: 'brightness(1)' }, { transform: 'scale(1.25)', opacity: 1, filter: 'brightness(3) hue-rotate(250deg)', offset: 0.2 }, { transform: 'scale(.1)', opacity: 0, filter: 'brightness(4) hue-rotate(250deg)' }], { duration: 500, easing: 'ease-in' });
-        await wait(700);
-        await banner();
-      } else if (kind === 'sword') {
-        // a giant sword sweeps down through the king, who splits in two
-        const sw = q * 3.6, sh = sw * WPN.sword.vb[1] / WPN.sword.vb[0];
-        const pivot = { x: K.x - q * 1.9, y: K.y - q * 1.9 };
-        const sword = mk('bt-wpn', { left: pivot.x + 'px', top: pivot.y - sh / 2 + 'px', width: sw + 'px', height: sh + 'px', opacity: '0', zIndex: 7, transformOrigin: '0 50%' });
-        sword.innerHTML = WPN.sword.svg;
-        sfx('swing');
-        await run(sword, [{ transform: 'rotate(-95deg) scale(.6)', opacity: 0 }, { transform: 'rotate(-80deg) scale(1)', opacity: 1 }], { duration: 380, easing: 'ease-out' });
-        if (!alive()) return;
-        await wait(250);
-        sfx('slash');
-        run(sword, [{ transform: 'rotate(-80deg)' }, { transform: 'rotate(95deg)' }], { duration: 260, easing: 'cubic-bezier(.7,0,.3,1)' });
-        await wait(130);
-        // the cut line
-        const cut = mk('fn-dim', { left: K.x - q * 1.1 + 'px', top: K.y - 2 + 'px', width: q * 2.2 + 'px', height: '4px', inset: 'auto', background: 'linear-gradient(90deg, rgba(255,255,255,0), #fff 30%, #fff 70%, rgba(255,255,255,0))', boxShadow: '0 0 14px 4px rgba(255,255,255,.8)', zIndex: 9 });
-        run(cut, [{ transform: 'rotate(45deg) scaleX(0)', opacity: 1 }, { transform: 'rotate(45deg) scaleX(1)', opacity: 1, offset: 0.4 }, { transform: 'rotate(45deg) scaleX(1.1)', opacity: 0 }], { duration: 520 }).then(() => cut.remove());
-        flash('#fff', 0.35, 160); shake(7);
-        // two halves split along the diagonal
-        const half = clip => img(KURL, Object.assign(box(K, q, q), { zIndex: 6, clipPath: clip }));
-        const h1 = half('polygon(0 0, 100% 0, 100% 100%)'), h2 = half('polygon(0 0, 0 100%, 100% 100%)');
-        king.remove(); king = null;
-        blood(K, 14, q * 0.55);
-        run(h1, [{ transform: 'translate(0,0) rotate(0)', opacity: 1 }, { transform: `translate(${q * 0.25}px, ${-q * 0.25}px) rotate(8deg)`, opacity: 1, offset: 0.3 }, { transform: `translate(${q * 0.6}px, ${q * 0.9}px) rotate(35deg)`, opacity: 0 }], { duration: 1300, easing: 'cubic-bezier(.3,.5,.6,1)' });
-        run(h2, [{ transform: 'translate(0,0) rotate(0)', opacity: 1 }, { transform: `translate(${-q * 0.2}px, ${q * 0.2}px) rotate(-6deg)`, opacity: 1, offset: 0.3 }, { transform: `translate(${-q * 0.6}px, ${q * 1.1}px) rotate(-30deg)`, opacity: 0 }], { duration: 1300, easing: 'cubic-bezier(.3,.5,.6,1)' });
-        run(sword, [{ opacity: 1 }, { opacity: 0 }], { duration: 400, delay: 300 });
-        await wait(550);
-        await banner();
-      } else {
-        // silhouette: a sunset, the king's shadow, a gun's shadow, one shot
-        king.remove(); king = null;
-        const sky = mk('fn-dim', { background: 'linear-gradient(180deg, #2a0b3d 0%, #8a1c3c 38%, #ff5e2c 62%, #ffb347 80%, #2a0b0b 100%)', zIndex: 1 });
-        await run(sky, [{ opacity: 0 }, { opacity: 1 }], { duration: 500 });
-        if (!alive()) return;
-        const sun = mk('fn-orb', Object.assign(box({ x: W * 0.5, y: H * 0.66 }, W * 0.42, W * 0.42), { background: 'radial-gradient(circle, #fff3c4 0%, #ffcf6b 40%, rgba(255,140,60,.6) 60%, rgba(255,90,40,0) 72%)', zIndex: 2 }));
-        run(sun, [{ transform: 'translateY(20px)', opacity: 0 }, { transform: 'translateY(0)', opacity: 1 }], { duration: 700 });
-        const ground = mk('fn-dim', { inset: 'auto', left: 0, right: 0, bottom: 0, height: H * 0.16 + 'px', background: '#120407', zIndex: 3 });
-        const KS = { x: W * 0.34, y: H * 0.58 }, ks = q * 3.1;
-        const shade = (clip) => img(KURL, Object.assign(box(KS, ks, ks), { zIndex: 4, filter: 'brightness(0)', clipPath: clip || 'none' }));
-        let ksil = shade();
-        await run(ksil, [{ transform: 'translateY(30px)', opacity: 0 }, { transform: 'translateY(0)', opacity: 1 }], { duration: 500, easing: 'ease-out' });
-        const gw = q * 2.9, gh = gw * WPN.pistol.vb[1] / WPN.pistol.vb[0], GS = { x: W * 0.78, y: H * 0.5 };
-        const gsil = mk('fn-img', Object.assign(box(GS, gw, gh), { zIndex: 5, filter: 'brightness(0)', transformOrigin: '30% 70%' }));
-        gsil.innerHTML = `<div style="transform:scaleX(-1);width:100%;height:100%">${WPN.pistol.svg}</div>`; // aimed left, at the king
-        const aim = 'rotate(4deg)';
-        sfx('lock');
-        await run(gsil, [{ transform: `translate(${gw}px, 0) ${aim}`, opacity: 0 }, { transform: `translate(0, 0) ${aim}`, opacity: 1 }], { duration: 600, easing: 'cubic-bezier(.2,.8,.3,1)' });
-        if (!alive()) return;
-        await wait(700);
-        const M = { x: GS.x - gw / 2, y: GS.y - gh / 2 + gh * 0.47 };
-        sfx('shot'); sfx('boom');
-        glow(M, q * 2, 'radial-gradient(circle, #fff 0%, #ffe27a 28%, rgba(255,120,30,.9) 52%, rgba(255,60,0,0) 72%)', 260);
-        flash('#fff', 0.7, 240); shake(12, 520);
-        run(gsil, [{ transform: 'translate(0,0) rotate(4deg)' }, { transform: `translate(${q * 0.3}px, ${-q * 0.2}px) rotate(18deg)`, offset: 0.25 }, { transform: 'translate(0,0) rotate(4deg)' }], { duration: 500, easing: 'ease-out' });
-        // the king splits down the middle
-        const l = shade('inset(0 50% 0 0)'), r = shade('inset(0 0 0 50%)');
-        ksil.remove(); ksil = null;
-        const C = { x: KS.x, y: KS.y - ks * 0.1 };
-        blood(C, 48, q * 1.4); splat(C, 16, q * 1.2);
-        const fall = d => [{ transform: 'translate(0,0) rotate(0)' }, { transform: `translate(${d * q * 0.3}px, ${-q * 0.12}px) rotate(${d * 7}deg)`, offset: 0.2 }, { transform: `translate(${d * q * 0.8}px, ${q * 0.55}px) rotate(${d * 24}deg)` }];
-        run(l, fall(-1), { duration: 1300, easing: 'cubic-bezier(.3,.4,.5,1)' });
-        run(r, fall(1), { duration: 1300, easing: 'cubic-bezier(.3,.4,.5,1)' });
-        await wait(800);
-        await banner();
-        await Promise.all([sky, sun, ground, gsil, l, r].map(e => run(e, [{ opacity: getComputedStyle(e).opacity }, { opacity: 0 }], { duration: 450 })));
-      }
+      // the checking piece holds a small pistol, aims it at the king and fires
+      const gw = q * 0.66, gh = gw * WPN.pistol.vb[1] / WPN.pistol.vb[0];
+      const GX = 0.3, GY = 0.72, MX = 1.0, MY = 0.47; // grip and muzzle, as fractions of the pistol art
+      const att = aSq ? this.pcs.querySelector(`[data-sq="${aSq}"]`) : null;
+      // the hand: the attacker's side that faces the king, a little below its middle
+      const H = { x: A.x + ux * q * 0.3, y: A.y + uy * q * 0.3 + q * 0.1 };
+      const aim = Math.atan2(K.y - H.y, K.x - H.x), left = Math.abs(aim) > Math.PI / 2;
+      const flip = left ? ' scaleY(-1)' : ''; // keep the pistol upright when it points left
+      const gun = mk('bt-wpn', { left: H.x - gw * GX + 'px', top: H.y - gh * GY + 'px', width: gw + 'px', height: gh + 'px', transformOrigin: `${GX * 100}% ${GY * 100}%`, zIndex: 7, filter: 'drop-shadow(0 0 1.5px rgba(255,255,255,.95)) drop-shadow(0 3px 4px rgba(0,0,0,.45))' });
+      gun.innerHTML = WPN.pistol.svg;
+      gun.firstElementChild.setAttribute('width', '100%'); gun.firstElementChild.setAttribute('height', '100%');
+      const held = `rotate(${aim}rad)${flip}`;
+      sfx('lock');
+      if (att) att.animate([{ transform: 'translateY(0)' }, { transform: `translateY(${-q * 0.12}px)` }, { transform: 'translateY(0)' }], { duration: 300, easing: 'ease-out' });
+      await run(gun, [{ transform: `${held} scale(0)`, opacity: 0 }, { transform: `${held} scale(1.15)`, opacity: 1, offset: 0.7 }, { transform: `${held} scale(1)`, opacity: 1 }], { duration: 320, easing: 'cubic-bezier(.2,.8,.3,1.3)' });
+      if (!alive()) return;
+      await wait(520);
+      // the muzzle, after the pistol is turned toward the king
+      const ox = (MX - GX) * gw, oy = (MY - GY) * gh * (left ? -1 : 1);
+      const M = { x: H.x + Math.cos(aim) * ox - Math.sin(aim) * oy, y: H.y + Math.sin(aim) * ox + Math.cos(aim) * oy };
+      sfx('shot');
+      glow(M, q * 0.7, 'radial-gradient(circle, #fff 0%, #ffe27a 30%, rgba(255,140,40,.85) 55%, rgba(255,80,0,0) 72%)', 200);
+      flash('#fff', 0.35, 140);
+      run(gun, [{ transform: held }, { transform: `${held} rotate(${left ? 16 : -16}deg)`, offset: 0.25 }, { transform: held }], { duration: 360, easing: 'ease-out' });
+      const len = Math.hypot(K.x - M.x, K.y - M.y), a2 = Math.atan2(K.y - M.y, K.x - M.x);
+      const tr = mk('fn-dim', { left: M.x + 'px', top: M.y - 1.5 + 'px', width: len + 'px', height: '3px', inset: 'auto', background: 'linear-gradient(90deg, rgba(255,240,180,0), #fff6c8)', boxShadow: '0 0 10px 2px rgba(255,230,150,.6)', transformOrigin: '0 50%', zIndex: 8 });
+      run(tr, [{ transform: `rotate(${a2}rad) scaleX(0)`, opacity: 1 }, { transform: `rotate(${a2}rad) scaleX(1)`, opacity: 1, offset: 0.4 }, { transform: `rotate(${a2}rad) scaleX(1)`, opacity: 0 }], { duration: 240 }).then(() => tr.remove());
+      await wait(80);
+      glow(K, q * 1.2, 'radial-gradient(circle, #fff 0%, #ffcf4a 35%, rgba(255,90,0,0) 70%)', 280);
+      sparks(K, 14, '#ffd36b', q * 0.8);
+      blood(K, 10, q * 0.5, Math.cos(a2));
+      shake(8);
+      const kx = Math.cos(a2) * q * 2.2, ky = Math.sin(a2) * q * 2.2 - q * 0.5;
+      run(king, [{ transform: 'translate(0,0) rotate(0)', opacity: 1 }, { transform: `translate(${kx * 0.5}px, ${ky * 0.5 - q * 0.45}px) rotate(${(kx >= 0 ? 1 : -1) * 200}deg)`, opacity: 1, offset: 0.45 }, { transform: `translate(${kx}px, ${ky + q * 1.5}px) rotate(${(kx >= 0 ? 1 : -1) * 400}deg)`, opacity: 0 }], { duration: 950, easing: 'cubic-bezier(.25,.6,.45,1)' });
+      await wait(450);
+      run(gun, [{ opacity: 1 }, { opacity: 0 }], { duration: 400, delay: 500 });
+      await banner();
     } finally {
       // leave the king lying on its side
       if (this.finStage === st) {
@@ -1779,6 +1694,80 @@ class Board {
           if (el) { el.style.visibility = ''; el.classList.add('toppled'); }
         }
       }
+    }
+  }
+  // Promotion: an anime-style power-up (no character): the pawn charges up, flashes and becomes its new piece
+  async promoteFx(sq, key, fen) {
+    const q = this.el.clientWidth / 8;
+    if (!q || !this.fx) return;
+    const col = { Q: ['#ffd84a', '#b05cff'], R: ['#ff5a4a', '#ff9a3c'], B: ['#4ad8ff', '#6c7bff'], N: ['#5cff8a', '#2fd3b0'] }[key[1]] || ['#ffd84a', '#ffffff'];
+    const p = this.xy(sq), P = { x: (p.x + 0.5) * q, y: (p.y + 0.5) * q };
+    const st = document.createElement('div');
+    st.className = 'fn-stage'; st.dataset.fen = fen;
+    this.fx.appendChild(st);
+    const alive = () => st.isConnected && this.chess && this.chess.fen() === fen;
+    const wait = ms => new Promise(r => setTimeout(r, ms));
+    const run = (el, kf, opt) => el.animate(kf, Object.assign({ fill: 'forwards' }, opt)).finished.catch(() => {});
+    const mk = (css, tag) => { const e = document.createElement(tag || 'div'); e.style.position = 'absolute'; Object.assign(e.style, css); st.appendChild(e); return e; };
+    const box = (Q, w, h) => ({ left: Q.x - w / 2 + 'px', top: Q.y - h / 2 + 'px', width: w + 'px', height: h + 'px' });
+    try {
+      // darken everything but the promotion square
+      const dim = mk({ inset: 0, background: `radial-gradient(circle at ${P.x}px ${P.y}px, rgba(6,4,14,0) ${q * 0.7}px, rgba(6,4,14,.75) ${q * 3.2}px)` });
+      run(dim, [{ opacity: 0 }, { opacity: 1 }], { duration: 250 });
+      // a column of light rising from the square
+      const pillar = mk(Object.assign(box({ x: P.x, y: P.y - q * 2.5 }, q * 0.9, q * 6), { background: `linear-gradient(0deg, ${col[0]} 0%, rgba(255,255,255,.85) 40%, rgba(255,255,255,0) 100%)`, filter: 'blur(4px)', mixBlendMode: 'screen', transformOrigin: '50% 100%' }));
+      run(pillar, [{ transform: 'scaleY(0) scaleX(.4)', opacity: 0 }, { transform: 'scaleY(1) scaleX(1)', opacity: 0.9 }], { duration: 650, easing: 'ease-out' });
+      const pawn = mk(Object.assign(box(P, q, q), { zIndex: 3 }), 'img');
+      pawn.src = PIECE_URL[key[0] + 'P']; pawn.alt = '';
+      sfx('charge');
+      // charge: particles pulled in, rings closing, the pawn rising and shaking with a glowing aura
+      for (let i = 0; i < 22; i++) {
+        const a = Math.random() * Math.PI * 2, d = q * (1.6 + Math.random() * 1.4), sz = q * (0.05 + Math.random() * 0.07);
+        const e = mk(Object.assign(box({ x: P.x + Math.cos(a) * d, y: P.y + Math.sin(a) * d }, sz, sz), { borderRadius: '50%', background: i % 3 ? col[0] : '#fff', boxShadow: `0 0 ${sz * 2}px ${col[0]}`, zIndex: 2 }));
+        run(e, [{ transform: 'translate(0,0)', opacity: 0 }, { transform: 'translate(0,0)', opacity: 1, offset: 0.15 }, { transform: `translate(${-Math.cos(a) * d}px, ${-Math.sin(a) * d}px) scale(.3)`, opacity: 0.2 }], { duration: 700 + Math.random() * 300, delay: Math.random() * 200, easing: 'cubic-bezier(.6,0,.9,.6)' }).then(() => e.remove());
+      }
+      for (let i = 0; i < 3; i++) {
+        const r = mk(Object.assign(box(P, q * 2.6, q * 2.6), { borderRadius: '50%', border: `${Math.max(2, q * 0.05)}px solid ${col[0]}`, boxShadow: `0 0 ${q * 0.25}px ${col[0]}`, zIndex: 1 }));
+        run(r, [{ transform: 'scale(1)', opacity: 0 }, { transform: 'scale(.9)', opacity: 0.9, offset: 0.2 }, { transform: 'scale(.15)', opacity: 0 }], { duration: 650, delay: i * 200, easing: 'ease-in' }).then(() => r.remove());
+      }
+      await run(pawn, [
+        { transform: 'translate(0,0) scale(1)', filter: 'brightness(1) drop-shadow(0 0 0 transparent)' },
+        { transform: `translate(${q * 0.03}px,${-q * 0.12}px) scale(1.08)`, filter: `brightness(1.3) drop-shadow(0 0 ${q * 0.15}px ${col[0]})`, offset: 0.3 },
+        { transform: `translate(${-q * 0.04}px,${-q * 0.2}px) scale(1.12)`, filter: `brightness(1.6) drop-shadow(0 0 ${q * 0.25}px ${col[0]})`, offset: 0.5 },
+        { transform: `translate(${q * 0.04}px,${-q * 0.24}px) scale(1.14)`, filter: `brightness(2) drop-shadow(0 0 ${q * 0.3}px ${col[0]})`, offset: 0.7 },
+        { transform: `translate(${-q * 0.04}px,${-q * 0.26}px) scale(1.16)`, filter: `brightness(2.6) drop-shadow(0 0 ${q * 0.4}px ${col[0]})`, offset: 0.85 },
+        { transform: `translate(0,${-q * 0.28}px) scale(1.2)`, filter: `brightness(4) drop-shadow(0 0 ${q * 0.5}px #fff)` }
+      ], { duration: 1000, easing: 'linear' });
+      if (!alive()) return;
+      // the flash, one inverted impact frame, then the new piece
+      sfx('zap');
+      const fl = mk({ inset: 0, background: '#fff', zIndex: 6 });
+      run(fl, [{ opacity: 0.85 }, { opacity: 0 }], { duration: 260, easing: 'ease-out' }).then(() => fl.remove());
+      this.el.style.filter = 'invert(1)';
+      setTimeout(() => { this.el.style.filter = ''; }, 55);
+      pawn.remove();
+      const ring = mk(Object.assign(box(P, q * 1.2, q * 1.2), { borderRadius: '50%', border: `${Math.max(3, q * 0.08)}px solid #fff`, boxShadow: `0 0 ${q * 0.4}px ${col[1]}, inset 0 0 ${q * 0.3}px ${col[1]}`, zIndex: 4 }));
+      run(ring, [{ transform: 'scale(.3)', opacity: 1 }, { transform: 'scale(2.6)', opacity: 0 }], { duration: 650, easing: 'cubic-bezier(.1,.7,.3,1)' }).then(() => ring.remove());
+      for (let i = 0; i < 18; i++) {
+        const a = (i / 18) * Math.PI * 2, d = q * (1 + Math.random()), sz = q * 0.06;
+        const e = mk(Object.assign(box(P, sz, sz), { borderRadius: '50%', background: '#fff', boxShadow: `0 0 ${sz * 3}px ${col[1]}`, zIndex: 5 }));
+        run(e, [{ transform: 'translate(0,0)', opacity: 1 }, { transform: `translate(${Math.cos(a) * d}px, ${Math.sin(a) * d}px) scale(.2)`, opacity: 0 }], { duration: 600 + Math.random() * 300, easing: 'cubic-bezier(.1,.8,.3,1)' }).then(() => e.remove());
+      }
+      const neu = mk(Object.assign(box(P, q, q), { zIndex: 4 }), 'img');
+      neu.src = PIECE_URL[key]; neu.alt = '';
+      await run(neu, [
+        { transform: `translateY(${-q * 0.28}px) scale(1.6)`, filter: `brightness(3) drop-shadow(0 0 ${q * 0.5}px ${col[1]})` },
+        { transform: `translateY(${-q * 0.1}px) scale(1.15)`, filter: `brightness(1.4) drop-shadow(0 0 ${q * 0.35}px ${col[1]})`, offset: 0.4 },
+        { transform: 'translateY(0) scale(1)', filter: `brightness(1) drop-shadow(0 0 ${q * 0.12}px ${col[1]})` }
+      ], { duration: 600, easing: 'cubic-bezier(.2,.8,.3,1)' });
+      run(pillar, [{ opacity: 0.9 }, { opacity: 0 }], { duration: 350 });
+      await run(dim, [{ opacity: 1 }, { opacity: 0 }], { duration: 350 });
+    } finally {
+      st.remove();
+      if (this.hideFen === fen && this.hideSq === sq) this.hideSq = null;
+      this.fxUntil = 0;
+      const el = this.pcs.querySelector(`[data-sq="${sq}"]`);
+      if (el) el.style.visibility = '';
     }
   }
   renderLabels(labels) {
@@ -5212,6 +5201,9 @@ function wire() {
   });
 
   $$('.tab').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
+  if (S.fin !== 'off') S.fin = 'gun'; // the other finishers were removed
+  $('#finSel').value = S.fin;
+  $('#finSel').addEventListener('change', e => { S.fin = e.target.value; store.set('s64.fin', S.fin); });
   $('#soundBtn').addEventListener('click', () => { S.sound = !S.sound; store.set('s64.sound', S.sound); renderSoundBtn(); if (S.sound && !playSample('move')) sound('move'); });
 
   // play controls

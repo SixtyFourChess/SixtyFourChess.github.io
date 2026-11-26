@@ -836,7 +836,7 @@ function makeChess960(Chess) {
         if (new Chess(fromMap(fin) + ' ' + us + ' - - 0 1').in_check()) continue;
         const after = new Chess(fromMap(fin) + ' ' + them + ' - - 0 1');
         const san = (side === 'k' ? 'O-O' : 'O-O-O') + (after.in_checkmate() ? '#' : after.in_check() ? '+' : '');
-        out.push({ color: us, from: kSq, to: rSq, flags: side, piece: 'k', san, castle: { side, kDest, rDest, pl: fromMap(fin) } });
+        out.push({ color: us, from: kSq, to: rSq, flags: side, piece: 'k', san, rook: rSq, castle: { side, kDest, rDest, pl: fromMap(fin) } });
       }
       return out;
     }
@@ -3869,6 +3869,8 @@ function fixCastling(m, cast) {
     if (ch === 'Q' && m.e1 === 'K' && m.a1 === 'R') c += ch;
     if (ch === 'k' && m.e8 === 'k' && m.h8 === 'r') c += ch;
     if (ch === 'q' && m.e8 === 'k' && m.a8 === 'r') c += ch;
+    if (/[A-H]/.test(ch) && m[ch.toLowerCase() + '1'] === 'R' && Object.keys(m).some(q => q[1] === '1' && m[q] === 'K')) c += ch;
+    if (/[a-h]/.test(ch) && m[ch + '8'] === 'r' && Object.keys(m).some(q => q[1] === '8' && m[q] === 'k')) c += ch;
   }
   return c || '-';
 }
@@ -3918,11 +3920,14 @@ function customLabels(G) {
 function moveTags(G, mv, col) {
   const t = G.tags;
   if (mv.captured) delete t[mv.flags && mv.flags.includes('e') ? mv.to[0] + mv.from[1] : mv.to];
-  if (t[mv.from]) { t[mv.to] = t[mv.from]; delete t[mv.from]; }
-  if (mv.flags && (mv.flags.includes('k') || mv.flags.includes('q'))) {
-    const r = col === 'w' ? '1' : '8', [rf, rt] = mv.flags.includes('k') ? ['h' + r, 'f' + r] : ['a' + r, 'd' + r];
-    if (t[rf]) { t[rt] = t[rf]; delete t[rf]; }
-  }
+  const castle = mv.flags && (mv.flags.includes('k') || mv.flags.includes('q'));
+  if (!castle) { if (t[mv.from]) { t[mv.to] = t[mv.from]; delete t[mv.from]; } return; }
+  const r = col === 'w' ? '1' : '8', ks = mv.flags.includes('k');
+  const rf = mv.rook || (ks ? 'h' : 'a') + r, kt = (ks ? 'g' : 'c') + r, rt = (ks ? 'f' : 'd') + r;
+  const kTag = t[mv.from], rTag = t[rf];
+  delete t[mv.from]; delete t[rf];
+  if (kTag) t[kt] = kTag;
+  if (rTag) t[rt] = rTag;
 }
 function customDoMove(G, from, to, promo) {
   const rule = ruleOf(G.rule), col = G.chess.turn(), opp = col === 'w' ? 'b' : 'w';
@@ -4120,6 +4125,20 @@ const A51 = {
   }
 };
 RULES.push(A51);
+
+/* ---------- Custom rule: Fischer random (Chess960) ---------- */
+const FISCHER = {
+  id: 'fischer', short: 'Fischer random', card: 'The back pieces start in a random order', both: true,
+  title: 'Chess, but the pieces are shuffled',
+  text: 'Bishops on opposite colours, the king somewhere between the rooks, everything else random. To castle, move your king onto your rook: they land where they would in normal chess.',
+  n: (() => { const v = store.get('s64.c960', null); return Number.isInteger(v) && v >= 0 && v < 960 ? v : Math.floor(Math.random() * 960); })(),
+  get choose() { return { label: `Starting position #${this.n}`, options: [['shuffle', 'Shuffle']] }; },
+  onChoose() { this.n = Math.floor(Math.random() * 960); store.set('s64.c960', this.n); },
+  started() { this.onChoose(); }, // the next game gets a fresh position
+  setup() { return Chess960.startFen(this.n); },
+  icon: () => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="3.5"/><circle cx="8.5" cy="8.5" r="1.2" fill="currentColor"/><circle cx="15.5" cy="8.5" r="1.2" fill="currentColor"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/><circle cx="8.5" cy="15.5" r="1.2" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1.2" fill="currentColor"/></svg>'
+};
+RULES.push(FISCHER);
 
 const cName = (G, col) => G.vs === 'friend' ? pName(col) : col === G.userColor ? 'You' : 'Stockfish';
 function customCheckOver(G) {
@@ -4333,6 +4352,7 @@ function customStart() {
   Object.assign(G, { chess: mkChess(G.startFen), log: [], over: null, lastMove: null, phase: 'game', thinking: false, animating: false, gen: ++SEQ, tags: {}, frenzy: null });
   const rr = ruleOf(G.rule);
   if (rr.init) rr.init(G, poweredSides(G), G.opt);
+  if (rr.started) rr.started();
   G.startTags = JSON.parse(JSON.stringify(G.tags));
   saveCustom(); renderCustom(false);
   customBot();
@@ -4864,7 +4884,7 @@ function wire() {
   // custom mode
   $('#cRules').innerHTML = !RULES.length ? '<p class="tip">No custom rules yet. Add your own to the RULES list in index.html and they will show up here.</p>' : RULES.map(r => `<button type="button" class="rule" data-rule="${r.id}"><span class="ri">${r.icon()}</span><span class="rt">${esc(r.short)}</span><span class="rd">${esc(r.card)}</span></button>`).join('');
   $('#cRules').addEventListener('click', e => { const b = e.target.closest('[data-rule]'); if (!b) return; CUSTOM.sel.rule = b.dataset.rule; store.set('s64.cRule', CUSTOM.sel.rule); renderPlay(); });
-  $('#cOpt').addEventListener('click', e => { const b = e.target.closest('[data-o]'); if (!b) return; CUSTOM.sel.opt = b.dataset.o; store.set('s64.cOpt', CUSTOM.sel.opt); renderPlay(); });
+  $('#cOpt').addEventListener('click', e => { const b = e.target.closest('[data-o]'); if (!b) return; const rl = ruleOf(CUSTOM.sel.rule); if (rl.onChoose) rl.onChoose(b.dataset.o); CUSTOM.sel.opt = b.dataset.o; store.set('s64.cOpt', CUSTOM.sel.opt); renderPlay(); });
   $('#cVs').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; CUSTOM.sel.vs = b.dataset.vs; store.set('s64.cVs', CUSTOM.sel.vs); renderPlay(); });
   $('#cElo').innerHTML = [[800, '800'], [1500, '1500'], [2200, '2200'], [3200, 'Max']].map(([v, l]) => `<button type="button" class="chip" data-e="${v}">${l}</button>`).join('');
   $('#cElo').addEventListener('click', e => { const b = e.target.closest('[data-e]'); if (!b) return; CUSTOM.sel.elo = +b.dataset.e; store.set('s64.cElo', CUSTOM.sel.elo); renderPlay(); });

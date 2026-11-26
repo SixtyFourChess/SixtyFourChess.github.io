@@ -96,7 +96,7 @@ function makeChess960(Chess) {
         if (new Chess(fromMap(fin) + ' ' + us + ' - - 0 1').in_check()) continue;
         const after = new Chess(fromMap(fin) + ' ' + them + ' - - 0 1');
         const san = (side === 'k' ? 'O-O' : 'O-O-O') + (after.in_checkmate() ? '#' : after.in_check() ? '+' : '');
-        out.push({ color: us, from: kSq, to: rSq, flags: side, piece: 'k', san, castle: { side, kDest, rDest, pl: fromMap(fin) } });
+        out.push({ color: us, from: kSq, to: rSq, flags: side, piece: 'k', san, rook: rSq, castle: { side, kDest, rDest, pl: fromMap(fin) } });
       }
       return out;
     }

@@ -451,6 +451,27 @@ textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 0; }
 .secret-cover p { margin: 0; max-width: 32ch; opacity: .8; font-size: 14px; }
 .secret-cover .btn { margin-top: 6px; }
 
+/* ---------- extra animations ---------- */
+.board .sqs, .board .pcs { transition: filter .8s; }
+.board.frozen .sqs, .board.frozen .pcs, .board.frozen .hls { filter: grayscale(1) brightness(.9); }
+.frost { position: absolute; inset: 0; pointer-events: none; z-index: 6; border-radius: inherit; background: radial-gradient(circle at 50% 50%, rgba(200,230,255,0) 45%, rgba(200,230,255,.35) 100%), linear-gradient(135deg, rgba(230,245,255,.18), rgba(160,200,235,.12)); box-shadow: inset 0 0 40px rgba(210,235,255,.6); }
+.frost svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.bcard { position: absolute; inset: 0; z-index: 40; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2%; text-align: center; pointer-events: none; font-family: "Montserrat", var(--font-display); text-transform: uppercase; color: #fff; background: radial-gradient(circle at 50% 50%, rgba(14,12,22,.86), rgba(4,4,8,.94) 75%); border-radius: inherit; overflow: hidden; }
+.bcard .k { font-weight: 800; font-size: calc(var(--bsz, 480px) * .032); letter-spacing: .16em; color: #111; background: #ffd23f; padding: .35em .9em; border-radius: 999px; }
+.bcard .nm { font-weight: 900; font-size: calc(var(--bsz, 480px) * .085); line-height: 1; letter-spacing: -.01em; max-width: 90%; overflow-wrap: anywhere; }
+.bcard .sub { font-weight: 800; font-size: calc(var(--bsz, 480px) * .032); letter-spacing: .1em; opacity: .75; }
+.bcard .vs { font-weight: 900; font-size: calc(var(--bsz, 480px) * .14); line-height: 1; background: linear-gradient(90deg, #ffd23f, #ff3d6e 55%, #b84dff); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 calc(var(--bsz, 480px) * .03) rgba(255,61,110,.55)); }
+.bcard .side { display: flex; align-items: center; gap: .5em; }
+.bcard .chip { width: calc(var(--bsz, 480px) * .045); height: calc(var(--bsz, 480px) * .045); border-radius: 50%; border: 2px solid rgba(255,255,255,.7); }
+.bcard .chip.w { background: #f3efe6; } .bcard .chip.b { background: #24232a; }
+.bcard .av { width: calc(var(--bsz, 480px) * .26); height: calc(var(--bsz, 480px) * .26); }
+.bcard .av svg, .bcard .av img { width: 100%; height: 100%; }
+.bcard .stamp { position: absolute; left: 50%; top: 40%; font-weight: 900; font-size: calc(var(--bsz, 480px) * .12); color: #ff2a3c; border: calc(var(--bsz, 480px) * .012) solid #ff2a3c; padding: .05em .3em; border-radius: .12em; transform: translate(-50%, -50%) rotate(-12deg); text-shadow: 0 0 10px rgba(255,40,60,.5); }
+.bcard.god { background: radial-gradient(circle at 50% 45%, rgba(60,0,30,.9), rgba(0,0,0,.97) 70%); }
+.bcard.god .nm { font-size: calc(var(--bsz, 480px) * .15); color: #ff2a3c; text-shadow: 0 0 24px rgba(255,30,60,.8), 3px 0 rgba(0,220,255,.7), -3px 0 rgba(255,0,120,.7); }
+.fx-clockshard { position: fixed; z-index: 70; pointer-events: none; background: #e8e6e1; clip-path: polygon(50% 0, 100% 70%, 20% 100%); box-shadow: 0 0 0 1px rgba(0,0,0,.4); }
+.fx-crack { position: fixed; z-index: 71; pointer-events: none; }
+
 /* ---------- checkmate finishers ---------- */
 .fin-pick { position: relative; }
 .fin-pick > span { display: none; }
@@ -524,7 +545,7 @@ textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 0; }
     </nav>
     <div class="top-right">
       <span class="pill" id="enginePill" data-state="loading" title="Chess engine status"><i></i><span>Loading engine…</span></span>
-      <label class="battle-btn fin-pick" title="Animation that plays on checkmate"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 2.5c-4 0-6.5 2.6-6.5 6 0 2.2 1.1 3.6 2.5 4.4V15.5h8v-2.6c1.4-.8 2.5-2.2 2.5-4.4 0-3.4-2.5-6-6.5-6z"/><circle cx="7.5" cy="9" r="1.4" fill="currentColor"/><circle cx="12.5" cy="9" r="1.4" fill="currentColor"/><path d="M8.5 15.5v2M11.5 15.5v2"/></svg><span>Finisher:</span><select id="finSel" aria-label="Checkmate finisher"><option value="gun">Gun</option><option value="off">Off</option></select></label>
+      <label class="battle-btn fin-pick" title="Animations: Full plays everything, Light keeps only the quick ones, Off turns them off"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 2.5c-4 0-6.5 2.6-6.5 6 0 2.2 1.1 3.6 2.5 4.4V15.5h8v-2.6c1.4-.8 2.5-2.2 2.5-4.4 0-3.4-2.5-6-6.5-6z"/><circle cx="7.5" cy="9" r="1.4" fill="currentColor"/><circle cx="12.5" cy="9" r="1.4" fill="currentColor"/><path d="M8.5 15.5v2M11.5 15.5v2"/></svg><span>Animations:</span><select id="animSel" aria-label="Animations"><option value="full">Full</option><option value="light">Light</option><option value="off">Off</option></select></label>
       <button class="icon-btn" id="soundBtn" type="button" aria-label="Sound on" title="Sound"></button>
     </div>
   </header>
@@ -1498,6 +1519,15 @@ function attackersOf(map, sq, by) {
   }
   return out;
 }
+// Animations: 'full' plays everything, 'light' only the quick effects that never hold up the game, 'off' none.
+// Online Bullet always plays as Light so animations never cost time on the clock.
+function animLevel() {
+  if (reduceMotion || S.anim === 'off') return 'off';
+  if (S.tab === 'online' && ONLINE.st && ONLINE.st.tc && ONLINE.st.tc[0] && ONLINE.st.tc[0] <= 60) return 'light';
+  return S.anim;
+}
+const animFull = () => animLevel() === 'full';
+const animAny = () => animLevel() !== 'off';
 class Board {
   constructor(el, opts) {
     this.el = el; this.opts = opts;
@@ -1550,7 +1580,7 @@ class Board {
       if ((o.animate || dragged) && this.lastMove && changed && changed <= 3) this.captureFx(prevMap, this.pieceMap, slid);
       // a pawn that just promoted powers up into its new piece
       const lm = this.lastMove, was = lm && prevMap[lm.from], now = lm && this.pieceMap[lm.to];
-      if ((o.animate || dragged) && was && now && was[1] === 'P' && now[1] !== 'P' && was[0] === now[0] && !reduceMotion && (!this.opts.finisherOk || this.opts.finisherOk())) {
+      if ((o.animate || dragged) && was && now && was[1] === 'P' && now[1] !== 'P' && was[0] === now[0] && animFull() && (!this.opts.finisherOk || this.opts.finisherOk()) && !(this.opts.quietFx && this.opts.quietFx())) {
         const fen = chess.fen();
         this.hideSq = lm.to; this.hideFen = fen;
         const real = this.pcs.querySelector(`[data-sq="${lm.to}"]`);
@@ -1559,12 +1589,18 @@ class Board {
         setTimeout(() => this.promoteFx(lm.to, now, fen).catch(() => {}), slid ? 230 : 30);
       }
     }
+    // castling, en passant, forks and queen sacrifices get their own quick effects
+    if (prevMap && (o.animate || dragged) && this.lastMove && animAny() && (!this.opts.finisherOk || this.opts.finisherOk()) && !(this.opts.quietFx && this.opts.quietFx())) {
+      try { this.moveFx(prevMap, this.pieceMap, chess, slid); } catch (e) { /* effects never break the game */ }
+    }
+    if (this.frozenFen && this.frozenFen !== chess.fen()) this.unfreeze();
+    if (this.topFen && this.topFen !== chess.fen()) { this.topSq = null; this.topFen = null; }
     // a different position cancels a finisher that is still playing
     if (this.finStage && this.finStage.dataset.fen !== chess.fen()) { this.finStage.remove(); this.finStage = null; this.fxUntil = 0; if (this.hideFen !== chess.fen()) this.hideSq = null; }
     if (this.finFen && this.finFen !== chess.fen()) this.finFen = null; // the board moved on, so the same mate may play again later
     const fresh = o.animate || dragged || this.wantFinisher;
     this.wantFinisher = false;
-    if (fresh && S.fin !== 'off' && !reduceMotion && (!this.opts.finisherOk || this.opts.finisherOk()) && this.finFen !== chess.fen() && chess.in_checkmate()) {
+    if (fresh && animFull() && (!this.opts.finisherOk || this.opts.finisherOk()) && this.finFen !== chess.fen() && chess.in_checkmate()) {
       this.finFen = chess.fen();
       const fen = this.finFen, kind = 'gun';
       const go = () => {
@@ -1770,6 +1806,165 @@ class Board {
       if (el) el.style.visibility = '';
     }
   }
+  // ---------- quick move effects (never hold up the game) ----------
+  moveFx(prev, next, chess, slid) {
+    const lm = this.lastMove, q = this.el.clientWidth / 8, from = lm.from, to = lm.to;
+    const mover = next[to] || null, was = prev[from] || null;
+    if (!mover || !was || !this.fx) return;
+    const col = mover[0], foe = col === 'w' ? 'b' : 'w';
+    const ctr = sq => { const p = this.xy(sq); return { x: (p.x + 0.5) * q, y: (p.y + 0.5) * q }; };
+    const layer = () => { const d = document.createElement('div'); d.className = 'fn-stage'; d.style.zIndex = 7; this.fx.appendChild(d); return d; };
+    const later = (fn, ms) => setTimeout(() => { try { fn(); } catch (e) { /* ignore */ } }, ms);
+    const delay = slid ? 230 : 20;
+    // castling: the king moved and a rook of the same colour moved with it
+    const kingMoved = was[1] === 'K' && Object.keys(next).find(s2 => next[s2] === col + 'K') !== from;
+    const rookFrom = Object.keys(prev).find(s2 => prev[s2] === col + 'R' && next[s2] !== col + 'R');
+    const rookTo = Object.keys(next).find(s2 => next[s2] === col + 'R' && prev[s2] !== col + 'R');
+    if (kingMoved && rookFrom && rookTo && !Object.keys(prev).some(s2 => prev[s2] && prev[s2][0] === foe && next[s2] !== prev[s2])) {
+      const kSq = Object.keys(next).find(s2 => next[s2] === col + 'K');
+      later(() => this.castleFx(ctr(kSq), ctr(rookTo), q, layer()), delay);
+      return;
+    }
+    // en passant: a pawn moved diagonally onto an empty square
+    if (was[1] === 'P' && from[0] !== to[0] && !prev[to]) {
+      const capSq = to[0] + from[1];
+      if (prev[capSq] === foe + 'P' && !next[capSq]) { later(() => this.ghostFx(ctr(capSq), foe, q, layer()), delay); return; }
+    }
+    // a fork: the piece that moved now attacks two or more of king, queen and rooks
+    const big = Object.keys(next).filter(s2 => next[s2][0] === foe && 'KQR'.includes(next[s2][1]) && attackersOf(next, s2, col).includes(to));
+    if (big.length >= 2) { later(() => this.forkFx(ctr(to), big.map(ctr), q, layer()), delay + 60); return; }
+    // a queen sacrifice: the queen lands where something smaller can take it
+    if (mover[1] === 'Q' && !chess.in_checkmate() && !(prev[to] === foe + 'Q')) {
+      const hit = attackersOf(next, to, foe).filter(s2 => next[s2][1] !== 'Q'); // traded for a queen is not a sacrifice
+      if (hit.length) later(() => this.sacFx(ctr(to), q, layer()), delay);
+    }
+  }
+  _run(el, kf, opt) { return el.animate(kf, Object.assign({ fill: 'forwards' }, opt)).finished.catch(() => {}); }
+  castleFx(K, R, q, st) {
+    const shield = document.createElement('div');
+    Object.assign(shield.style, { position: 'absolute', left: K.x - q * 0.55 + 'px', top: K.y - q * 0.62 + 'px', width: q * 1.1 + 'px', height: q * 1.24 + 'px', filter: `drop-shadow(0 0 ${q * 0.18}px rgba(90,170,255,.9))` });
+    shield.innerHTML = `<svg viewBox="0 0 100 112" width="100%" height="100%"><path d="M50 4 L92 18 V52 C92 80 72 98 50 108 C28 98 8 80 8 52 V18 Z" fill="rgba(60,130,230,.28)" stroke="#bfe0ff" stroke-width="5" stroke-linejoin="round"/><path d="M50 18 L80 28 V52 C80 72 66 86 50 94 C34 86 20 72 20 52 V28 Z" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="2.5"/></svg>`;
+    st.appendChild(shield);
+    const bar = document.createElement('div'), len = Math.hypot(R.x - K.x, R.y - K.y);
+    Object.assign(bar.style, { position: 'absolute', left: K.x + 'px', top: K.y - 2 + 'px', width: len + 'px', height: '4px', background: 'linear-gradient(90deg, #bfe0ff, rgba(120,190,255,.2))', boxShadow: '0 0 10px rgba(120,190,255,.9)', transformOrigin: '0 50%', transform: `rotate(${Math.atan2(R.y - K.y, R.x - K.x)}rad)` });
+    st.appendChild(bar);
+    sfx('lock');
+    this._run(bar, [{ opacity: 0 }, { opacity: 1, offset: 0.3 }, { opacity: 0 }], { duration: 700 });
+    this._run(shield, [{ transform: 'translateY(-30%) scale(1.6)', opacity: 0 }, { transform: 'translateY(0) scale(.92)', opacity: 1, offset: 0.35 }, { transform: 'scale(1)', opacity: 1, offset: 0.55 }, { transform: 'scale(1.05)', opacity: 0 }], { duration: 900, easing: 'ease-out' }).then(() => st.remove());
+    setTimeout(() => this.el.animate([{ transform: 'translateY(0)' }, { transform: `translateY(${q * 0.04}px)` }, { transform: 'translateY(0)' }], { duration: 160, easing: 'ease-out' }), 300);
+  }
+  ghostFx(P, foe, q, st) {
+    const g = document.createElement('img');
+    g.src = PIECE_URL[foe + 'P']; g.alt = '';
+    Object.assign(g.style, { position: 'absolute', left: P.x - q / 2 + 'px', top: P.y - q / 2 + 'px', width: q + 'px', height: q + 'px', filter: `grayscale(1) brightness(1.6) drop-shadow(0 0 ${q * 0.15}px rgba(150,220,255,.95))` });
+    st.appendChild(g);
+    this._run(g, [{ transform: 'translate(0,0)', opacity: 0.9 }, { transform: `translate(${q * 0.12}px,${-q * 0.35}px)`, opacity: 0.6, offset: 0.35 }, { transform: `translate(${-q * 0.12}px,${-q * 0.7}px)`, opacity: 0.4, offset: 0.65 }, { transform: `translate(${q * 0.06}px,${-q * 1.1}px) scale(.8)`, opacity: 0 }], { duration: 1300, easing: 'ease-in-out' }).then(() => st.remove());
+  }
+  forkFx(A, T, q, st) {
+    const NS = 'http://www.w3.org/2000/svg', sv = document.createElementNS(NS, 'svg');
+    sv.setAttribute('width', '100%'); sv.setAttribute('height', '100%'); sv.style.cssText = 'position:absolute;inset:0;overflow:visible';
+    for (const t of T) {
+      for (const [w, c] of [[q * 0.12, 'rgba(255,120,40,.35)'], [q * 0.045, '#ffb347']]) {
+        const l = document.createElementNS(NS, 'line');
+        l.setAttribute('x1', A.x); l.setAttribute('y1', A.y); l.setAttribute('x2', t.x); l.setAttribute('y2', t.y);
+        l.setAttribute('stroke', c); l.setAttribute('stroke-width', w); l.setAttribute('stroke-linecap', 'round');
+        l.setAttribute('stroke-dasharray', Math.hypot(t.x - A.x, t.y - A.y)); l.style.strokeDashoffset = Math.hypot(t.x - A.x, t.y - A.y);
+        l.animate([{ strokeDashoffset: Math.hypot(t.x - A.x, t.y - A.y) }, { strokeDashoffset: 0 }], { duration: 260, easing: 'ease-out', fill: 'forwards' });
+        sv.appendChild(l);
+      }
+      const r = document.createElementNS(NS, 'circle');
+      r.setAttribute('cx', t.x); r.setAttribute('cy', t.y); r.setAttribute('r', q * 0.46); r.setAttribute('fill', 'none'); r.setAttribute('stroke', '#ff5a3c'); r.setAttribute('stroke-width', q * 0.05);
+      r.style.filter = 'drop-shadow(0 0 6px #ff5a3c)';
+      sv.appendChild(r);
+    }
+    st.appendChild(sv);
+    this._run(sv, [{ opacity: 0 }, { opacity: 1, offset: 0.15 }, { opacity: 1, offset: 0.75 }, { opacity: 0 }], { duration: 1500 }).then(() => st.remove());
+  }
+  sacFx(P, q, st) {
+    // slow motion: the colour drains, the queen's square pulses slowly
+    const grey = document.createElement('div');
+    Object.assign(grey.style, { position: 'absolute', inset: 0, background: `radial-gradient(circle at ${P.x}px ${P.y}px, rgba(0,0,0,0) ${q * 0.6}px, rgba(10,10,20,.5) ${q * 4}px)` });
+    st.appendChild(grey);
+    this.el.animate([{ filter: 'saturate(1)' }, { filter: 'saturate(.25) contrast(1.1)', offset: 0.25 }, { filter: 'saturate(.25) contrast(1.1)', offset: 0.75 }, { filter: 'saturate(1)' }], { duration: 1500, easing: 'ease-in-out' });
+    for (let i = 0; i < 3; i++) {
+      const r = document.createElement('div');
+      Object.assign(r.style, { position: 'absolute', left: P.x - q * 0.6 + 'px', top: P.y - q * 0.6 + 'px', width: q * 1.2 + 'px', height: q * 1.2 + 'px', borderRadius: '50%', border: `${Math.max(2, q * 0.04)}px solid rgba(255,255,255,.85)`, boxShadow: '0 0 12px rgba(255,255,255,.6)' });
+      st.appendChild(r);
+      this._run(r, [{ transform: 'scale(.6)', opacity: 0.9 }, { transform: 'scale(2.4)', opacity: 0 }], { duration: 1300, delay: i * 320, easing: 'cubic-bezier(.2,.5,.4,1)' });
+    }
+    this._run(grey, [{ opacity: 0 }, { opacity: 1, offset: 0.25 }, { opacity: 1, offset: 0.75 }, { opacity: 0 }], { duration: 1500 }).then(() => st.remove());
+  }
+  // ---------- endings ----------
+  kingSq(c) { const m = this.pieceMap || {}; return Object.keys(m).find(s2 => m[s2] === c + 'K'); }
+  tipKing(loser, roll) {
+    const q = this.el.clientWidth / 8, sq = this.kingSq(loser), fen = this.chess && this.chess.fen();
+    if (!sq || !this.fx || !q) return;
+    const real = this.pcs.querySelector(`[data-sq="${sq}"]`), p = this.xy(sq);
+    const st = document.createElement('div'); st.className = 'fn-stage'; this.fx.appendChild(st);
+    const k = document.createElement('img'); k.src = PIECE_URL[loser + 'K']; k.alt = '';
+    Object.assign(k.style, { position: 'absolute', left: p.x * q + 'px', top: p.y * q + 'px', width: q + 'px', height: q + 'px', transformOrigin: '50% 88%' });
+    st.appendChild(k);
+    if (real) real.style.visibility = 'hidden';
+    const dir = p.x < 4 ? 1 : -1;
+    const kf = [{ transform: 'rotate(0)' }, { transform: `rotate(${dir * 8}deg)`, offset: 0.25 }, { transform: `rotate(${dir * -4}deg)`, offset: 0.4 }, { transform: `rotate(${dir * 90}deg)`, offset: 0.7 }];
+    if (roll) kf.push({ transform: `translateX(${dir * q * 0.35}px) rotate(${dir * 150}deg)`, offset: 0.85 }, { transform: `translateX(${dir * q * 0.2}px) rotate(${dir * 90}deg)` });
+    else kf.push({ transform: `rotate(${dir * 90}deg)` });
+    this._run(k, kf, { duration: 1700, easing: 'ease-in' }).then(() => {
+      st.remove();
+      if (this.chess && this.chess.fen() === fen) { this.topSq = sq; this.topFen = fen; const el = this.pcs.querySelector(`[data-sq="${sq}"]`); if (el) { el.style.visibility = ''; el.classList.add('toppled'); } }
+      else if (real) real.style.visibility = '';
+    });
+  }
+  shatterClock(loser) {
+    const strip = ['#pTop', '#pBottom'].map(id => $(id)).find(s2 => s2 && s2.querySelector(`.pchip.${loser}`));
+    const el = strip && strip.querySelector('.pclock');
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const crack = document.createElement('div'); crack.className = 'fx-crack';
+    Object.assign(crack.style, { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px' });
+    crack.innerHTML = `<svg viewBox="0 0 100 40" width="100%" height="100%" preserveAspectRatio="none"><path d="M48 0 L52 14 L44 20 L56 27 L50 40 M52 14 L70 8 L84 12 M44 20 L26 17 L12 26 M56 27 L74 31 L92 26" fill="none" stroke="#111" stroke-width="2.2"/><path d="M48 0 L52 14 L44 20 L56 27 L50 40" fill="none" stroke="#fff" stroke-width=".8"/></svg>`;
+    document.body.appendChild(crack);
+    sfx('slash');
+    el.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-4px)' }, { transform: 'translateX(4px)' }, { transform: 'translateX(-2px)' }, { transform: 'translateX(0)' }], { duration: 300 });
+    setTimeout(() => {
+      sfx('boom');
+      for (let i = 0; i < 16; i++) {
+        const sh = document.createElement('div'); sh.className = 'fx-clockshard';
+        const sz = 6 + Math.random() * 12;
+        Object.assign(sh.style, { left: r.left + Math.random() * r.width + 'px', top: r.top + Math.random() * r.height + 'px', width: sz + 'px', height: sz + 'px', background: i % 3 ? '#e8e6e1' : '#e5484d' });
+        document.body.appendChild(sh);
+        const a = Math.random() * Math.PI * 2, d = 40 + Math.random() * 90;
+        sh.animate([{ transform: 'translate(0,0) rotate(0)', opacity: 1 }, { transform: `translate(${Math.cos(a) * d}px, ${Math.sin(a) * d + 60}px) rotate(${Math.random() * 720}deg)`, opacity: 0 }], { duration: 800 + Math.random() * 400, easing: 'cubic-bezier(.2,.6,.4,1)', fill: 'forwards' }).finished.then(() => sh.remove());
+      }
+      crack.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 600, fill: 'forwards' }).finished.then(() => crack.remove());
+    }, 650);
+  }
+  freeze() {
+    if (!this.chess) return;
+    this.frozenFen = this.chess.fen();
+    this.el.classList.add('frozen');
+    if (!this.frostEl) {
+      const f = document.createElement('div'); f.className = 'frost';
+      let flakes = '';
+      for (let i = 0; i < 26; i++) { const x = Math.random() * 100, y = Math.random() * 100, r = 0.6 + Math.random() * 1.6; flakes += `<g transform="translate(${x} ${y})" stroke="rgba(235,248,255,.8)" stroke-width=".25"><path d="M-${r} 0H${r}M0 -${r}V${r}M-${r * .7} -${r * .7}L${r * .7} ${r * .7}M-${r * .7} ${r * .7}L${r * .7} -${r * .7}"/></g>`; }
+      f.innerHTML = `<svg viewBox="0 0 100 100" preserveAspectRatio="none">${flakes}</svg>`;
+      this.el.appendChild(f); this.frostEl = f;
+      f.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 900, fill: 'forwards' });
+      sfx('charge');
+    }
+  }
+  unfreeze() {
+    this.frozenFen = null; this.el.classList.remove('frozen');
+    if (this.frostEl) { this.frostEl.remove(); this.frostEl = null; }
+  }
+  // ---------- cards shown over the board ----------
+  card(html, cls, ms, block) {
+    const c = document.createElement('div'); c.className = 'bcard' + (cls ? ' ' + cls : ''); c.innerHTML = html;
+    this.el.appendChild(c);
+    if (block) this.fxUntil = Math.max(this.fxUntil || 0, performance.now() + ms);
+    const out = this._run(c, [{ opacity: 0 }, { opacity: 1, offset: 0.12 }, { opacity: 1, offset: 0.86 }, { opacity: 0 }], { duration: ms, easing: 'linear' }).then(() => c.remove());
+    return { el: c, done: out };
+  }
   renderLabels(labels) {
     if (!this.lbl) { this.lbl = document.createElement('div'); this.lbl.className = 'lbls'; this.el.appendChild(this.lbl); }
     let h = '';
@@ -1786,7 +1981,7 @@ class Board {
   }
   // Capture effects: the victim waits for the attacker, then bursts and flies to the capturer's tray
   captureFx(prev, next, slid) {
-    if (reduceMotion) return;
+    if (!animAny()) return;
     const to = this.lastMove.to, mover = next[to] && next[to][0];
     if (!mover) return;
     const caps = [];
@@ -2142,7 +2337,7 @@ const moveSound = (m, c) => {
 /* ============================================================
    App state
    ============================================================ */
-const S = { tab: 'play', sound: store.get('s64.sound', true), fin: store.get('s64.fin', 'random') };
+const S = { tab: 'play', sound: store.get('s64.sound', true), anim: ['full', 'light', 'off'].includes(store.get('s64.anim', '')) ? store.get('s64.anim', '') : 'full', fin: store.get('s64.fin', 'random') };
 const engine = new Engine();
 let board;
 
@@ -2411,7 +2606,7 @@ function resignPlay() {
   if (P.job) P.job.cancel();
   P.thinking = false;
   const loser = P.vs === 'friend' ? P.chess.turn() : P.userColor;
-  P.over = { result: loser === 'w' ? '0-1' : '1-0', text: P.vs === 'friend' ? `${pName(loser)} resigned. ${pName(loser === 'w' ? 'b' : 'w')} wins.` : 'You resigned.', resigned: true };
+  P.over = { how: 'resign', loser, result: loser === 'w' ? '0-1' : '1-0', text: P.vs === 'friend' ? `${pName(loser)} resigned. ${pName(loser === 'w' ? 'b' : 'w')} wins.` : 'You resigned.', resigned: true };
   gameEnded(); savePlay(); renderPlay();
 }
 function playStatus() {
@@ -3221,8 +3416,8 @@ function flagFall(loser) {
   if (FREE.over) return;
   const winner = loser === 'w' ? 'b' : 'w';
   FREE.over = canMate(FREE.chess.fen(), winner)
-    ? { result: winner === 'w' ? '1-0' : '0-1', text: `${pName(loser)} ran out of time. ${pName(winner)} wins!`, resigned: true }
-    : { result: '1/2-1/2', text: `${pName(loser)} ran out of time, but ${pName(winner)} has no way to checkmate. Draw.`, resigned: true };
+    ? { how: 'time', loser, result: winner === 'w' ? '1-0' : '0-1', text: `${pName(loser)} ran out of time. ${pName(winner)} wins!`, resigned: true }
+    : { how: 'timedraw', loser, result: '1/2-1/2', text: `${pName(loser)} ran out of time, but ${pName(winner)} has no way to checkmate. Draw.`, resigned: true };
   if (P === FREE) { gameEnded(); savePlay(); renderPlay(); }
 }
 function clockTick() {
@@ -3278,6 +3473,7 @@ function outcomeOf(G) {
 }
 function gameEnded() {
   sound('end');
+  { const how = gameEndHow(P), lz = P.over && (P.over.loser || (P.over.result === '1-0' ? 'b' : P.over.result === '0-1' ? 'w' : null)); if (how && how !== 'mate') endFx(how, lz || (P.chess ? P.chess.turn() : 'w')); }
   if (P === FREE && FREE.clk) FREE.clk.running = null;
   if (P.mode !== 'ladder') return;
   const G = P, npc = NPCS[G.npc], out = outcomeOf(G);
@@ -3288,6 +3484,7 @@ function gameEnded() {
     if (NPCS[G.npc + 1]) LP.sel = G.npc + 1;
     saveLP();
     setTimeout(() => confetti(!!npc.god), 150);
+    victoryCard(G.npc);
   }
   npcSay(out === 'win' ? 'lose' : out === 'draw' ? 'draw' : 'win');
 }
@@ -3346,6 +3543,7 @@ function startLadder(idx) {
   G.newUnlock = false; G.sayText = ''; G.mood = 'happy';
   hideSayPop();
   newGame();
+  bossIntro(idx);
   npcSay('intro');
   savePlay();
 }
@@ -4454,7 +4652,7 @@ function customResign() {
   if (G.phase !== 'game' || G.over || !G.log.length) return;
   pauseBot(G);
   const loser = G.vs === 'friend' ? G.chess.turn() : G.userColor;
-  G.over = { result: loser === 'w' ? '0-1' : '1-0', text: G.vs === 'friend' ? `${pName(loser)} resigned.` : 'You resigned.', resigned: true };
+  G.over = { how: 'resign', loser, result: loser === 'w' ? '0-1' : '1-0', text: G.vs === 'friend' ? `${pName(loser)} resigned.` : 'You resigned.', resigned: true };
   gameEnded(); saveCustom(); renderCustom(false);
 }
 function customPlayers(G, vs, user) {
@@ -4678,12 +4876,19 @@ function onlineState(st) {
   }
   G.quiet = false;
   if (both && prev && !(prev.players.w && prev.players.b)) sound('check'); // your friend joined
+  const startNow = both && !st.over && st.moves.length === 0 && (!prev || fresh || !(prev.players.w && prev.players.b));
+  if (G.over && !wasOver && prev && st.over) {
+    const r = st.over.reason, lz = st.over.loser || null;
+    const how = r === 'resign' || r === 'abandoned' ? 'resign' : r === 'time' ? 'time' : r === 'time-draw' ? 'timedraw' : ['stalemate', 'repetition', 'material', 'fifty', 'agreed'].includes(r) ? 'draw' : null;
+    if (how) setTimeout(() => { if (S.tab === 'online') endFx(how, lz || (G.chess ? G.chess.turn() : 'w')); }, 60);
+  }
   G.phase = both ? 'game' : 'wait';
   if (!G.over && both) store.set('s64.ogame', { code: st.code });
   if (G.msg && !G.msgErr) G.msg = '';
   if (G.msgErr && G.phase === 'game') G.msg = '';
   onlineFlash();
   if (S.tab === 'online') renderPlay(anim);
+  if (startNow && S.tab === 'online') setTimeout(() => vsCard(st), 80);
 }
 // tell the player it's their move if they're on another browser tab
 function onlineFlash() {
@@ -5145,6 +5350,69 @@ async function rpPlay(tok) {
   await card(res && res !== '*' ? res : '', winner || (res === '1/2-1/2' ? 'Draw' : 'Game over'), winner ? (mated ? 'wins by checkmate' : 'wins') : '', 1700);
   prog.textContent = 'Finished · ⟲ to watch again';
 }
+
+/* ============================================================
+   Ending and intro animations (respect the Animations setting)
+   ============================================================ */
+// called once when a game ends: how = 'resign' | 'time' | 'draw' | 'mate', loser = 'w' | 'b'
+function endFx(how, loser) {
+  if (!animAny() || !board || S.tab === 'review') return;
+  if (how === 'resign') board.tipKing(loser, true);
+  else if (how === 'time') { board.shatterClock(loser); setTimeout(() => board.tipKing(loser, false), 700); }
+  else if (how === 'timedraw') { board.shatterClock(loser); setTimeout(() => board.freeze(), 700); }
+  else if (how === 'draw') board.freeze();
+}
+function gameEndHow(G) {
+  const o = G.over;
+  if (!o) return null;
+  if (o.how) return o.how;
+  const c = G.chess;
+  if (c && c.in_checkmate()) return 'mate';
+  if (o.result === '1/2-1/2') return 'draw';
+  return null;
+}
+function vsCard(st) {
+  if (!animFull() || !board) return;
+  const me = st.you, opp = me === 'w' ? 'b' : 'w', nm = c => esc((st.players[c] && st.players[c].name) || '?');
+  const tc = typeof otcName === 'function' ? otcName(st.tc) : '';
+  const c = board.card(`<div class="side"><span class="chip ${opp}"></span><span class="nm">${nm(opp)}</span></div><div class="vs">VS</div><div class="side"><span class="chip ${me}"></span><span class="nm">${nm(me)}</span></div><div class="sub">${esc(tc)}${st.variant === '960' ? ' · Fischer random' : ''}</div>`, '', 1900, true);
+  const [a, , b] = c.el.children;
+  a.animate([{ transform: 'translateX(-60%)', opacity: 0 }, { transform: 'translateX(0)', opacity: 1 }], { duration: 380, easing: 'cubic-bezier(.2,.8,.3,1.2)' });
+  b.animate([{ transform: 'translateX(60%)', opacity: 0 }, { transform: 'translateX(0)', opacity: 1 }], { duration: 380, easing: 'cubic-bezier(.2,.8,.3,1.2)' });
+  c.el.querySelector('.vs').animate([{ transform: 'scale(3)', opacity: 0 }, { transform: 'scale(.9)', opacity: 1, offset: 0.7 }, { transform: 'scale(1)', opacity: 1 }], { duration: 420, delay: 250, fill: 'backwards', easing: 'ease-out' });
+  sfx('boom');
+}
+function bossIntro(i) {
+  if (!animFull() || !board) return;
+  const n = NPCS[i];
+  if (!n.god) {
+    const c = board.card(`<div class="k">Level ${i + 1} of ${NPCS.length}</div><div class="av">${avatar(n.av, 'happy')}</div><div class="nm">${esc(n.name)}</div><div class="sub">${esc(n.title)} · ${esc(eloTxt(n))}</div>`, '', 2000, true);
+    c.el.querySelector('.av').animate([{ transform: 'scale(.2) rotate(-12deg)', opacity: 0 }, { transform: 'scale(1.1)', opacity: 1, offset: 0.7 }, { transform: 'scale(1)', opacity: 1 }], { duration: 450, easing: 'ease-out' });
+    c.el.querySelector('.nm').animate([{ transform: 'translateY(40%)', opacity: 0 }, { transform: 'translateY(0)', opacity: 1 }], { duration: 400, delay: 200, fill: 'backwards', easing: 'ease-out' });
+    sfx('lock');
+    return;
+  }
+  // OMEGA: the final boss powers up
+  const c = board.card(`<div class="k">Final boss</div><div class="av">${avatar(n.av, 'happy')}</div><div class="nm">${esc(n.name)}</div><div class="sub">${esc(n.title)} · ${esc(eloTxt(n))}</div>`, 'god', 3400, true);
+  sfx('charge');
+  const shake = () => board.el.animate([{ transform: 'translate(0,0)' }, { transform: 'translate(-6px,3px)' }, { transform: 'translate(6px,-3px)' }, { transform: 'translate(-3px,2px)' }, { transform: 'translate(0,0)' }], { duration: 380 });
+  const flash = () => { const f = document.createElement('div'); Object.assign(f.style, { position: 'absolute', inset: 0, background: '#ff2a3c', mixBlendMode: 'screen', pointerEvents: 'none' }); c.el.appendChild(f); f.animate([{ opacity: 0.7 }, { opacity: 0 }], { duration: 220, fill: 'forwards' }).finished.then(() => f.remove()); };
+  [500, 1100, 1500, 1750].forEach((t, k) => setTimeout(() => { flash(); shake(); if (k === 3) sfx('boom'); }, t));
+  c.el.querySelector('.av').animate([{ transform: 'scale(.4)', filter: 'brightness(0)' }, { transform: 'scale(.9)', filter: 'brightness(.3) drop-shadow(0 0 0 red)', offset: 0.5 }, { transform: 'scale(1.15)', filter: 'brightness(1.4) drop-shadow(0 0 30px #ff2a3c)', offset: 0.85 }, { transform: 'scale(1)', filter: 'brightness(1) drop-shadow(0 0 18px #ff2a3c)' }], { duration: 1900, easing: 'ease-in', fill: 'forwards' });
+  c.el.querySelector('.nm').animate([{ opacity: 0, letterSpacing: '.5em' }, { opacity: 0, offset: 0.5 }, { opacity: 1, letterSpacing: '.02em' }], { duration: 1900, fill: 'forwards', easing: 'ease-out' });
+}
+function victoryCard(i) {
+  if (!animFull() || !board) return;
+  const n = NPCS[i], next = NPCS[i + 1];
+  const show = () => {
+    if ((board.fxUntil || 0) > performance.now()) { setTimeout(show, 200); return; } // let the checkmate finisher finish
+    const c = board.card(`<div class="k">Level ${i + 1} cleared</div><div class="av">${avatar(n.av, 'sad')}</div><div class="nm">${esc(n.name)}</div><div class="sub">${next ? `Next up: ${esc(next.name)}` : 'You beat the AI Chess Master God!'}</div><div class="stamp">Defeated</div>`, n.god ? 'god' : '', 2800, false);
+    c.el.querySelector('.stamp').animate([{ transform: 'translate(-50%,-50%) rotate(-12deg) scale(3)', opacity: 0 }, { transform: 'translate(-50%,-50%) rotate(-12deg) scale(.9)', opacity: 1, offset: 0.7 }, { transform: 'translate(-50%,-50%) rotate(-12deg) scale(1)', opacity: 1 }], { duration: 380, delay: 450, fill: 'backwards', easing: 'ease-out' });
+    setTimeout(() => sfx('boom'), 700);
+  };
+  setTimeout(show, 400);
+}
+
 /* ============================================================
    Tabs, wiring, boot
    ============================================================ */
@@ -5197,13 +5465,13 @@ function wire() {
     extraMoves: sq => (S.tab === 'custom' && CUSTOM.phase === 'game' && CUSTOM.chess) ? powerMoves(CUSTOM, sq) : [],
     allowStd: sq => S.tab !== 'custom' || customAllowStd(sq),
     skin: (sq, p) => S.tab === 'custom' ? customSkin(sq, p) : null,
-    finisherOk: () => S.tab !== 'review'
+    finisherOk: () => S.tab !== 'review',
+    quietFx: () => S.tab === 'custom' && secretOn(CUSTOM) && !CUSTOM.over
   });
 
   $$('.tab').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
-  if (S.fin !== 'off') S.fin = 'gun'; // the other finishers were removed
-  $('#finSel').value = S.fin;
-  $('#finSel').addEventListener('change', e => { S.fin = e.target.value; store.set('s64.fin', S.fin); });
+  $('#animSel').value = S.anim;
+  $('#animSel').addEventListener('change', e => { S.anim = e.target.value; store.set('s64.anim', S.anim); });
   $('#soundBtn').addEventListener('click', () => { S.sound = !S.sound; store.set('s64.sound', S.sound); renderSoundBtn(); if (S.sound && !playSample('move')) sound('move'); });
 
   // play controls

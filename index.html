@@ -526,14 +526,6 @@ textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 0; }
             <button type="button" data-vs="friend">Friend, same device</button>
           </div>
         </div>
-        <div class="block">
-          <span class="sec-label">Variant</span>
-          <div class="seg" id="varSeg">
-            <button type="button" data-v="std">Standard</button>
-            <button type="button" data-v="960" title="The back pieces start in a random order. Castling: move your king onto your rook.">Fischer random</button>
-          </div>
-          <p class="small muted" id="varNote" hidden></p>
-        </div>
         <div class="block" id="friendBlock" hidden>
           <div class="name-row">
             <label class="me-row" for="nameW"><span class="sec-label">White</span><input id="nameW" type="text" autocomplete="off" spellcheck="false" maxlength="24" placeholder="Player 1"></label>
@@ -2497,7 +2489,7 @@ function saveLP() { store.set('s64.ladder', LP); }
 const unlockedMax = () => Math.min(LP.beaten, NPCS.length - 1);
 let SEQ = 10; // unique generation counter shared by both games
 const FREE = { // free play against an adjustable bot
-  mode: 'free', saveKey: 's64.play', variant: store.get('s64.variant', 'std') === '960' ? '960' : 'std', startFen: null, n960: null, vs: store.get('s64.vs', 'bot') === 'friend' ? 'friend' : 'bot',
+  mode: 'free', saveKey: 's64.play', vs: store.get('s64.vs', 'bot') === 'friend' ? 'friend' : 'bot',
   names: Object.assign({ w: '', b: '' }, store.get('s64.names', {}) || {}), autoFlip: store.get('s64.autoFlip', true),
   tc: store.get('s64.tc', null), clk: null, chess: null, userColor: 'w', colorPref: store.get('s64.colorPref', 'w'), elo: store.get('s64.elo', 1200),
   orientation: 'w', over: null, thinking: false, job: null, hint: null, hintJob: null, hintBusy: false, lastMove: null, gen: 1
@@ -2612,9 +2604,8 @@ function gameData(G) {
 }
 function savePlay() { if (P.mode === 'custom') { saveCustom(); return; } store.set(P.saveKey, gameData(P)); }
 function restorePlay(data) {
-  P.startFen = P === FREE && data && data.startFen && Chess960.isFen(data.startFen) ? data.startFen : null;
-  P.n960 = P.startFen && data.n960 != null ? data.n960 : null;
-  P.chess = P.startFen ? new Chess960(P.startFen) : new Chess();
+  if (data && data.startFen) data = null; // Fischer random lives in Custom mode now
+  P.chess = new Chess();
   if (data && Array.isArray(data.moves)) {
     for (const u of data.moves) if (!P.chess.move(uciObj(u))) break;
     P.userColor = data.userColor === 'b' ? 'b' : 'w';
@@ -2649,9 +2640,7 @@ function newGame() {
   P.gen = ++SEQ;
   if (P.job) P.job.cancel();
   if (P.hintJob) P.hintJob.cancel();
-  if (P === FREE && FREE.variant === '960') { FREE.n960 = Chess960.random(); FREE.startFen = Chess960.startFen(FREE.n960); }
-  else if (P === FREE) { FREE.n960 = null; FREE.startFen = null; }
-  P.chess = P.startFen ? new Chess960(P.startFen) : new Chess();
+  P.chess = new Chess();
   P.userColor = P.colorPref === 'r' ? (Math.random() < .5 ? 'w' : 'b') : P.colorPref;
   P.orientation = P.vs === 'friend' ? 'w' : P.userColor;
   if (P === FREE) resetClock();
@@ -2760,17 +2749,16 @@ function resignPlay() {
   P.over = { result: loser === 'w' ? '0-1' : '1-0', text: P.vs === 'friend' ? `${pName(loser)} resigned. ${pName(loser === 'w' ? 'b' : 'w')} wins.` : 'You resigned.', resigned: true };
   gameEnded(); savePlay(); renderPlay();
 }
-function castleTip() { return P === FREE && FREE.startFen ? ` <span class="muted">Fischer random #${FREE.n960}. To castle, move your king onto your rook.</span>` : ''; }
 function playStatus() {
   const c = P.chess;
   if (P.over) return { html: esc(P.over.text), over: true };
   if (P.vs === 'friend' && P.clk && P.clk.paused) return { html: 'Clock paused. Press Resume clock to keep playing.' };
-  if (P.vs === 'friend') return { html: `${esc(pName(c.turn()))} to move (${SIDE[c.turn()]})` + (c.in_check() ? ', in check!' : '.') + (P.hint ? ' Hint shown in blue.' : '') + (c.history().length === 0 ? castleTip() : '') };
+  if (P.vs === 'friend') return { html: `${esc(pName(c.turn()))} to move (${SIDE[c.turn()]})` + (c.in_check() ? ', in check!' : '.') + (P.hint ? ' Hint shown in blue.' : '') };
   if (!engine.ready && !engine.failed && c.turn() !== P.userColor) return { html: 'Loading the engine…', spin: true };
   if (P.thinking) return { html: `${esc(botName())} is thinking…`, spin: true };
   if (P.hintBusy) return { html: 'Looking for a hint…', spin: true };
   if (c.turn() === P.userColor) {
-    const base = c.history().length === 0 ? `You have ${SIDE[P.userColor]}. Make your first move.` + castleTip() : 'Your move.';
+    const base = c.history().length === 0 ? `You have ${SIDE[P.userColor]}. Make your first move.` : 'Your move.';
     return { html: base + (c.in_check() ? ' You are in check.' : '') + (P.hint ? ' Hint shown in blue.' : '') };
   }
   return { html: 'Waiting for the bot…' };
@@ -2827,7 +2815,6 @@ function renderPlay(anim) {
   $('#strengthBlock').hidden = friend; $('#colorBlock').hidden = friend; $('#friendBlock').hidden = !friend;
   $('#drawBtn').hidden = !friend; $('#drawBtn').disabled = !!P.over || !sans.length;
   $$('#vsSeg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.vs === P.vs)));
-  $$('#varSeg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === FREE.variant)));
   $$('#tcChips .chip').forEach(b => { const t = TCS[+b.dataset.tc]; b.setAttribute('aria-pressed', String(FREE.tc && FREE.tc.base ? t[0] === FREE.tc.base && t[1] === FREE.tc.inc : !t[0])); });
   const ck = FREE.clk, pend = friend && !P.over && P.chess.history().length && ((FREE.tc && FREE.tc.base ? FREE.tc.base + '|' + FREE.tc.inc : '') !== (ck ? ck.base + '|' + ck.inc : ''));
   $('#tcNote').hidden = !pend;
@@ -5224,12 +5211,6 @@ function wire() {
   $('#cLeave').addEventListener('click', () => { pauseBot(CUSTOM); CUSTOM.phase = 'lobby'; saveCustom(); renderPlay(); });
 
   // two players on one device
-  $('#varSeg').addEventListener('click', e => {
-    const b = e.target.closest('button');
-    if (!b || b.dataset.v === FREE.variant) return;
-    FREE.variant = b.dataset.v; store.set('s64.variant', FREE.variant);
-    if (P === FREE) newGame();
-  });
   $('#vsSeg').addEventListener('click', e => {
     const b = e.target.closest('button');
     if (!b || b.dataset.vs === FREE.vs) return;

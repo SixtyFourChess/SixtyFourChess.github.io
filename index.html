@@ -396,7 +396,7 @@ textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 0; }
 .pclock + .turn { margin-left: 8px; }
 @keyframes clockpulse { 50% { opacity: .72; } }
 
-/* ---------- battle mode ---------- */
+/* ---------- header pill buttons ---------- */
 .battle-btn { display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 11px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); font-weight: 600; font-size: 13px; color: var(--muted); }
 .battle-btn svg { width: 17px; height: 17px; flex: none; }
 .battle-btn[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
@@ -423,16 +423,16 @@ textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 0; }
 .rp-cam { position: absolute; left: 0; width: 100%; transform-origin: 0 0; will-change: transform; }
 .rp-board { position: relative; width: 100%; aspect-ratio: 1 / 1; background: repeating-conic-gradient(#8f9197 0 25%, #ececec 0 50%) 0 0 / 25% 25%; box-shadow: 0 30px 80px rgba(0,0,0,.6); }
 .rp-board > div { position: absolute; inset: 0; pointer-events: none; }
-.rp-hl > i { position: absolute; width: 12.5%; height: 12.5%; background: rgba(255, 214, 70, .38); }
+.rp-board > .rp-hl { z-index: 0; } .rp-board > .rp-pcs { z-index: 1; }
+.rp-hl > i { position: absolute; width: 12.5%; height: 12.5%; background: rgba(255, 214, 70, .34); box-shadow: 0 0 calc(var(--rpw, 400px) * .03) calc(var(--rpw, 400px) * .004) rgba(255, 205, 70, .55); animation: rphl .5s ease-out both; }
+.rp-hl > i.to { background: rgba(255, 214, 70, .5); box-shadow: 0 0 calc(var(--rpw, 400px) * .05) calc(var(--rpw, 400px) * .01) rgba(255, 200, 60, .8), inset 0 0 calc(var(--rpw, 400px) * .02) rgba(255, 255, 255, .5); z-index: 1; }
+@keyframes rphl { from { opacity: 0; } to { opacity: 1; } }
 .rp-pcs > img { position: absolute; width: 12.5%; height: 12.5%; will-change: transform; }
-.rp-wm { display: flex; align-items: center; justify-content: center; font: 800 calc(var(--rpw, 400px) * .105) var(--font-display); color: #000; opacity: .06; letter-spacing: -.02em; white-space: nowrap; }
 .rp-punch { position: relative; }
-.rp-tone, .rp-punch > .rp-fx { position: absolute; inset: 0; pointer-events: none; }
-.rp-tone { opacity: 0; mix-blend-mode: multiply; background: radial-gradient(circle, rgba(0,0,0,.42) 30%, transparent 33%) 0 0 / 6px 6px, repeating-linear-gradient(45deg, rgba(0,0,0,.14) 0 1px, transparent 1px 7px), repeating-linear-gradient(-45deg, rgba(0,0,0,.08) 0 1px, transparent 1px 9px); }
+.rp-punch > .rp-fx { position: absolute; inset: 0; pointer-events: none; }
 .rp-fx > * { position: absolute; }
-.rp-hl > i.chk { background: rgba(255, 35, 45, .55); animation: rpchk .45s ease-in-out infinite alternate; }
+.rp-hl > i.chk { background: rgba(255, 35, 45, .55); box-shadow: 0 0 calc(var(--rpw, 400px) * .06) calc(var(--rpw, 400px) * .012) rgba(255, 30, 40, .85); animation: rpchk .45s ease-in-out infinite alternate; z-index: 1; }
 @keyframes rpchk { from { opacity: .55; } to { opacity: 1; } }
-.rp-kill, .rp-kill > * { position: absolute; }
 .rp-card { position: absolute; inset: 0; z-index: 12; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: calc(var(--rpw, 400px) * .02); padding: 7%; text-align: center; background: radial-gradient(circle at 50% 45%, rgba(20,20,26,.84), rgba(4,4,6,.94) 75%); pointer-events: none; font-family: "Montserrat", var(--font-display); text-transform: uppercase; }
 .rp-card .k { font-weight: 800; font-size: calc(var(--rpw, 400px) * .038); letter-spacing: .14em; color: #111; background: #ffd23f; padding: .35em .9em; border-radius: 999px; }
 .rp-card .l1 { font-weight: 900; font-size: calc(var(--rpw, 400px) * .118); line-height: .98; color: #fff; letter-spacing: -.01em; text-shadow: 0 0 calc(var(--rpw, 400px) * .04) rgba(255,255,255,.28); overflow-wrap: anywhere; }
@@ -467,18 +467,7 @@ textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 0; }
 .fn-banner { left: 50%; top: 50%; font: 900 italic clamp(28px, calc(var(--bsz, 480px) * .12), 72px)/1 var(--font-display); letter-spacing: .04em; color: #fff; white-space: nowrap; text-shadow: 0 0 2px #000, 0 4px 0 #b3001b, 0 8px 24px rgba(0, 0, 0, .7); z-index: 20; }
 .fn-blood { border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; background: radial-gradient(circle at 35% 30%, #ff4a4a, #b10000 55%, #5c0000); }
 
-/* ---------- battle mode v2 ---------- */
-.bt-vig, .bt-white { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
-.bt-white { background: #fff; z-index: 6; }
-.bt-pc { z-index: 2; }
-.bt-runes { position: absolute; z-index: 1; filter: drop-shadow(0 0 6px #b48cff); }
-.bt-ring { position: absolute; z-index: 5; border-radius: 50%; border: 3px solid; box-shadow: 0 0 10px currentColor, inset 0 0 8px currentColor; }
-.bt-arc, .bt-mflash { position: absolute; z-index: 5; }
-.bt-arc svg, .bt-mflash svg, .bt-runes svg { display: block; width: 100%; height: 100%; overflow: visible; }
-.bt-arc { filter: drop-shadow(0 0 6px rgba(255, 255, 255, .9)); }
-.bt-mflash { transform-origin: 0 50%; filter: drop-shadow(0 0 8px rgba(255, 200, 80, .9)); }
-.bt-casing { position: absolute; z-index: 5; background: linear-gradient(90deg, #f6d36b, #b8862b); border-radius: 1px; }
-.bt-cut { position: absolute; z-index: 5; background: #fff; border-radius: 2px; box-shadow: 0 0 8px 2px rgba(255, 255, 255, .9); }
+/* weapon art used by the checkmate finishers */
 .bt-wpn { filter: drop-shadow(0 4px 5px rgba(0, 0, 0, .45)); }
 
 /* ---------- capture effects ---------- */
@@ -535,7 +524,6 @@ textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 0; }
     </nav>
     <div class="top-right">
       <span class="pill" id="enginePill" data-state="loading" title="Chess engine status"><i></i><span>Loading engine…</span></span>
-      <button class="battle-btn" id="battleBtn" type="button" aria-pressed="false" title="Battle animations for captures"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 3.5l9 9M16.5 3.5l-9 9"/><path d="M11 14.5l3.5 3.5M9 14.5L5.5 18M12.5 11.5l3-3M7.5 11.5l-3-3"/></svg><span>Battle mode</span></button>
       <label class="battle-btn fin-pick" title="Animation that plays on checkmate"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 2.5c-4 0-6.5 2.6-6.5 6 0 2.2 1.1 3.6 2.5 4.4V15.5h8v-2.6c1.4-.8 2.5-2.2 2.5-4.4 0-3.4-2.5-6-6.5-6z"/><circle cx="7.5" cy="9" r="1.4" fill="currentColor"/><circle cx="12.5" cy="9" r="1.4" fill="currentColor"/><path d="M8.5 15.5v2M11.5 15.5v2"/></svg><span>Finisher:</span><select id="finSel" aria-label="Checkmate finisher"><option value="random">Random</option><option value="gun">Gun</option><option value="purple">Hollow purple</option><option value="sword">Sword</option><option value="shadow">Silhouette</option><option value="off">Off</option></select></label>
       <button class="icon-btn" id="soundBtn" type="button" aria-label="Sound on" title="Sound"></button>
     </div>
@@ -1490,18 +1478,8 @@ const BWD = {
 };
 const bsvg = (w, h, defs, body) => `<svg viewBox='0 0 ${w} ${h}'><defs>${defs.map(d => BWD[d]).join('')}</defs>${body}</svg>`;
 const WPN = {
-  spear: { vb: [220, 30], svg: bsvg(220, 30, ['wood', 'steel'], `<rect x='0' y='12.6' width='170' height='4.8' rx='2.4' fill='url(#bw-wood)'/><path d='M8 13.4H160' stroke='#fff' stroke-opacity='.2' stroke-width='1'/><g fill='#2f2116'><rect x='150' y='11.4' width='3' height='7.2' rx='1'/><rect x='155' y='11.4' width='3' height='7.2' rx='1'/><rect x='160' y='11.4' width='3' height='7.2' rx='1'/></g><path d='M162 16l-7 10M164 16l-3 11M160 16l-10 7' stroke='#c0392b' stroke-width='1.6' stroke-linecap='round'/><path d='M166 15C178 6 198 6 220 15C198 24 178 24 166 15Z' fill='url(#bw-steel)' stroke='#4f5864' stroke-width='.8'/><path d='M171 15H213' stroke='#fff' stroke-opacity='.85' stroke-width='.9'/>`) },
-  dagger: { vb: [120, 34], svg: bsvg(120, 34, ['gold', 'steel'], `<circle cx='5' cy='17' r='5' fill='url(#bw-gold)'/><rect x='8' y='13' width='26' height='8' rx='3' fill='#4a2c18'/><path d='M12 13l4 8M18 13l4 8M24 13l4 8' stroke='#24140a' stroke-width='1.4'/><rect x='34' y='6' width='7' height='22' rx='2' fill='url(#bw-gold)'/><path d='M41 12L111 15.5L120 17L111 18.5L41 22Z' fill='url(#bw-steel)' stroke='#4f5864' stroke-width='.7'/><path d='M43 17H111' stroke='#fff' stroke-opacity='.8' stroke-width='.8'/>`) },
   sword: { vb: [260, 44], svg: bsvg(260, 44, ['gold', 'steel'], `<circle cx='7' cy='22' r='7' fill='url(#bw-gold)'/><circle cx='7' cy='22' r='3' fill='#c0392b'/><rect x='13' y='17' width='34' height='10' rx='3' fill='#3b2314'/><path d='M18 17l5 10M25 17l5 10M32 17l5 10M39 17l5 10' stroke='#1e1009' stroke-width='1.5'/><path d='M47 4Q53 22 47 40H56Q62 22 56 4Z' fill='url(#bw-gold)' stroke='#7a5a12' stroke-width='.8'/><circle cx='51.5' cy='22' r='3.4' fill='#2e86de' stroke='#fff' stroke-opacity='.6' stroke-width='.8'/><path d='M57 15L238 18.2L260 22L238 25.8L57 29Z' fill='url(#bw-steel)' stroke='#4f5864' stroke-width='.8'/><path d='M62 22H222' stroke='#8994a3' stroke-width='2.2'/><path d='M62 18.6H230' stroke='#fff' stroke-opacity='.7' stroke-width='.8'/>`) },
-  saber: { vb: [250, 60], svg: bsvg(250, 60, ['gold', 'steel'], `<circle cx='6' cy='30' r='6' fill='url(#bw-gold)'/><rect x='11' y='25.5' width='32' height='9' rx='3' fill='#2a2f3a'/><path d='M16 25.5l5 9M23 25.5l5 9M30 25.5l5 9M37 25.5l5 9' stroke='#cfd5de' stroke-opacity='.5' stroke-width='1.2'/><ellipse cx='46' cy='30' rx='4' ry='10' fill='url(#bw-gold)'/><path d='M50 26C120 25 190 17 250 2L246 13C190 29 120 36 50 35Z' fill='url(#bw-steel)' stroke='#4f5864' stroke-width='.8'/><path d='M54 29C120 28 186 21 242 8' fill='none' stroke='#fff' stroke-opacity='.8' stroke-width='.9'/>`) },
   pistol: { vb: [110, 80], svg: bsvg(110, 80, ['dark'], `<path d='M24 46H46L40 80H16Z' fill='#23272d'/><path d='M22 50l18 2M21 56l18 2M20 62l18 2M19 68l18 2' stroke='#14171a' stroke-width='1.2'/><rect x='22' y='31' width='84' height='15' rx='2.5' fill='url(#bw-dark)'/><path d='M30 33v11M33.5 33v11M37 33v11M40.5 33v11' stroke='#0e1013' stroke-width='1.1'/><rect x='104' y='35.5' width='6' height='9' rx='1' fill='#0e1013'/><rect x='98' y='28' width='3' height='4' fill='#2c3138'/><rect x='26' y='28' width='5' height='4' fill='#2c3138'/><path d='M28 46H92V51H42Z' fill='#2c3138'/><path d='M53 46q0 14-12 14h-4' stroke='#2c3138' stroke-width='3.5' fill='none'/><path d='M47 48q2 6-2 9' stroke='#0e1013' stroke-width='2' fill='none'/><path d='M24 32.5H104' stroke='#fff' stroke-opacity='.25' stroke-width='1'/><rect x='62' y='34' width='14' height='6' rx='1' fill='#15181c'/>`) },
-  sniper: { vb: [320, 80], svg: bsvg(320, 80, ['wood', 'dark'], `<path d='M0 34L70 36L92 38L92 52L66 52L18 66L0 62Z' fill='url(#bw-wood)' stroke='#3b2314' stroke-width='.8'/><path d='M10 40L60 40' stroke='#fff' stroke-opacity='.18' stroke-width='1.2'/><rect x='84' y='34' width='74' height='14' rx='3' fill='url(#bw-dark)'/><rect x='156' y='37' width='152' height='6' fill='url(#bw-dark)'/><rect x='304' y='35' width='16' height='10' rx='2' fill='#15171b'/><path d='M308 35v10M313 35v10' stroke='#3a4049' stroke-width='1'/><rect x='92' y='16' width='70' height='11' rx='5.5' fill='url(#bw-dark)'/><path d='M162 12.5h11v18h-11z' fill='#1b1e23'/><path d='M84 14.5h9v14h-9z' fill='#1b1e23'/><circle cx='173' cy='21.5' r='6' fill='#4fc3f7' opacity='.85'/><circle cx='171' cy='19.5' r='2' fill='#fff' opacity='.9'/><rect x='102' y='26' width='6' height='9' fill='#1b1e23'/><rect x='144' y='26' width='6' height='9' fill='#1b1e23'/><path d='M140 48q6 7 11 0' stroke='#1b1e23' stroke-width='3' fill='none'/><rect x='112' y='47' width='16' height='13' rx='2' fill='#23272d'/><path d='M100 48q0 12-12 12' stroke='#23272d' stroke-width='3' fill='none'/><path d='M232 43l-14 30M238 43l12 30' stroke='#23272d' stroke-width='3' stroke-linecap='round'/>`) },
-  cannon: { vb: [180, 110], svg: bsvg(180, 110, ['wood', 'bronze'], `<path d='M8 64L96 58L104 66L84 86L24 86Z' fill='url(#bw-wood)' stroke='#3b2314' stroke-width='1'/><path d='M28 41L170 46Q178 46 178 50V60Q178 64 170 64L28 69Z' fill='url(#bw-bronze)' stroke='#5e3f0e' stroke-width='.8'/><path d='M34 45L168 49' stroke='#fff' stroke-opacity='.45' stroke-width='1.4'/><rect x='60' y='42' width='7' height='26' rx='1.5' fill='#7a5a1a'/><rect x='130' y='44' width='6' height='22' rx='1.5' fill='#7a5a1a'/><rect x='165' y='45' width='5' height='20' rx='1.5' fill='#7a5a1a'/><circle cx='28' cy='55' r='15' fill='url(#bw-bronze)' stroke='#5e3f0e' stroke-width='.8'/><circle cx='12' cy='55' r='5' fill='#7a5a1a'/><ellipse cx='178' cy='55' rx='2' ry='8' fill='#111'/><circle cx='54' cy='86' r='21' fill='none' stroke='#4a2d17' stroke-width='6'/><path d='M54 65V107M33 86H75M39 71L69 101M69 71L39 101' stroke='#4a2d17' stroke-width='3'/><circle cx='54' cy='86' r='5' fill='#2a1a0d'/>`) },
-  staff: { vb: [240, 50], svg: bsvg(240, 50, ['wood', 'gold', 'crystal'], `<rect x='0' y='22' width='190' height='6' rx='3' fill='url(#bw-wood)'/><path d='M14 22l6 6M40 22l6 6M66 22l6 6M92 22l6 6M118 22l6 6M144 22l6 6M170 22l6 6' stroke='#d4a72c' stroke-width='2'/><rect x='180' y='19.5' width='10' height='11' rx='2' fill='url(#bw-gold)'/><path d='M188 25C200 2 230 2 236 14C222 8 205 12 199 25C205 38 222 42 236 36C230 48 200 48 188 25Z' fill='url(#bw-gold)' stroke='#7a5a12' stroke-width='.8'/><circle cx='222' cy='25' r='13' fill='#b48cff' opacity='.35'/><path d='M212 25L222 12L232 25L222 38Z' fill='url(#bw-crystal)' stroke='#fff' stroke-opacity='.7' stroke-width='.8'/><path d='M222 12V38M212 25H232' stroke='#fff' stroke-opacity='.45' stroke-width='.7'/>`) },
-  scope: `<svg viewBox='0 0 100 100'><circle cx='50' cy='50' r='44' fill='rgba(255,40,40,.06)' stroke='#ff3b3b' stroke-width='2.5'/><circle cx='50' cy='50' r='30' fill='none' stroke='#ff3b3b' stroke-width='1' stroke-dasharray='3 4'/><circle cx='50' cy='50' r='2.5' fill='#ff3b3b'/><path d='M50 4v32M50 64v32M4 50h32M64 50h32' stroke='#ff3b3b' stroke-width='2.5'/><path d='M44 50h-4M60 50h-4M50 44v-4M50 60v-4' stroke='#fff' stroke-width='1'/></svg>`,
-  runes: `<svg viewBox='0 0 100 100'><circle cx='50' cy='50' r='46' fill='none' stroke='#c9a7ff' stroke-width='2' stroke-dasharray='7 4'/><circle cx='50' cy='50' r='38' fill='none' stroke='#8fe8ff' stroke-width='1.4'/><path d='M50 12L83 69H17ZM50 88L17 31H83Z' fill='none' stroke='#c9a7ff' stroke-width='1.3' opacity='.85'/><circle cx='50' cy='50' r='12' fill='none' stroke='#8fe8ff' stroke-width='1.2'/></svg>`,
-  mflash: `<svg viewBox='0 0 100 60'><path d='M0 30L38 14L100 30L38 46Z' fill='#ffcf4a' opacity='.9'/><path d='M0 30L26 4L46 30L26 56Z' fill='#ff9d2e' opacity='.8'/><path d='M0 30L62 23L62 37Z' fill='#fff'/></svg>`,
-  arc: `<svg viewBox='-50 -50 100 100'><path d='M-44 -18Q0 38 44 -18' pathLength='100' fill='none' stroke='rgba(255,255,255,.35)' stroke-width='11' stroke-linecap='round'/><path d='M-44 -18Q0 38 44 -18' pathLength='100' fill='none' stroke='#fff' stroke-width='3.5' stroke-linecap='round'/></svg>`
 };
 const FIN_GUN = 'data:image/webp;base64,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';
 // squares of `by` pieces that attack `sq` (map: square -> 'wQ' style keys)
@@ -1803,346 +1781,6 @@ class Board {
       }
     }
   }
-  // Battle mode: the attacker uses a weapon on the captured piece before moving in
-  async battle(cap, mover, prev) {
-    const token = this.fxToken, lm = this.lastMove, aKey = prev[lm.from];
-    const q = this.el.clientWidth / 8;
-    if (!aKey || !this.fx || !q) return true;
-    const bid = (this.bid = (this.bid || 0) + 1);
-    const aType = aKey[1].toLowerCase();
-    const ctr = sq => { const p = this.xy(sq); return { x: (p.x + 0.5) * q, y: (p.y + 0.5) * q }; };
-    const A = ctr(lm.from), V = ctr(cap.sq), Tq = ctr(lm.to);
-    const rad = Math.atan2(V.y - A.y, V.x - A.x), ang = rad * 180 / Math.PI;
-    const ux = Math.cos(rad), uy = Math.sin(rad), dist = Math.hypot(V.x - A.x, V.y - A.y);
-    const side = ux >= 0 ? 1 : -1, flip = ux < -0.01 ? ' scaleY(-1)' : '';
-    const span = Math.max(Math.abs(lm.from.charCodeAt(0) - cap.sq.charCodeAt(0)), Math.abs(lm.from.charCodeAt(1) - cap.sq.charCodeAt(1)));
-    const kind = aType === 'p' ? (cap.sq !== lm.to ? 'pistol' : 'spear') : aType === 'n' ? 'slash' : aType === 'b' ? (span >= 4 ? 'sniper' : 'dagger') : aType === 'r' ? 'cannon' : aType === 'q' ? 'staff' : 'sword';
-    const st = document.createElement('div');
-    st.className = 'bt-stage';
-    this.fx.appendChild(st);
-    const ok = () => this.fxToken === token && st.isConnected;
-    const wait = ms => new Promise(r => setTimeout(r, ms));
-    const run = (el, kf, opt) => el.animate(kf, Object.assign({ fill: 'forwards' }, opt)).finished.catch(() => {});
-    const mk = (cls, css, html) => { const e = document.createElement(cls === 'bt-pc' ? 'img' : 'div'); e.className = cls; Object.assign(e.style, css || {}); if (html) e.innerHTML = html; st.appendChild(e); return e; };
-    const piece = (key, P) => { const e = mk('bt-pc', { left: P.x - q / 2 + 'px', top: P.y - q / 2 + 'px', width: q + 'px', height: q + 'px' }); e.src = PIECE_URL[key]; e.alt = ''; return e; };
-    const pt = (O, d) => ({ x: O.x + ux * d, y: O.y + uy * d });
-    const at = (P, s) => `translate(${P.x - A.x}px, ${P.y - A.y}px)${s ? ' ' + s : ''}`;
-    const wt = (t, extra) => `rotate(${ang}deg) translateX(${t}px)${flip}${extra ? ' ' + extra : ''}`;
-    const weapon = (name, W, O) => { const H = W * WPN[name].vb[1] / WPN[name].vb[0]; return mk('bt-wpn', { left: O.x + 'px', top: O.y - H / 2 + 'px', width: W + 'px', height: H + 'px', opacity: '0' }, WPN[name].svg); };
-    const fade = (el, d) => run(el, [{ opacity: 1 }, { opacity: 0 }], { duration: d || 220 });
-    const FLASH = 'radial-gradient(circle, #fff 0%, #ffe27a 30%, rgba(255,140,40,.8) 55%, rgba(255,80,0,0) 72%)';
-    const MAGIC = 'radial-gradient(circle, #fff 0%, #d9c2ff 25%, rgba(150,100,255,.8) 50%, rgba(120,60,255,0) 72%)';
-    const glow = (P, size, bg, dur, s0 = 0.2, s1 = 1.5) => {
-      const e = mk('bt-glow', { left: P.x + 'px', top: P.y + 'px', width: size + 'px', height: size + 'px', background: bg });
-      run(e, [{ transform: `translate(-50%,-50%) scale(${s0})`, opacity: 1 }, { transform: `translate(-50%,-50%) scale(${s1})`, opacity: 0 }], { duration: dur, easing: 'ease-out' }).then(() => e.remove());
-    };
-    const ring = (P, color, size, dur) => {
-      const e = mk('bt-ring', { left: P.x + 'px', top: P.y + 'px', width: size + 'px', height: size + 'px', borderColor: color, color });
-      run(e, [{ transform: 'translate(-50%,-50%) scale(.2)', opacity: 1 }, { transform: 'translate(-50%,-50%) scale(1.6)', opacity: 0 }], { duration: dur || 420, easing: 'cubic-bezier(.2,.7,.3,1)' }).then(() => e.remove());
-    };
-    const beam = (P1, P2, bg, w, dur, keep) => {
-      const len = Math.hypot(P2.x - P1.x, P2.y - P1.y), a = Math.atan2(P2.y - P1.y, P2.x - P1.x);
-      const e = mk('bt-tracer', { left: P1.x + 'px', top: P1.y - w / 2 + 'px', width: len + 'px', height: w + 'px', background: bg, boxShadow: `0 0 ${w * 3}px ${w}px rgba(255,240,200,.5)` });
-      if (keep) { e.style.transform = `rotate(${a}rad)`; e.style.boxShadow = 'none'; return e; }
-      run(e, [{ transform: `rotate(${a}rad) scaleX(0)`, opacity: 1 }, { transform: `rotate(${a}rad) scaleX(1)`, opacity: 1, offset: 0.35 }, { transform: `rotate(${a}rad) scaleX(1)`, opacity: 0 }], { duration: dur }).then(() => e.remove());
-      return e;
-    };
-    const smoke = (P, n, size) => {
-      for (let i = 0; i < n; i++) {
-        const e = mk('bt-smoke', { left: P.x + 'px', top: P.y + 'px', width: size + 'px', height: size + 'px' });
-        const dx = (Math.random() - 0.5) * size * 1.6, dy = -size * (0.6 + Math.random());
-        run(e, [{ transform: 'translate(-50%,-50%) scale(.3)', opacity: 0.85 }, { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(${1.2 + Math.random()})`, opacity: 0 }], { duration: 800 + Math.random() * 600, easing: 'ease-out' }).then(() => e.remove());
-      }
-    };
-    const sparks = (P, n, color, spread) => {
-      for (let i = 0; i < n; i++) {
-        const e = mk('bt-spark', { left: P.x + 'px', top: P.y + 'px', background: color, boxShadow: `0 0 6px ${color}` });
-        const a = Math.random() * Math.PI * 2, d = spread * (0.4 + Math.random() * 0.8);
-        run(e, [{ transform: 'translate(-50%,-50%) scale(1)', opacity: 1 }, { transform: `translate(calc(-50% + ${Math.cos(a) * d}px), calc(-50% + ${Math.sin(a) * d + spread * 0.25}px)) scale(.2)`, opacity: 0 }], { duration: 400 + Math.random() * 450, easing: 'cubic-bezier(.15,.8,.3,1)' }).then(() => e.remove());
-      }
-    };
-    const converge = (P, n, color, radius) => {
-      for (let i = 0; i < n; i++) {
-        const a = Math.random() * Math.PI * 2, d = radius * (0.6 + Math.random() * 0.5);
-        const e = mk('bt-spark', { left: P.x + 'px', top: P.y + 'px', background: color, boxShadow: `0 0 6px ${color}` });
-        run(e, [{ transform: `translate(calc(-50% + ${Math.cos(a) * d}px), calc(-50% + ${Math.sin(a) * d}px)) scale(.4)`, opacity: 0 }, { transform: `translate(calc(-50% + ${Math.cos(a) * d * 0.5}px), calc(-50% + ${Math.sin(a) * d * 0.5}px)) scale(1)`, opacity: 1, offset: 0.4 }, { transform: 'translate(-50%,-50%) scale(.6)', opacity: 0 }], { duration: 420, delay: Math.random() * 260, fill: 'both', easing: 'ease-in' }).then(() => e.remove());
-      }
-    };
-    const whiteout = a => { const e = mk('bt-white'); run(e, [{ opacity: a }, { opacity: 0 }], { duration: 170, easing: 'ease-out' }).then(() => e.remove()); };
-    const shake = (a, dur) => { try { this.el.animate([{ transform: 'translate(0,0)' }, { transform: `translate(${-a}px,${a / 2}px)` }, { transform: `translate(${a}px,${-a / 2}px)` }, { transform: `translate(${-a / 2}px,${a / 3}px)` }, { transform: `translate(${a / 3}px,${-a / 4}px)` }, { transform: 'translate(0,0)' }], { duration: dur || 340, easing: 'ease-out', composite: 'add' }); } catch (e) { /* ignore */ } };
-    const mflash = (M, size) => {
-      const e = mk('bt-mflash', { left: M.x + 'px', top: M.y - size * 0.3 + 'px', width: size + 'px', height: size * 0.6 + 'px' }, WPN.mflash);
-      run(e, [{ transform: `rotate(${ang}deg) scale(.3)`, opacity: 1 }, { transform: `rotate(${ang}deg) scale(1.15)`, opacity: 1, offset: 0.4 }, { transform: `rotate(${ang}deg) scale(1.3)`, opacity: 0 }], { duration: 130 }).then(() => e.remove());
-      glow(M, size * 0.9, FLASH, 160);
-    };
-    const hitFx = (P, color, big) => {
-      glow(P, q * (big ? 1.2 : 0.8), `radial-gradient(circle, #fff 0%, ${color} 35%, rgba(0,0,0,0) 70%)`, 240);
-      ring(P, color, q * (big ? 1.1 : 0.8), 400);
-      sparks(P, big ? 14 : 8, color, q * (big ? 0.7 : 0.45));
-      whiteout(big ? 0.4 : 0.18);
-      shake(big ? 8 : 3);
-    };
-    const slashArc = (P, deg, size, dur) => {
-      const e = mk('bt-arc', { left: P.x + 'px', top: P.y + 'px', width: size + 'px', height: size + 'px', transform: `translate(-50%,-50%) rotate(${deg}deg)` }, WPN.arc);
-      e.querySelectorAll('path').forEach(p => { p.style.strokeDasharray = '100'; run(p, [{ strokeDashoffset: 100 }, { strokeDashoffset: 0 }], { duration: dur, easing: 'cubic-bezier(.3,0,.2,1)' }); });
-      run(e, [{ opacity: 1 }, { opacity: 1, offset: 0.6 }, { opacity: 0 }], { duration: dur + 280 }).then(() => e.remove());
-    };
-    // weapon motion with motion-blur afterimages
-    const streak = (w, from, to, dur, easing) => {
-      [[16, 0.45], [32, 0.22]].forEach(([d, o]) => {
-        const g = w.cloneNode(true);
-        g.style.opacity = '0'; g.style.filter = 'blur(1px)';
-        st.insertBefore(g, w);
-        run(g, [{ transform: from, opacity: o }, { transform: to, opacity: o, offset: dur / (dur + 140) }, { transform: to, opacity: 0 }], { duration: dur + 140, delay: d, fill: 'both', easing: 'linear' }).then(() => g.remove());
-      });
-      return run(w, [{ transform: from, opacity: 1 }, { transform: to, opacity: 1 }], { duration: dur, easing: easing || 'cubic-bezier(.7,0,1,1)' });
-    };
-    // setup: spotlight, hide the real attacker, show the victim and an actor on the start square
-    const MX = (A.x + V.x) / 2, MY = (A.y + V.y) / 2, r0 = Math.max(q * 1.3, dist * 0.55);
-    const vig = mk('bt-vig', { background: `radial-gradient(circle at ${MX}px ${MY}px, rgba(8,6,14,0) ${r0}px, rgba(8,6,14,.55) ${r0 + q * 2.4}px)` });
-    run(vig, [{ opacity: 0 }, { opacity: 1 }], { duration: 240 });
-    this.hideSq = lm.to; this.hideFen = this.chess.fen();
-    const att = this.pcs.querySelector(`[data-sq="${lm.to}"]`);
-    if (att) { att.style.transition = 'none'; att.style.transform = ''; att.style.visibility = 'hidden'; }
-    this.fxUntil = performance.now() + 6000;
-    const vic = piece(cap.key, V);
-    const actor = piece(aKey, A);
-    let cur = A;
-    const moveActor = (P, dur, hop) => {
-      const kf = hop ? [{ transform: at(cur) }, { transform: at({ x: (cur.x + P.x) / 2, y: (cur.y + P.y) / 2 - q * 0.75 }, 'scale(1.14)'), offset: 0.5 }, { transform: at(P) }] : [{ transform: at(cur) }, { transform: at(P) }];
-      if (Math.hypot(P.x - cur.x, P.y - cur.y) > q * 0.9) {
-        [[22, 0.35], [44, 0.16]].forEach(([d, o]) => {
-          const g = actor.cloneNode(true);
-          g.style.opacity = '0';
-          st.insertBefore(g, actor);
-          run(g, kf.map((k, i) => Object.assign({}, k, { opacity: i === kf.length - 1 ? 0 : o })), { duration: dur, delay: d, fill: 'both', easing: hop ? 'ease-in-out' : 'cubic-bezier(.3,.7,.3,1)' }).then(() => g.remove());
-        });
-      }
-      cur = P;
-      return run(actor, kf, { duration: dur, easing: hop ? 'ease-in-out' : 'cubic-bezier(.3,.7,.3,1)' });
-    };
-    const windup = d => run(actor, [{ transform: at(cur) }, { transform: at(pt(cur, -q * 0.1), 'scale(1.07,.93)') }, { transform: at(cur) }], { duration: d || 320, easing: 'ease-in-out' });
-    const jolt = s => run(vic, [{ transform: 'none' }, { transform: `translate(${ux * q * s}px, ${uy * q * s}px) rotate(${side * 9}deg)`, filter: 'brightness(1.6) drop-shadow(0 0 5px #ff3b30)' }, { transform: 'none', filter: 'none' }], { duration: 180, easing: 'ease-out' });
-    const impale = () => run(vic, [{ transform: 'none', filter: 'none' }, { transform: 'translateX(-3px) rotate(-5deg)', filter: 'brightness(1.4) drop-shadow(0 0 6px #ff2a2a)' }, { transform: 'translateX(3px) rotate(5deg)', filter: 'brightness(1.4) drop-shadow(0 0 6px #ff2a2a)' }, { transform: 'translateX(-2px)', filter: 'brightness(1.2) drop-shadow(0 0 5px #ff2a2a)' }, { transform: 'none', filter: 'drop-shadow(0 0 4px #ff2a2a)' }], { duration: 340 });
-    const fall = () => run(vic, [{ transform: 'none', opacity: 1 }, { transform: `rotate(${side * 18}deg)`, opacity: 1, offset: 0.3 }, { transform: `translate(${ux * q * 0.3}px, ${q * 0.35}px) rotate(${side * 95}deg) scale(.85)`, opacity: 0 }], { duration: 560, easing: 'cubic-bezier(.5,0,.9,.6)' });
-    const knock = p => run(vic, [{ transform: 'none', opacity: 1 }, { transform: `translate(${ux * q * p * 0.5}px, ${uy * q * p * 0.5 - q * 0.4}px) rotate(${side * 200}deg)`, opacity: 1, offset: 0.4 }, { transform: `translate(${ux * q * p}px, ${uy * q * p + q * 0.2}px) rotate(${side * 430}deg) scale(.7)`, opacity: 0 }], { duration: 620, easing: 'cubic-bezier(.2,.6,.5,1)' });
-    const SH = [[0, 0], [50, 0], [100, 0], [100, 50], [100, 100], [50, 100], [0, 100], [0, 50]];
-    const shatter = power => {
-      vic.style.visibility = 'hidden';
-      for (let i = 0; i < 8; i++) {
-        const a = SH[i], b = SH[(i + 1) % 8], cx = 42 + Math.random() * 16, cy = 42 + Math.random() * 16;
-        const f = piece(cap.key, V);
-        f.style.clipPath = `polygon(${cx}% ${cy}%, ${a[0]}% ${a[1]}%, ${b[0]}% ${b[1]}%)`;
-        f.style.transformOrigin = `${(cx + a[0] + b[0]) / 3}% ${(cy + a[1] + b[1]) / 3}%`;
-        const mx = (a[0] + b[0]) / 2 - 50, my = (a[1] + b[1]) / 2 - 50, l = Math.hypot(mx, my) || 1, k = q * power * (0.6 + Math.random() * 0.6);
-        const dx = mx / l * k + ux * q * 0.3 * power, dy = my / l * k + uy * q * 0.3 * power, rot = (Math.random() - 0.5) * 760;
-        run(f, [{ transform: 'none', opacity: 1, filter: 'brightness(1.8)' }, { transform: `translate(${dx}px, ${dy - q * 0.35}px) rotate(${rot * 0.6}deg)`, opacity: 1, filter: 'brightness(1)', offset: 0.45 }, { transform: `translate(${dx * 1.3}px, ${dy + q * 0.7}px) rotate(${rot}deg) scale(.7)`, opacity: 0 }], { duration: 820 + Math.random() * 320, easing: 'cubic-bezier(.2,.6,.6,1)' }).then(() => f.remove());
-      }
-    };
-    const halves = async cutDeg => {
-      const h1 = piece(cap.key, V), h2 = piece(cap.key, V), diag = cutDeg !== 0;
-      h1.style.clipPath = diag ? 'polygon(0 0, 100% 0, 0 100%)' : 'polygon(0 0, 100% 0, 100% 52%, 0 48%)';
-      h2.style.clipPath = diag ? 'polygon(100% 0, 100% 100%, 0 100%)' : 'polygon(0 48%, 100% 52%, 100% 100%, 0 100%)';
-      vic.style.visibility = 'hidden';
-      const line = mk('bt-cut', { left: V.x + 'px', top: V.y + 'px', width: q * 1.3 + 'px', height: Math.max(2, q * 0.035) + 'px' });
-      run(line, [{ transform: `translate(-50%,-50%) rotate(${cutDeg}deg) scaleX(0)`, opacity: 1 }, { transform: `translate(-50%,-50%) rotate(${cutDeg}deg) scaleX(1)`, opacity: 1, offset: 0.3 }, { transform: `translate(-50%,-50%) rotate(${cutDeg}deg) scaleX(1.05)`, opacity: 0 }], { duration: 520 }).then(() => line.remove());
-      await wait(240);
-      const cr = cutDeg * Math.PI / 180, cx = Math.cos(cr), cy = Math.sin(cr), s = q * 0.17;
-      await Promise.all([
-        run(h1, [{ transform: 'none', opacity: 1 }, { transform: `translate(${cx * s}px, ${cy * s}px) rotate(4deg)`, opacity: 1, offset: 0.35 }, { transform: `translate(${cx * s * 2 - q * 0.1}px, ${cy * s * 2 + q * 0.6}px) rotate(-38deg)`, opacity: 0 }], { duration: 860, easing: 'cubic-bezier(.4,0,.8,.6)' }),
-        run(h2, [{ transform: 'none', opacity: 1 }, { transform: `translate(${-cx * s * 0.4}px, ${-cy * s * 0.4}px)`, opacity: 1, offset: 0.35 }, { transform: `translate(${-cx * s + q * 0.1}px, ${-cy * s + q * 0.45}px) rotate(18deg)`, opacity: 0 }], { duration: 860, easing: 'cubic-bezier(.4,0,.8,.6)' })
-      ]);
-    };
-    try {
-      if (kind === 'spear') {
-        const W = q * 1.45, w = weapon('spear', W, A), hit = dist - W + q * 0.2;
-        await run(w, [{ transform: wt(-q * 0.1, 'scale(.7)'), opacity: 0 }, { transform: wt(q * 0.05), opacity: 1 }], { duration: 180, easing: 'cubic-bezier(.3,1.4,.5,1)' });
-        windup(340);
-        await run(w, [{ transform: wt(q * 0.05), opacity: 1 }, { transform: wt(-q * 0.38), opacity: 1 }], { duration: 260, easing: 'ease-out' });
-        if (!ok()) return false;
-        sfx('swing');
-        run(actor, [{ transform: at(cur) }, { transform: at(pt(cur, q * 0.16)) }, { transform: at(cur) }], { duration: 380, easing: 'cubic-bezier(.5,0,.3,1)' });
-        await streak(w, wt(-q * 0.38), wt(hit), 95);
-        sfx('stab');
-        hitFx(V, '#ff3b30', false);
-        await impale();
-        await run(w, [{ transform: wt(hit), opacity: 1 }, { transform: wt(hit - q * 0.25), opacity: 1, offset: 0.4 }, { transform: wt(-q * 0.15), opacity: 0 }], { duration: 300, easing: 'ease-in' });
-        await fall();
-      } else if (kind === 'pistol') {
-        const W = q * 0.7, w = weapon('pistol', W, A), base = q * 0.14;
-        await run(w, [{ transform: wt(base, 'rotate(-300deg) scale(.4)'), opacity: 0 }, { transform: wt(base), opacity: 1 }], { duration: 300, easing: 'cubic-bezier(.3,1.3,.5,1)' });
-        await wait(160);
-        for (let k = 0; k < 2; k++) {
-          if (!ok()) return false;
-          sfx('shot');
-          const M = pt(A, base + W);
-          mflash(M, q * 0.6);
-          beam(M, V, 'linear-gradient(90deg, rgba(255,240,180,0), #fff8d0)', Math.max(2, q * 0.028), 140);
-          const C = pt(A, base + W * 0.55), cs = mk('bt-casing', { left: C.x + 'px', top: C.y + 'px', width: q * 0.09 + 'px', height: q * 0.045 + 'px' });
-          run(cs, [{ transform: 'translate(-50%,-50%) rotate(0deg)', opacity: 1 }, { transform: `translate(calc(-50% + ${-ux * q * 0.35}px), calc(-50% - ${q * 0.7}px)) rotate(400deg)`, opacity: 1, offset: 0.45 }, { transform: `translate(calc(-50% + ${-ux * q * 0.6}px), calc(-50% + ${q * 0.3}px)) rotate(900deg)`, opacity: 0 }], { duration: 650, easing: 'cubic-bezier(.3,.6,.6,1)' }).then(() => { cs.remove(); sfx('shell'); });
-          run(w, [{ transform: wt(base - q * 0.06, 'rotate(-30deg)'), opacity: 1 }, { transform: wt(base), opacity: 1 }], { duration: 200, easing: 'ease-out' });
-          hitFx(V, '#ffc94d', false);
-          jolt(0.1);
-          await wait(260);
-        }
-        fade(w);
-        await knock(1.1);
-      } else if (kind === 'sniper') {
-        const W = q * 2.4, w = weapon('sniper', W, A), base = -q * 0.35, M = pt(A, base + W);
-        await run(w, [{ transform: wt(base - q * 0.3), opacity: 0 }, { transform: wt(base), opacity: 1 }], { duration: 280, easing: 'ease-out' });
-        const las = beam(M, V, 'rgba(255,40,40,.75)', Math.max(1, q * 0.012), 0, true);
-        run(las, [{ opacity: 0 }, { opacity: 0.8 }, { opacity: 0.4 }, { opacity: 0.9 }, { opacity: 0.5 }, { opacity: 0.85 }], { duration: 900 });
-        const ret = mk('bt-scope', { left: V.x + 'px', top: V.y + 'px', width: q * 1.4 + 'px', height: q * 1.4 + 'px' }, WPN.scope);
-        await run(ret, [{ transform: 'translate(-50%,-50%) scale(2.6) rotate(-40deg)', opacity: 0 }, { transform: 'translate(-50%,-50%) scale(1) rotate(0deg)', opacity: 1 }], { duration: 560, easing: 'cubic-bezier(.2,.8,.2,1)' });
-        sfx('lock');
-        await run(ret, [{ transform: 'translate(-50%,-50%) scale(1)' }, { transform: 'translate(-50%,-50%) scale(.82)' }, { transform: 'translate(-50%,-50%) scale(.9)' }], { duration: 260 });
-        await wait(200);
-        if (!ok()) return false;
-        las.remove();
-        sfx('snipe');
-        mflash(M, q * 0.95);
-        smoke(M, 3, q * 0.35);
-        beam(M, V, 'linear-gradient(90deg, rgba(255,255,255,0), #ffffff)', Math.max(2, q * 0.03), 200);
-        run(w, [{ transform: wt(base), opacity: 1 }, { transform: wt(base - q * 0.3, 'rotate(-6deg)'), opacity: 1 }, { transform: wt(base), opacity: 1 }], { duration: 420, easing: 'ease-out' });
-        await wait(60);
-        ret.remove();
-        hitFx(V, '#ff5040', true);
-        shatter(1.1);
-        await wait(650);
-        fade(w);
-      } else if (kind === 'dagger') {
-        if (dist > q * 1.6) { sfx('whoosh'); await moveActor(pt(V, -q * 0.85), 260); }
-        if (!ok()) return false;
-        const O = cur, W = q * 0.85, w = weapon('dagger', W, O);
-        const hit = Math.hypot(V.x - O.x, V.y - O.y) - W + q * 0.18;
-        await run(w, [{ transform: wt(0, 'rotate(-200deg) scale(.5)'), opacity: 0 }, { transform: wt(0), opacity: 1 }], { duration: 220, easing: 'cubic-bezier(.3,1.3,.5,1)' });
-        for (let k = 0; k < 2; k++) {
-          if (!ok()) return false;
-          sfx('swing');
-          await streak(w, wt(0), wt(hit), 90);
-          sfx('stab');
-          hitFx(V, '#ff3b30', false);
-          jolt(0.06);
-          await run(w, [{ transform: wt(hit), opacity: 1 }, { transform: wt(q * 0.02), opacity: 1 }], { duration: 160, easing: 'ease-out' });
-        }
-        await impale();
-        fade(w);
-        await fall();
-      } else if (kind === 'slash') {
-        const N = pt(V, -q * 0.85);
-        sfx('whoosh');
-        await moveActor(N, 440, true);
-        if (!ok()) return false;
-        const w = weapon('saber', q * 1.3, N), r = `translateX(${q * 0.1}px)`;
-        await run(w, [{ transform: `rotate(${ang - 110}deg) ${r} scale(.6)`, opacity: 0 }, { transform: `rotate(${ang - 105}deg) ${r}`, opacity: 1 }], { duration: 180, easing: 'ease-out' });
-        await wait(80);
-        sfx('slash');
-        slashArc(V, -45, q * 2, 200);
-        await streak(w, `rotate(${ang - 105}deg) ${r}`, `rotate(${ang + 95}deg) ${r}`, 190, 'cubic-bezier(.6,0,.2,1)');
-        hitFx(V, '#ffffff', false);
-        fade(w, 260);
-        await halves(-45);
-      } else if (kind === 'cannon') {
-        const W = q * 1.6, w = weapon('cannon', W, A), base = Math.min(-q * 0.5, dist - q * 0.45 - W);
-        await run(w, [{ transform: wt(base - q * 0.5), opacity: 0 }, { transform: wt(base), opacity: 1 }], { duration: 340, easing: 'cubic-bezier(.2,1.3,.5,1)' });
-        const F = pt(A, base + W * 12 / 180);
-        sfx('fuse');
-        for (let k = 0; k < 3; k++) { sparks(F, 4, '#ffcf4a', q * 0.2); await wait(110); }
-        if (!ok()) return false;
-        sfx('boom');
-        const M = pt(A, base + W);
-        mflash(M, q * 1.2);
-        smoke(M, 7, q * 0.55);
-        shake(5); whiteout(0.2);
-        run(w, [{ transform: wt(base), opacity: 1 }, { transform: wt(base - q * 0.35), opacity: 1 }, { transform: wt(base), opacity: 1 }], { duration: 460, easing: 'ease-out' });
-        const ball = mk('bt-ball', { left: M.x + 'px', top: M.y + 'px', width: q * 0.28 + 'px', height: q * 0.28 + 'px' });
-        const d = Math.hypot(V.x - M.x, V.y - M.y), lift = Math.min(q * 0.5, d * 0.1);
-        const puff = setInterval(() => {
-          if (!ball.isConnected) return;
-          const r = ball.getBoundingClientRect(), br = this.el.getBoundingClientRect();
-          smoke({ x: r.left - br.left + r.width / 2, y: r.top - br.top + r.height / 2 }, 1, q * 0.25);
-        }, 45);
-        await run(ball, [{ transform: 'translate(-50%,-50%)' }, { transform: `translate(calc(-50% + ${(V.x - M.x) / 2}px), calc(-50% + ${(V.y - M.y) / 2 - lift}px))`, offset: 0.5 }, { transform: `translate(calc(-50% + ${V.x - M.x}px), calc(-50% + ${V.y - M.y}px))` }], { duration: Math.max(220, d / q * 75), easing: 'linear' });
-        clearInterval(puff);
-        ball.remove();
-        if (!ok()) return false;
-        sfx('boom');
-        glow(V, q * 0.9, 'radial-gradient(circle, #fff 0%, #fff6c2 40%, rgba(255,220,120,0) 70%)', 160, 0.3, 1.4);
-        glow(V, q * 2, 'radial-gradient(circle, #fff 0%, #ffd34d 22%, #ff7a1a 48%, rgba(120,40,0,0) 72%)', 560, 0.2, 1.5);
-        ring(V, '#ffb02e', q * 1.6, 520);
-        smoke(V, 10, q * 0.65);
-        sparks(V, 16, '#ffb02e', q * 0.9);
-        whiteout(0.45); shake(10, 420);
-        shatter(1.5);
-        await wait(700);
-        fade(w);
-      } else if (kind === 'staff') {
-        const W = q * 1.5, w = weapon('staff', W, A), base = Math.min(-q * 0.25, dist - q * 0.55 - W);
-        const rc = mk('bt-runes', { left: A.x + 'px', top: A.y + 'px', width: q * 1.6 + 'px', height: q * 1.6 + 'px' }, WPN.runes);
-        st.insertBefore(rc, actor);
-        run(rc, [{ transform: 'translate(-50%,-50%) scale(.3) rotate(0deg)', opacity: 0 }, { transform: 'translate(-50%,-50%) scale(1) rotate(120deg)', opacity: 1, offset: 0.3 }, { transform: 'translate(-50%,-50%) scale(1.05) rotate(360deg)', opacity: 0.9 }], { duration: 1300, easing: 'linear' });
-        await run(w, [{ transform: wt(base, 'scale(.5)'), opacity: 0 }, { transform: wt(base), opacity: 1 }], { duration: 260, easing: 'cubic-bezier(.3,1.3,.5,1)' });
-        const O = pt(A, base + W * 222 / 240);
-        sfx('charge');
-        converge(O, 14, '#c9a2ff', q * 0.9);
-        glow(O, q * 0.6, MAGIC, 500, 0.3, 1.2);
-        await wait(300);
-        glow(O, q * 0.9, MAGIC, 420, 0.3, 1.3);
-        await wait(260);
-        if (!ok()) return false;
-        sfx('zap');
-        const bolt = mk('bt-bolt', { left: O.x + 'px', top: O.y + 'px', width: q * 0.38 + 'px', height: q * 0.38 + 'px' });
-        const trail = setInterval(() => {
-          if (!bolt.isConnected) return;
-          const r = bolt.getBoundingClientRect(), br = this.el.getBoundingClientRect();
-          sparks({ x: r.left - br.left + r.width / 2, y: r.top - br.top + r.height / 2 }, 3, Math.random() < 0.5 ? '#8fe8ff' : '#c9a2ff', q * 0.22);
-        }, 30);
-        run(w, [{ transform: wt(base), opacity: 1 }, { transform: wt(base - q * 0.12), opacity: 1 }, { transform: wt(base), opacity: 1 }], { duration: 300 });
-        await run(bolt, [{ transform: 'translate(-50%,-50%) scale(.6)' }, { transform: `translate(calc(-50% + ${V.x - O.x}px), calc(-50% + ${V.y - O.y}px)) scale(1.15)` }], { duration: Math.max(240, dist / q * 85), easing: 'cubic-bezier(.4,0,.6,1)' });
-        clearInterval(trail);
-        bolt.remove();
-        run(rc, [{ opacity: 0.9 }, { opacity: 0 }], { duration: 300 });
-        if (!ok()) return false;
-        sfx('zap');
-        const rv = mk('bt-runes', { left: V.x + 'px', top: V.y + 'px', width: q * 1.3 + 'px', height: q * 1.3 + 'px' }, WPN.runes);
-        st.insertBefore(rv, vic);
-        run(rv, [{ transform: 'translate(-50%,-50%) scale(.2) rotate(0deg)', opacity: 1 }, { transform: 'translate(-50%,-50%) scale(1.2) rotate(-240deg)', opacity: 0 }], { duration: 700, easing: 'ease-out' }).then(() => rv.remove());
-        glow(V, q * 1.5, MAGIC, 560, 0.2, 1.6);
-        ring(V, '#c9a2ff', q * 1.3, 500);
-        whiteout(0.25); shake(4);
-        sparks(V, 14, '#c9a2ff', q * 0.7);
-        for (let i = 0; i < 22; i++) {
-          const e = mk('bt-spark', { left: V.x + (Math.random() - 0.5) * q * 0.6 + 'px', top: V.y + (Math.random() - 0.4) * q * 0.7 + 'px', background: i % 2 ? '#8fe8ff' : '#e0ccff', boxShadow: '0 0 6px #b48cff' });
-          run(e, [{ transform: 'translate(-50%,-50%) scale(1.2)', opacity: 0 }, { transform: 'translate(-50%,-50%) scale(1.2)', opacity: 1, offset: 0.15 }, { transform: `translate(calc(-50% + ${(Math.random() - 0.5) * q * 0.5}px), calc(-50% - ${q * (0.6 + Math.random() * 0.9)}px)) scale(.2)`, opacity: 0 }], { duration: 800 + Math.random() * 600, delay: 120 + Math.random() * 300, fill: 'both', easing: 'ease-out' }).then(() => e.remove());
-        }
-        fade(w);
-        await run(vic, [{ transform: 'none', filter: 'none', opacity: 1 }, { transform: 'scale(1.12)', filter: 'brightness(2.2) drop-shadow(0 0 10px #b48cff)', opacity: 1, offset: 0.3 }, { transform: 'scale(.2) translateY(-30%)', filter: 'brightness(3) drop-shadow(0 0 14px #8fe8ff)', opacity: 0 }], { duration: 720, easing: 'ease-in' });
-      } else { // the king's sword
-        const w = weapon('sword', q * 1.4, A), r = `translateX(${q * 0.12}px)`;
-        await run(w, [{ transform: `rotate(${ang - 140}deg) ${r} scale(.6)`, opacity: 0 }, { transform: `rotate(${ang - 130}deg) ${r}`, opacity: 1 }], { duration: 220, easing: 'ease-out' });
-        run(actor, [{ transform: at(cur) }, { transform: at(cur, 'translateY(-8%) scale(1.06)') }], { duration: 260, easing: 'ease-out' });
-        await wait(200);
-        if (!ok()) return false;
-        sfx('slash');
-        slashArc(V, 0, q * 2.1, 210);
-        run(actor, [{ transform: at(cur, 'translateY(-8%) scale(1.06)') }, { transform: at(pt(cur, q * 0.1)) }, { transform: at(cur) }], { duration: 320, easing: 'cubic-bezier(.5,0,.3,1)' });
-        await streak(w, `rotate(${ang - 130}deg) ${r}`, `rotate(${ang + 70}deg) ${r}`, 200, 'cubic-bezier(.6,0,.2,1)');
-        hitFx(V, '#ffe9a8', false);
-        fade(w, 260);
-        await halves(0);
-      }
-      if (!ok()) return false;
-      run(vig, [{ opacity: 1 }, { opacity: 0 }], { duration: 260 });
-      await moveActor(Tq, 230);
-      return ok();
-    } finally {
-      st.remove();
-      if (this.bid === bid) {
-        this.hideSq = null; this.fxUntil = 0;
-        if (this.fxToken === token) { const a2 = this.pcs.querySelector(`[data-sq="${lm.to}"]`); if (a2) a2.style.visibility = ''; }
-      }
-    }
-  }
   renderLabels(labels) {
     if (!this.lbl) { this.lbl = document.createElement('div'); this.lbl.className = 'lbls'; this.el.appendChild(this.lbl); }
     let h = '';
@@ -2159,17 +1797,13 @@ class Board {
   }
   // Capture effects: the victim waits for the attacker, then bursts and flies to the capturer's tray
   captureFx(prev, next, slid) {
-    if (reduceMotion && !S.battle) return;
+    if (reduceMotion) return;
     const to = this.lastMove.to, mover = next[to] && next[to][0];
     if (!mover) return;
     const caps = [];
     for (const sq in prev) { const k = prev[sq]; if (k[0] !== mover && (!next[sq] || next[sq][0] === mover)) caps.push({ sq, key: k }); }
     if (caps.length !== 1) return;
     const cap = caps[0], token = this.fxToken;
-    if (S.battle && !(this.opts.noBattle && this.opts.noBattle())) {
-      this.battle(cap, mover, prev).then(done => { if (done && this.fxToken === token) this.burst(cap, mover); }).catch(() => {});
-      return;
-    }
     let vic = null;
     if (slid) {
       const { x, y } = this.xy(cap.sq);
@@ -2192,7 +1826,7 @@ class Board {
     const ring = add('fx-ring');
     ring.animate([{ transform: 'translate(-50%,-50%) scale(.3)', opacity: 1 }, { transform: 'translate(-50%,-50%) scale(1.7)', opacity: 0 }],
       { duration: 480, easing: 'cubic-bezier(.2,.7,.3,1)' }).onfinish = () => ring.remove();
-    const n = S.battle ? 0 : 8 + val * 2;
+    const n = 8 + val * 2;
     for (let i = 0; i < n; i++) {
       const s = add('fx-shard ' + cap.key[0]);
       const ang = (i / n) * Math.PI * 2 + Math.random() * 0.6, dist = size * (0.45 + Math.random() * 0.6);
@@ -2519,7 +2153,7 @@ const moveSound = (m, c) => {
 /* ============================================================
    App state
    ============================================================ */
-const S = { tab: 'play', sound: store.get('s64.sound', true), battle: store.get('s64.battle', false), fin: store.get('s64.fin', 'random') };
+const S = { tab: 'play', sound: store.get('s64.sound', true), fin: store.get('s64.fin', 'random') };
 const engine = new Engine();
 let board;
 
@@ -5313,8 +4947,8 @@ function confirmResign() {
 
 /* ============================================================
    REPLAY: watch a reviewed game like a ChessGameShorts edit
-   Straight board, no tilt; White moves zoom in gently, Black moves zoom back out. Moves stay calm on the board.
-   The drama comes from set pieces: JJK-style manga cutaways on big moves and a gun kill scene on checkmate.
+   Straight board, no tilt; White moves zoom in gently, Black moves zoom back out. Pieces glide with a soft glow;
+   a capturing piece lifts up, hovers over its target for a moment, then drops onto it.
    ============================================================ */
 const RP = { el: null, token: 0, paused: false, speed: 1, anims: new Set(), camT: 'translate(0px,0px) scale(1)' };
 const RP_STOP = {};
@@ -5361,7 +4995,7 @@ function startReplay() {
   const el = document.createElement('div');
   el.className = 'rp';
   el.innerHTML = `<div class="rp-frame"><div class="rp-scene">
-      <div class="rp-cam"><div class="rp-punch"><div class="rp-board"><div class="rp-hl"></div><div class="rp-wm">ChessGameShorts</div><div class="rp-pcs"></div></div><div class="rp-tone"></div><div class="rp-fx"></div></div></div>
+      <div class="rp-cam"><div class="rp-punch"><div class="rp-board"><div class="rp-hl"></div><div class="rp-pcs"></div></div><div class="rp-fx"></div></div></div>
       <div class="rp-layer rp-top"></div>
     </div>
     <div class="rp-bar"><button type="button" data-rp="restart" title="Restart">⟲</button><button type="button" data-rp="pause" title="Pause (space)">❚❚</button><button type="button" data-rp="speed" title="Speed">1×</button><span class="rp-prog"></span><button type="button" data-rp="close" title="Close (Esc)">✕</button></div></div>`;
@@ -5394,10 +5028,9 @@ async function rpStart() {
 }
 async function rpPlay(tok) {
   const g = R.game, el = RP.el, L = rpLayout();
-  const scene = el.querySelector('.rp-scene'), cam = el.querySelector('.rp-cam'), punch = el.querySelector('.rp-punch'), brd = el.querySelector('.rp-board');
-  const pcs = el.querySelector('.rp-pcs'), fx = el.querySelector('.rp-fx'), hl = el.querySelector('.rp-hl'), tone = el.querySelector('.rp-tone');
+  const cam = el.querySelector('.rp-cam'), pcs = el.querySelector('.rp-pcs'), fx = el.querySelector('.rp-fx'), hl = el.querySelector('.rp-hl');
   const top = el.querySelector('.rp-top'), prog = el.querySelector('.rp-prog');
-  pcs.innerHTML = ''; fx.innerHTML = ''; hl.innerHTML = ''; top.innerHTML = ''; scene.style.filter = ''; brd.style.filter = ''; tone.style.opacity = '0';
+  pcs.innerHTML = ''; fx.innerHTML = ''; hl.innerHTML = ''; top.innerHTML = '';
   const orient = board.orientation === 'b' ? 'b' : 'w', q = L.B / 8;
   const xy = sq => { const f = sq.charCodeAt(0) - 97, r = +sq[1] - 1; return orient === 'w' ? { x: f, y: 7 - r } : { x: 7 - f, y: r }; };
   const ctr = sq => { const p = xy(sq); return { x: (p.x + 0.5) * q, y: (p.y + 0.5) * q }; };
@@ -5405,7 +5038,7 @@ async function rpPlay(tok) {
   const place = (img, sq) => { const p = xy(sq); img.style.left = p.x * 12.5 + '%'; img.style.top = p.y * 12.5 + '%'; };
   const els = {};
   { const m = fenToMap(g.positions[0].fen); for (const sq in m) { const i = document.createElement('img'); i.src = PIECE_URL[keyOf(m[sq])]; i.alt = ''; place(i, sq); pcs.appendChild(i); els[sq] = i; } }
-  // camera: never tilted, gentle zoom
+  // camera: straight board, gentle zoom
   const camTo = (sq, z, dur) => {
     let tx = 0, ty = 0;
     if (sq && z > 1) {
@@ -5418,165 +5051,68 @@ async function rpPlay(tok) {
     return rpRun(cam, [{ transform: from }, { transform: t }], { duration: dur, easing: 'cubic-bezier(.45,0,.25,1)' });
   };
   cam.style.transform = RP.camT = 'translate(0px,0px) scale(1)';
-  // ---- drawing helpers
   const mk = (css, tag, parent) => { const e = document.createElement(tag || 'div'); Object.assign(e.style, css || {}); (parent || fx).appendChild(e); return e; };
-  const box = (P, w, h) => ({ left: P.x - w / 2 + 'px', top: P.y - h / 2 + 'px', width: w + 'px', height: h + 'px' });
-  const gone = (e, kf, o) => rpRun(e, kf, o).then(() => e.remove());
-  const NS = 'http://www.w3.org/2000/svg';
-  const svgLayer = (parent, w, h) => { const s = document.createElementNS(NS, 'svg'); s.setAttribute('viewBox', `0 0 ${w} ${h}`); s.setAttribute('width', '100%'); s.setAttribute('height', '100%'); s.style.cssText = 'position:absolute;inset:0;overflow:visible;pointer-events:none'; parent.appendChild(s); return s; };
-  const shape = (svg, tag, attrs) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); svg.appendChild(e); return e; };
-  const INK = Math.max(2.5, q * 0.075);
-  // flat fill + light core + thick black ink border (the JJK look)
-  const inkPoly = (svg, pts, fill, core) => {
-    const d = pts.map(p => p.join(',')).join(' ');
-    shape(svg, 'polygon', { points: d, fill, stroke: '#000', 'stroke-width': INK, 'stroke-linejoin': 'round' });
-    if (core) { const cx = pts.reduce((a, p) => a + p[0], 0) / pts.length, cy = pts.reduce((a, p) => a + p[1], 0) / pts.length; shape(svg, 'polygon', { points: pts.map(p => [cx + (p[0] - cx) * 0.45, cy + (p[1] - cy) * 0.45].join(',')).join(' '), fill: core }); }
-  };
-  const inkOrb = (P, r, fill, core) => { const s = svgLayer(fx, L.B, L.B); shape(s, 'circle', { cx: P.x, cy: P.y, r, fill, stroke: '#000', 'stroke-width': INK }); shape(s, 'circle', { cx: P.x - r * 0.12, cy: P.y - r * 0.12, r: r * 0.45, fill: core }); s.style.transformOrigin = `${P.x}px ${P.y}px`; return s; };
-  const slash = (P, ang, len, wid) => { const c = Math.cos(ang), s_ = Math.sin(ang), nx = -s_, ny = c; return [[P.x - c * len / 2, P.y - s_ * len / 2], [P.x + nx * wid / 2, P.y + ny * wid / 2], [P.x + c * len / 2, P.y + s_ * len / 2], [P.x - nx * wid / 2, P.y - ny * wid / 2]]; };
-  const mist = (P, n, spread) => { for (let i = 0; i < n; i++) { const sz = q * (0.5 + Math.random() * 0.9), e = mk(Object.assign(box({ x: P.x + (Math.random() - 0.5) * spread, y: P.y + (Math.random() - 0.5) * spread }, sz, sz), { borderRadius: '50%', background: 'radial-gradient(circle, rgba(220,20,40,.75), rgba(220,20,40,0) 70%)', filter: 'blur(3px)' })); gone(e, [{ transform: 'scale(.4)', opacity: 0.9 }, { transform: 'scale(1.6)', opacity: 0 }], { duration: 900 + Math.random() * 500, easing: 'ease-out' }); } };
-  // manga page: greyscale + halftone + cross-hatch on the board, coloured ink stays on top
-  const manga = on => { brd.style.filter = on ? 'grayscale(1) contrast(1.7) brightness(1.06)' : ''; rpRun(tone, [{ opacity: on ? 0 : 1 }, { opacity: on ? 1 : 0 }], { duration: on ? 80 : 350 }); };
-  const impact = n => { for (let i = 0; i < n; i++) setTimeout(() => { if (tok !== RP.token) return; scene.style.filter = 'invert(1)'; setTimeout(() => { if (tok === RP.token) scene.style.filter = ''; }, 45 / RP.speed); }, (i * 110) / RP.speed); };
-  const snapzoom = P => { punch.style.transformOrigin = `${P.x}px ${P.y}px`; rpRun(punch, [{ transform: 'scale(1)' }, { transform: 'scale(1.09)', offset: 0.18 }, { transform: 'scale(1)' }], { duration: 420, easing: 'ease-out', fill: 'none' }); };
-  const inkSpeedlines = P => { const s = svgLayer(fx, L.B, L.B); for (let i = 0; i < 34; i++) { const a = (i / 34) * Math.PI * 2 + Math.random() * 0.1, r0 = q * (2.1 + Math.random() * 0.9), r1 = q * (6 + Math.random() * 2); const w = q * (0.006 + Math.random() * 0.014); shape(s, 'polygon', { points: `${P.x + Math.cos(a) * r1},${P.y + Math.sin(a) * r1} ${P.x + Math.cos(a + w / r0 * 3) * r0},${P.y + Math.sin(a + w / r0 * 3) * r0} ${P.x + Math.cos(a - w / r0 * 3) * r0},${P.y + Math.sin(a - w / r0 * 3) * r0}`, fill: '#000' }); } gone(s, [{ opacity: 0.75 }, { opacity: 0.75, offset: 0.6 }, { opacity: 0 }], { duration: 1100 }); };
-  // ---- the JJK-style set pieces
-  const setPiece = async (kind, P, from) => {
-    manga(true); inkSpeedlines(P); impact(2); snapzoom(P); sfx('boom');
-    if (kind === 'cleave') { // red X slash
-      for (const [i, ang] of [[0, Math.PI / 4], [1, -Math.PI / 4]]) {
-        const s = svgLayer(fx, L.B, L.B); inkPoly(s, slash(P, ang, q * 3.2, q * 0.34), '#e0182e', '#ffd0d6');
-        s.style.transformOrigin = `${P.x}px ${P.y}px`;
-        rpRun(s, [{ transform: `rotate(${ang}rad) scaleX(0) rotate(${-ang}rad)`, opacity: 1 }, { transform: 'none', opacity: 1, offset: 0.25 }, { transform: 'none', opacity: 1, offset: 0.75 }, { transform: 'none', opacity: 0 }], { delay: i * 110, duration: 1200, easing: 'cubic-bezier(.2,.9,.3,1)' }).then(() => s.remove());
-        if (i === 0) sfx('slash');
-      }
-      mist(P, 7, q * 1.4);
-      await rpWait(1250, tok);
-    } else if (kind === 'dismantle') { // inked white slashes + red mist
-      sfx('slash');
-      for (let i = 0; i < 6; i++) {
-        const ang = Math.random() * Math.PI, off = { x: P.x + (Math.random() - 0.5) * q * 1.4, y: P.y + (Math.random() - 0.5) * q * 1.4 };
-        const s = svgLayer(fx, L.B, L.B); inkPoly(s, slash(off, ang, q * (2.2 + Math.random()), q * 0.2), '#fff', null);
-        rpRun(s, [{ opacity: 0 }, { opacity: 1, offset: 0.08 }, { opacity: 1, offset: 0.7 }, { opacity: 0 }], { delay: i * 70, duration: 1100 }).then(() => s.remove());
-      }
-      mist(P, 6, q * 1.6);
-      await rpWait(1250, tok);
-    } else if (kind === 'blue') { // a blue orb that pulls the debris in, then collapses
-      const orb = inkOrb(P, q * 0.62, '#36b6ff', '#e6f7ff');
-      rpRun(orb, [{ transform: 'scale(0)' }, { transform: 'scale(1.15)', offset: 0.5 }, { transform: 'scale(1)' }], { duration: 380, easing: 'ease-out' });
-      const s = svgLayer(fx, L.B, L.B);
-      for (let i = 0; i < 16; i++) { const a = Math.random() * Math.PI * 2, d = q * (2.2 + Math.random() * 1.4), x = P.x + Math.cos(a) * d, y = P.y + Math.sin(a) * d, z = q * (0.08 + Math.random() * 0.1); const t = shape(s, 'polygon', { points: `${x},${y - z} ${x + z},${y + z} ${x - z},${y + z}`, fill: '#000' }); t.animate([{ transform: 'translate(0,0) rotate(0)', opacity: 1 }, { transform: `translate(${P.x - x}px,${P.y - y}px) rotate(${Math.random() * 720}deg)`, opacity: 0.2 }], { duration: 900 + Math.random() * 300, easing: 'cubic-bezier(.55,0,.9,.5)', fill: 'forwards' }); }
-      await rpWait(1000, tok);
-      impact(1); s.remove();
-      await rpRun(orb, [{ transform: 'scale(1)' }, { transform: 'scale(1.4)', offset: 0.3 }, { transform: 'scale(0)' }], { duration: 300, easing: 'ease-in' });
-      orb.remove();
-    } else { // Hollow Purple: blue + red meet, turn purple and blast
-      const dx = from ? Math.sign(P.x - from.x) || 1 : 1, perp = { x: -(P.y - (from ? from.y : P.y + 1)), y: P.x - (from ? from.x : P.x) }, pl = Math.hypot(perp.x, perp.y) || 1;
-      const off = { x: perp.x / pl * q * 1.5, y: perp.y / pl * q * 1.5 };
-      const B = { x: P.x + off.x, y: P.y + off.y }, Rr = { x: P.x - off.x, y: P.y - off.y };
-      const bo = inkOrb(B, q * 0.42, '#36b6ff', '#e6f7ff'), ro = inkOrb(Rr, q * 0.42, '#ff2a3c', '#ffe0e3');
-      const pop = [{ transform: 'scale(0)' }, { transform: 'scale(1)' }];
-      rpRun(bo, pop, { duration: 260 }); await rpRun(ro, pop, { duration: 260 });
-      await rpWait(260, tok);
-      rpRun(bo, [{ transform: 'translate(0,0)' }, { transform: `translate(${-off.x}px,${-off.y}px)` }], { duration: 380, easing: 'cubic-bezier(.6,0,.4,1)' });
-      await rpRun(ro, [{ transform: 'translate(0,0)' }, { transform: `translate(${off.x}px,${off.y}px)` }], { duration: 380, easing: 'cubic-bezier(.6,0,.4,1)' });
-      bo.remove(); ro.remove();
-      impact(2); sfx('zap');
-      const po = inkOrb(P, q * 0.8, '#9b4dff', '#f1e4ff');
-      rpRun(po, [{ transform: 'scale(.3)' }, { transform: 'scale(1.2)', offset: 0.6 }, { transform: 'scale(1)' }], { duration: 360, easing: 'ease-out' });
-      await rpWait(380, tok);
-      const ring = svgLayer(fx, L.B, L.B); shape(ring, 'circle', { cx: P.x, cy: P.y, r: q * 0.9, fill: 'none', stroke: '#000', 'stroke-width': INK * 3.2 }); shape(ring, 'circle', { cx: P.x, cy: P.y, r: q * 0.9, fill: 'none', stroke: '#b06bff', 'stroke-width': INK * 1.6 });
-      ring.style.transformOrigin = `${P.x}px ${P.y}px`;
-      sfx('boom'); impact(1);
-      gone(ring, [{ transform: 'scale(.5)', opacity: 1 }, { transform: 'scale(4)', opacity: 0 }], { duration: 700, easing: 'cubic-bezier(.1,.7,.3,1)' });
-      await rpRun(po, [{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(2.6)', opacity: 0 }], { duration: 600, easing: 'ease-out' });
-      po.remove();
+  const smooth = t => { t = Math.max(0, Math.min(1, t)); return t * t * t * (t * (t * 6 - 15) + 10); };
+  const glowF = (k, col) => k > 0.01 ? `drop-shadow(0 ${q * 0.08 * k}px ${q * 0.1 * k}px rgba(0,0,0,${0.35 * k})) drop-shadow(0 0 ${q * 0.22 * k}px ${col})` : 'none';
+  // a soft glow that blooms on the landing square
+  const bloom = (P, col, size) => { const e = mk({ left: P.x - size / 2 + 'px', top: P.y - size / 2 + 'px', width: size + 'px', height: size + 'px', borderRadius: '50%', background: `radial-gradient(circle, ${col} 0%, rgba(0,0,0,0) 65%)`, mixBlendMode: 'screen', zIndex: 1 }); rpRun(e, [{ transform: 'scale(.5)', opacity: 0.95 }, { transform: 'scale(1.2)', opacity: 0 }], { duration: 900, easing: 'ease-out' }).then(() => e.remove()); };
+  // ordinary moves: one smooth glide with a gentle lift
+  const glide = (img, fr, to) => {
+    const a = xy(fr), b = xy(to), dx = (a.x - b.x) * q, dy = (a.y - b.y) * q, dist = Math.hypot(dx, dy) / q, kf = [];
+    for (let i = 0; i <= 24; i++) {
+      const u = i / 24, s = smooth(u), arc = Math.sin(Math.PI * s);
+      kf.push({ offset: u, transform: `translate(${dx * (1 - s)}px,${dy * (1 - s) - q * Math.min(0.16, 0.05 + 0.03 * dist) * arc}px) scale(${1 + 0.07 * arc})`, filter: glowF(arc, 'rgba(255,214,110,.95)') });
     }
-    manga(false);
+    return rpRun(img, kf, { duration: 520 + Math.min(220, dist * 40), easing: 'linear', fill: 'none' });
   };
-  // ---- the checkmate kill scene: white void, gun slides in from the left, bullet through the king, he splits in half
-  const killScene = async (loser) => {
-    const W = L.W, H = L.H;
-    const v = mk({ inset: 0, background: 'radial-gradient(circle at 60% 48%, #ffffff, #e9e9e6 70%)', zIndex: 10, overflow: 'hidden' }, 'div', top);
-    v.className = 'rp-kill';
-    await rpRun(v, [{ opacity: 0 }, { opacity: 1 }], { duration: 260 });
-    const ks = W * 0.46, K = { x: W * 0.64, y: H * 0.47 };
-    const kImg = src => mk(Object.assign(box(K, ks, ks), { zIndex: 2 }), 'img', v);
-    const king = kImg(); king.src = PIECE_URL[loser + 'K'];
-    rpRun(king, [{ transform: 'scale(.92)' }, { transform: 'scale(1)' }], { duration: 500, easing: 'ease-out' });
-    const gw = W * 0.46, gh = gw * WPN.pistol.vb[1] / WPN.pistol.vb[0], G = { x: W * 0.2, y: K.y - ks * 0.02 };
-    const gun = mk(Object.assign(box(G, gw, gh), { zIndex: 3, filter: 'drop-shadow(0 8px 14px rgba(0,0,0,.35))' }), 'div', v);
-    gun.innerHTML = WPN.pistol.svg;
-    gun.firstElementChild.setAttribute('width', '100%'); gun.firstElementChild.setAttribute('height', '100%');
-    sfx('lock');
-    await rpRun(gun, [{ transform: `translateX(${-W * 0.7}px)` }, { transform: 'translateX(0)' }], { duration: 520, easing: 'cubic-bezier(.2,.8,.3,1)' });
-    await rpWait(520, tok);
-    // fire
-    const M = { x: G.x + gw / 2, y: G.y - gh / 2 + gh * 0.47 };
-    sfx('shot'); sfx('boom'); impact(2);
-    const fl = mk(Object.assign(box(M, W * 0.22, W * 0.22), { borderRadius: '50%', background: 'radial-gradient(circle, #fff 0%, #ffe066 30%, rgba(255,120,30,.85) 52%, rgba(255,60,0,0) 70%)', zIndex: 4 }), 'div', v);
-    gone(fl, [{ transform: 'scale(.3)', opacity: 1 }, { transform: 'scale(1.3)', opacity: 0 }], { duration: 220 });
-    rpRun(gun, [{ transform: 'translate(0,0) rotate(0)' }, { transform: `translate(${-W * 0.04}px,${-W * 0.03}px) rotate(-14deg)`, offset: 0.25 }, { transform: 'translate(0,0) rotate(0)' }], { duration: 480, easing: 'ease-out' });
-    const tr = mk({ left: M.x + 'px', top: M.y - 3 + 'px', width: W - M.x + 'px', height: '6px', background: 'linear-gradient(90deg, #fff6c8, #222 60%, rgba(0,0,0,0))', transformOrigin: '0 50%', zIndex: 4 }, 'div', v);
-    gone(tr, [{ transform: 'scaleX(0)', opacity: 1 }, { transform: 'scaleX(1)', opacity: 1, offset: 0.4 }, { transform: 'scaleX(1)', opacity: 0 }], { duration: 300 });
-    await rpWait(70, tok);
-    // the king splits in half along the bullet
-    const cutY = (M.y - (K.y - ks / 2)) / ks * 100;
-    const t1 = kImg(), t2 = kImg(); t1.src = t2.src = king.src;
-    t1.style.clipPath = `inset(0 0 ${100 - cutY}% 0)`; t2.style.clipPath = `inset(${cutY}% 0 0 0)`;
-    king.remove();
-    rpRun(t1, [{ transform: 'translate(0,0) rotate(0)' }, { transform: `translate(${W * 0.06}px,${-H * 0.03}px) rotate(14deg)`, offset: 0.25 }, { transform: `translate(${W * 0.16}px,${H * 0.2}px) rotate(48deg)`, opacity: 0.95 }], { duration: 1300, easing: 'cubic-bezier(.3,.4,.5,1)' });
-    rpRun(t2, [{ transform: 'translate(0,0) rotate(0)' }, { transform: `translate(${W * 0.02}px,${H * 0.015}px) rotate(-4deg)`, offset: 0.25 }, { transform: `translate(${W * 0.05}px,${H * 0.12}px) rotate(-16deg)` }], { duration: 1300, easing: 'cubic-bezier(.3,.4,.5,1)' });
-    // red splatter + grey ink, thrown the way the bullet went
-    const C = { x: K.x, y: M.y };
-    for (let i = 0; i < 46; i++) {
-      const grey = i % 4 === 3, sz = W * (0.01 + Math.random() * 0.035), a = (Math.random() - 0.5) * 2.2, d = W * (0.12 + Math.random() * 0.45);
-      const e = mk(Object.assign(box(C, sz, sz * (0.7 + Math.random() * 0.6)), { borderRadius: '50% 45% 55% 50%', background: grey ? '#6f6f73' : 'radial-gradient(circle at 35% 30%, #ff4a4a, #b10000 60%, #5c0000)', zIndex: grey ? 1 : 5 }), 'div', v);
-      rpRun(e, [{ transform: 'translate(0,0) scale(.3)' }, { transform: `translate(${Math.cos(a) * d}px,${Math.sin(a) * d + H * 0.06 * Math.random()}px) scale(1)` }], { duration: 380 + Math.random() * 260, easing: 'cubic-bezier(.1,.8,.3,1)' });
+  // captures: the piece lifts up, travels over its target, hovers above it for a moment, then drops onto it
+  const pounce = (img, fr, to, victim) => {
+    const a = xy(fr), b = xy(to), dx = (a.x - b.x) * q, dy = (a.y - b.y) * q, dist = Math.hypot(dx, dy) / q;
+    const T1 = 180, T2 = T1 + 440 + Math.min(220, dist * 40), T3 = T2 + 320, T = T3 + 150, Lh = q * 0.42, kf = [];
+    for (let t = 0; t <= T; t += 15) {
+      let x = 0, y = 0, lift = 0, sc = 1, gl = 0;
+      if (t < T1) { const s = smooth(t / T1); x = dx; y = dy; lift = Lh * s; sc = 1 + 0.18 * s; gl = s; }
+      else if (t < T2) { const s = smooth((t - T1) / (T2 - T1)); x = dx * (1 - s); y = dy * (1 - s); lift = Lh + q * 0.1 * Math.sin(Math.PI * s); sc = 1.18; gl = 1; }
+      else if (t < T3) { const s = (t - T2) / (T3 - T2); lift = Lh + q * 0.035 * Math.sin(2 * Math.PI * s); sc = 1.18 + 0.03 * Math.sin(Math.PI * s); gl = 1; }
+      else { const s = ((t - T3) / (T - T3)) ** 2; lift = Lh * (1 - s); sc = 1.18 - 0.18 * s; gl = 1 - 0.4 * s; }
+      kf.push({ offset: Math.min(1, t / T), transform: `translate(${x}px,${y - lift}px) scale(${sc})`, filter: glowF(gl, 'rgba(255,140,60,.95)') });
     }
-    for (let i = 0; i < 5; i++) { const sz = W * (0.12 + Math.random() * 0.12), e = mk(Object.assign(box({ x: C.x + W * (0.08 + Math.random() * 0.3), y: C.y + (Math.random() - 0.5) * H * 0.12 }, sz, sz * 0.7), { borderRadius: '48% 52% 40% 60%', background: i % 2 ? 'rgba(170,0,10,.85)' : 'rgba(110,110,115,.55)', zIndex: 1 }), 'div', v); rpRun(e, [{ transform: 'scale(0)' }, { transform: 'scale(1)' }], { duration: 260, delay: 40 * i, easing: 'ease-out', fill: 'both' }); }
-    await rpWait(1700, tok);
-    await rpRun(v, [{ opacity: 1 }, { opacity: 0 }], { duration: 450 });
-    v.remove();
+    kf[kf.length - 1].offset = 1;
+    if (victim) { // the target trembles while it is hovered over
+      victim.style.zIndex = 1;
+      rpRun(victim, [{ transform: 'translate(0,0)', filter: 'none' }, { transform: 'translate(0,0)', filter: 'none', offset: T2 / T }, { transform: `translate(${q * 0.025}px,0)`, filter: 'drop-shadow(0 0 6px rgba(255,60,60,.9))', offset: (T2 + 60) / T }, { transform: `translate(${-q * 0.025}px,0)`, filter: 'drop-shadow(0 0 8px rgba(255,60,60,.9))', offset: (T2 + 140) / T }, { transform: `translate(${q * 0.02}px,0)`, filter: 'drop-shadow(0 0 8px rgba(255,60,60,.9))', offset: (T2 + 220) / T }, { transform: 'translate(0,0) scale(1)', filter: 'drop-shadow(0 0 8px rgba(255,60,60,.9))', offset: T3 / T }, { transform: 'translate(0,0) scale(.6)', opacity: 0, filter: 'none' }], { duration: T, easing: 'linear', fill: 'forwards' });
+    }
+    return rpRun(img, kf, { duration: T, easing: 'linear', fill: 'none' });
   };
   const badgeAt = (cls, sq, big) => {
     if (!BADGE_PNG[cls]) return null;
-    const p = xy(sq), sz = q * (big ? 0.68 : 0.52);
-    const e = mk({ left: (p.x + 1) * q - sz * 0.62 + 'px', top: p.y * q - sz * 0.38 + 'px', width: sz + 'px', height: sz + 'px', zIndex: 7, filter: 'drop-shadow(0 3px 6px rgba(0,0,0,.5))' }, 'img');
+    const p = xy(sq), sz = q * (big ? 0.62 : 0.5);
+    const col = { brilliant: '#26c2a3', great: '#5c8bb0', best: '#81b64c', inaccuracy: '#f7c631', mistake: '#ffa459', miss: '#ff7769', blunder: '#fa412d' }[cls] || '#fff';
+    const e = mk({ left: (p.x + 1) * q - sz * 0.62 + 'px', top: p.y * q - sz * 0.38 + 'px', width: sz + 'px', height: sz + 'px', zIndex: 7, filter: `drop-shadow(0 3px 6px rgba(0,0,0,.5)) drop-shadow(0 0 ${q * 0.15}px ${col})` }, 'img');
     e.src = 'data:image/png;base64,' + BADGE_PNG[cls];
-    rpRun(e, [{ transform: 'scale(.3)' }, { transform: 'scale(1.15)', offset: 0.5 }, { transform: 'scale(1)' }], { duration: 300, easing: 'ease-out' });
+    rpRun(e, [{ transform: 'scale(.3)', opacity: 0 }, { transform: 'scale(1.1)', opacity: 1, offset: 0.6 }, { transform: 'scale(1)', opacity: 1 }], { duration: 320, easing: 'ease-out' });
     return e;
   };
-  // Zavee-style hook title card
   const card = async (kicker, l1, l2, hold) => {
     const e = mk({}, 'div', top);
     e.className = 'rp-card';
-    e.innerHTML = (kicker ? `<div class="k">${esc(kicker)}</div>` : '') + `<div class="l1">${esc(l1)}</div><div class="l2">${esc(l2)}</div>`;
-    await rpRun(e, [{ opacity: 0, transform: 'scale(1.08)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 600, easing: 'ease-out' });
+    e.innerHTML = (kicker ? `<div class="k">${esc(kicker)}</div>` : '') + `<div class="l1">${esc(l1)}</div>` + (l2 ? `<div class="l2">${esc(l2)}</div>` : '');
+    await rpRun(e, [{ opacity: 0, transform: 'scale(1.06)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 600, easing: 'ease-out' });
     await rpWait(hold, tok);
     await rpRun(e, [{ opacity: 1 }, { opacity: 0 }], { duration: 600, easing: 'ease-in' });
     e.remove();
   };
   const h = g.headers || {}, wn = h.White && h.White !== '?' ? h.White : 'White', bn = h.Black && h.Black !== '?' ? h.Black : 'Black';
   const n = g.moves.length, last = mkChess(g.positions[n].fen), mated = last.in_checkmate();
-  const kick = h.Event && !/\?/.test(h.Event) ? h.Event : '';
   prog.textContent = 'Starting…';
-  await card(kick, wn, 'vs ' + bn, 1300);
-  let setIdx = 0;
+  await card(h.Event && !/\?/.test(h.Event) ? h.Event : '', wn, 'vs ' + bn, 1300);
   for (let i = 0; i < n; i++) {
     const mv = g.moves[i], A = g.positions[i], Bp = g.positions[i + 1];
     const cls = g.cls && g.cls[i] ? g.cls[i].cls : null;
     const after = mkChess(Bp.fen), mate = after.in_checkmate(), check = after.in_check();
-    const big = !mate && (cls === 'brilliant' || cls === 'great' || mv.captured === 'q');
     prog.textContent = `Move ${Math.ceil((i + 1) / 2)} · ${i + 1}/${n}`;
-    if (mate) { // a drained, dark silence before the finale
-      await rpRun(scene, [{ filter: 'grayscale(0) brightness(1)' }, { filter: 'grayscale(.9) brightness(.55)' }], { duration: 500, fill: 'none' });
-      scene.style.filter = 'grayscale(.9) brightness(.55)';
-      await rpWait(900, tok);
-      scene.style.filter = '';
-    }
-    if (mv.color === 'w') await camTo(mv.to, big || mate ? 1.44 : 1.2, 500); else await camTo(null, 1, 500);
-    // slide (castling, en passant and promotion are worked out from the two positions)
+    if (mv.color === 'w') await camTo(mv.to, cls === 'brilliant' || cls === 'great' || mate ? 1.38 : 1.2, 500); else await camTo(null, 1, 500);
+    // which piece goes where (castling, en passant and promotion come from the two positions)
     const pm = fenToMap(A.fen), nm = fenToMap(Bp.fen);
     const vac = Object.keys(pm).filter(sq => pm[sq] !== nm[sq]), arr = Object.keys(nm).filter(sq => nm[sq] !== pm[sq]);
     const used = new Set(), pairs = [];
@@ -5585,36 +5121,33 @@ async function rpPlay(tok) {
       if (!fr && mv.uci && mv.uci[4] && !used.has(mv.from)) fr = mv.from;
       if (fr) { used.add(fr); pairs.push([fr, to]); }
     }
-    const capd = vac.filter(sq => !used.has(sq)).map(sq => els[sq]).filter(Boolean);
-    const slides = pairs.map(([fr, to]) => {
+    const capSqs = vac.filter(sq => !used.has(sq));
+    const victim = capSqs.length ? els[capSqs[0]] : null;
+    hl.innerHTML = '';
+    const anims = pairs.map(([fr, to], k) => {
       const img = els[fr];
       if (!img) return Promise.resolve();
-      const a = xy(fr), b = xy(to);
-      place(img, to); img.src = PIECE_URL[keyOf(nm[to])]; img.style.zIndex = 3;
-      return rpRun(img, [{ transform: `translate(${(a.x - b.x) * 100}%,${(a.y - b.y) * 100}%)`, filter: 'blur(0)' }, { transform: `translate(${(a.x - b.x) * 50}%,${(a.y - b.y) * 50}%)`, filter: 'blur(1.2px)', offset: 0.5 }, { transform: 'translate(0,0)', filter: 'blur(0)' }], { duration: 420, easing: 'cubic-bezier(.65,0,.35,1)', fill: 'none' }).then(() => { img.style.zIndex = ''; });
+      place(img, to); img.style.zIndex = 4;
+      const pr = k === 0 && victim ? pounce(img, fr, to, victim) : glide(img, fr, to);
+      return pr.then(() => { img.src = PIECE_URL[keyOf(nm[to])]; img.style.zIndex = ''; });
     });
     const next = {};
     for (const sq in els) if (!used.has(sq) && nm[sq] && pm[sq] === nm[sq]) next[sq] = els[sq];
     for (const [fr, to] of pairs) next[to] = els[fr];
-    await Promise.all(slides);
-    for (const c of capd) gone(c, [{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(1.8)', opacity: 0 }], { duration: 300, easing: 'ease-out' }); // the captured piece pops
+    await Promise.all(anims);
+    for (const sq of capSqs) if (els[sq]) els[sq].remove();
     for (const k in els) delete els[k];
     Object.assign(els, next);
     moveSound(mv, after);
     const land = pairs.length ? pairs[0][1] : mv.to, P = ctr(land);
-    let marks = [mv.from, land].map(sq => { const p = xy(sq); return `<i style="left:${p.x * 12.5}%;top:${p.y * 12.5}%"></i>`; }).join('');
+    let marks = [mv.from, land].map((sq, k) => { const p = xy(sq); return `<i class="${k ? 'to' : ''}" style="left:${p.x * 12.5}%;top:${p.y * 12.5}%"></i>`; }).join('');
     if (check) { const kq = Object.keys(nm).find(sq => nm[sq] === (mv.color === 'w' ? 'k' : 'K')); if (kq) { const p = xy(kq); marks += `<i class="chk" style="left:${p.x * 12.5}%;top:${p.y * 12.5}%"></i>`; } }
     hl.innerHTML = marks;
-    const showBadge = cls && !['book', 'forced', 'good', 'excellent'].includes(cls) && (cls !== 'best' || big || mate || !!mv.captured || check);
-    const bdg = showBadge ? badgeAt(mate ? (cls === 'brilliant' ? 'brilliant' : 'best') : cls, land, big || mate) : null;
-    if (mate) {
-      await rpWait(450, tok);
-      await killScene(after.turn());
-    } else if (big) {
-      const kinds = cls === 'brilliant' ? ['purple'] : mv.captured === 'q' ? ['cleave', 'dismantle'] : ['blue', 'dismantle', 'cleave'];
-      await setPiece(kinds[setIdx++ % kinds.length], P, ctr(mv.from));
-    } else await rpWait(mv.captured || check ? 600 : 380, tok);
-    if (bdg) gone(bdg, [{ opacity: 1 }, { opacity: 0 }], { duration: 250 });
+    bloom(P, victim ? 'rgba(255,130,60,.85)' : 'rgba(255,220,120,.7)', q * (victim ? 2.6 : 2));
+    const showBadge = cls && !['book', 'forced', 'good', 'excellent'].includes(cls) && (cls !== 'best' || mate || !!victim || check);
+    const bdg = showBadge ? badgeAt(mate ? (cls === 'brilliant' ? 'brilliant' : 'best') : cls, land, cls === 'brilliant' || cls === 'great' || mate) : null;
+    await rpWait(mate ? 1800 : victim || check ? 650 : 420, tok);
+    if (bdg && !mate) rpRun(bdg, [{ opacity: 1 }, { opacity: 0 }], { duration: 250 }).then(() => bdg.remove());
   }
   await camTo(null, 1, 600);
   prog.textContent = 'Finished';
@@ -5623,7 +5156,6 @@ async function rpPlay(tok) {
   await card(res && res !== '*' ? res : '', winner || (res === '1/2-1/2' ? 'Draw' : 'Game over'), winner ? (mated ? 'wins by checkmate' : 'wins') : '', 1700);
   prog.textContent = 'Finished · ⟲ to watch again';
 }
-
 /* ============================================================
    Tabs, wiring, boot
    ============================================================ */
@@ -5676,20 +5208,10 @@ function wire() {
     extraMoves: sq => (S.tab === 'custom' && CUSTOM.phase === 'game' && CUSTOM.chess) ? powerMoves(CUSTOM, sq) : [],
     allowStd: sq => S.tab !== 'custom' || customAllowStd(sq),
     skin: (sq, p) => S.tab === 'custom' ? customSkin(sq, p) : null,
-    finisherOk: () => S.tab !== 'review',
-    noBattle: () => S.tab === 'custom' && secretOn(CUSTOM) && !CUSTOM.over
+    finisherOk: () => S.tab !== 'review'
   });
 
   $$('.tab').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
-  const renderBattleBtn = () => {
-    const b = $('#battleBtn');
-    b.setAttribute('aria-pressed', String(!!S.battle));
-    b.title = S.battle ? 'Battle mode is on: captures use weapons' : 'Turn on battle animations for captures';
-  };
-  renderBattleBtn();
-  $('#finSel').value = ['random', 'gun', 'purple', 'sword', 'shadow', 'off'].includes(S.fin) ? S.fin : 'random';
-  $('#finSel').addEventListener('change', e => { S.fin = e.target.value; store.set('s64.fin', S.fin); });
-  $('#battleBtn').addEventListener('click', () => { S.battle = !S.battle; store.set('s64.battle', S.battle); renderBattleBtn(); });
   $('#soundBtn').addEventListener('click', () => { S.sound = !S.sound; store.set('s64.sound', S.sound); renderSoundBtn(); if (S.sound && !playSample('move')) sound('move'); });
 
   // play controls

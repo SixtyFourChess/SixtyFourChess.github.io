@@ -3,7 +3,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&family=Pirata+One&family=Grenze+Gotisch:wght@500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&family=Pirata+One&family=Grenze+Gotisch:wght@500;700&family=Montserrat:wght@800;900&display=swap">
 <style>
 /* Layout: board-first study table — the wooden board and eval bar on the left, a scoresheet/coach rail on the right; stacks on phones */
 :root {
@@ -426,15 +426,18 @@ textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 0; }
 .rp-hl > i { position: absolute; width: 12.5%; height: 12.5%; background: rgba(255, 214, 70, .38); }
 .rp-pcs > img { position: absolute; width: 12.5%; height: 12.5%; will-change: transform; }
 .rp-wm { display: flex; align-items: center; justify-content: center; font: 800 calc(var(--rpw, 400px) * .105) var(--font-display); color: #000; opacity: .06; letter-spacing: -.02em; white-space: nowrap; }
+.rp-punch { position: relative; }
+.rp-tone, .rp-punch > .rp-fx { position: absolute; inset: 0; pointer-events: none; }
+.rp-tone { opacity: 0; mix-blend-mode: multiply; background: radial-gradient(circle, rgba(0,0,0,.42) 30%, transparent 33%) 0 0 / 6px 6px, repeating-linear-gradient(45deg, rgba(0,0,0,.14) 0 1px, transparent 1px 7px), repeating-linear-gradient(-45deg, rgba(0,0,0,.08) 0 1px, transparent 1px 9px); }
 .rp-fx > * { position: absolute; }
+.rp-hl > i.chk { background: rgba(255, 35, 45, .55); animation: rpchk .45s ease-in-out infinite alternate; }
+@keyframes rpchk { from { opacity: .55; } to { opacity: 1; } }
+.rp-kill, .rp-kill > * { position: absolute; }
+.rp-card { position: absolute; inset: 0; z-index: 12; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: calc(var(--rpw, 400px) * .02); padding: 7%; text-align: center; background: radial-gradient(circle at 50% 45%, rgba(20,20,26,.84), rgba(4,4,6,.94) 75%); pointer-events: none; font-family: "Montserrat", var(--font-display); text-transform: uppercase; }
+.rp-card .k { font-weight: 800; font-size: calc(var(--rpw, 400px) * .038); letter-spacing: .14em; color: #111; background: #ffd23f; padding: .35em .9em; border-radius: 999px; }
+.rp-card .l1 { font-weight: 900; font-size: calc(var(--rpw, 400px) * .118); line-height: .98; color: #fff; letter-spacing: -.01em; text-shadow: 0 0 calc(var(--rpw, 400px) * .04) rgba(255,255,255,.28); overflow-wrap: anywhere; }
+.rp-card .l2 { font-weight: 900; font-size: calc(var(--rpw, 400px) * .085); line-height: 1; background: linear-gradient(90deg, #ffd23f, #ff3d6e 55%, #b84dff); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 calc(var(--rpw, 400px) * .03) rgba(255,61,110,.45)); overflow-wrap: anywhere; }
 .rp-scene > .rp-layer { position: absolute; inset: 0; pointer-events: none; }
-.rp-badge { width: 7.5%; z-index: 5; filter: drop-shadow(0 3px 6px rgba(0,0,0,.5)); }
-.rp-slam { position: absolute; left: 50%; top: 50%; z-index: 9; white-space: nowrap; font: 400 calc(var(--rpw, 400px) * .16)/1 "Pirata One", var(--font-display); color: #fff; letter-spacing: .02em; text-shadow: 0 0 2px #000, 0 6px 0 #b3001b, 0 10px 40px rgba(255,30,60,.7); }
-.rp-poster { position: absolute; inset: 0; z-index: 12; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: calc(var(--rpw, 400px) * .03); text-align: center; padding: 8%; background: radial-gradient(circle at 50% 45%, rgba(30,28,36,.92), rgba(4,4,6,.97) 75%); color: #f4f1ea; pointer-events: none; }
-.rp-poster .t { font: 400 calc(var(--rpw, 400px) * .135)/1.02 "Pirata One", var(--font-display); text-shadow: 0 4px 30px rgba(255,255,255,.18); }
-.rp-poster .vs { font: 400 calc(var(--rpw, 400px) * .07)/1 "Pirata One", var(--font-display); opacity: .6; }
-.rp-poster .sub { font: 500 calc(var(--rpw, 400px) * .06)/1.2 "Grenze Gotisch", serif; color: #d9c9a3; }
-.rp-poster img { width: 34%; filter: drop-shadow(0 10px 30px rgba(0,0,0,.7)); }
 .rp-bar { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: #0d0d11; color: #ddd; font: 600 13px var(--font-body); }
 .rp-bar button { border: 1px solid #2a2a33; background: #17171d; color: #eee; border-radius: 8px; height: 34px; min-width: 38px; padding: 0 10px; font: inherit; cursor: pointer; }
 .rp-bar button:hover { background: #22222a; }
@@ -5310,12 +5313,10 @@ function confirmResign() {
 
 /* ============================================================
    REPLAY: watch a reviewed game like a ChessGameShorts edit
-   Straight board; White moves zoom in gently, Black moves zoom back out. Calm moves glide clean;
-   big moves (brilliant, great, queen captures, mate) explode.
+   Straight board, no tilt; White moves zoom in gently, Black moves zoom back out. Moves stay calm on the board.
+   The drama comes from set pieces: JJK-style manga cutaways on big moves and a gun kill scene on checkmate.
    ============================================================ */
 const RP = { el: null, token: 0, paused: false, speed: 1, anims: new Set(), camT: 'translate(0px,0px) scale(1)' };
-const RP_STROBE = ['rgb(60,140,255)', 'rgb(80,235,110)', 'rgb(255,50,70)', 'rgb(255,70,190)'];
-const RP_BEAT = 430, RP_DRAMA = 3.5, RP_HIT = 1500;
 const RP_STOP = {};
 function rpRun(el, kf, opt) {
   const a = el.animate(kf, Object.assign({ fill: 'forwards' }, opt));
@@ -5360,8 +5361,8 @@ function startReplay() {
   const el = document.createElement('div');
   el.className = 'rp';
   el.innerHTML = `<div class="rp-frame"><div class="rp-scene">
-      <div class="rp-cam"><div class="rp-board"><div class="rp-hl"></div><div class="rp-wm">ChessGameShorts</div><div class="rp-pcs"></div><div class="rp-fx"></div></div></div>
-      <div class="rp-layer rp-strobe"></div><div class="rp-layer rp-flash"></div><div class="rp-layer rp-top"></div>
+      <div class="rp-cam"><div class="rp-punch"><div class="rp-board"><div class="rp-hl"></div><div class="rp-wm">ChessGameShorts</div><div class="rp-pcs"></div></div><div class="rp-tone"></div><div class="rp-fx"></div></div></div>
+      <div class="rp-layer rp-top"></div>
     </div>
     <div class="rp-bar"><button type="button" data-rp="restart" title="Restart">⟲</button><button type="button" data-rp="pause" title="Pause (space)">❚❚</button><button type="button" data-rp="speed" title="Speed">1×</button><span class="rp-prog"></span><button type="button" data-rp="close" title="Close (Esc)">✕</button></div></div>`;
   document.body.appendChild(el);
@@ -5381,8 +5382,7 @@ function startReplay() {
 }
 function rpLayout() {
   const sc = RP.el.querySelector('.rp-scene'), W = sc.clientWidth, H = sc.clientHeight;
-  const cam = RP.el.querySelector('.rp-cam');
-  cam.style.top = (H - W) / 2 + 'px';
+  RP.el.querySelector('.rp-cam').style.top = (H - W) / 2 + 'px';
   RP.el.style.setProperty('--rpw', W + 'px');
   return { W, H, B: W, oy: (H - W) / 2 };
 }
@@ -5394,21 +5394,18 @@ async function rpStart() {
 }
 async function rpPlay(tok) {
   const g = R.game, el = RP.el, L = rpLayout();
-  const scene = el.querySelector('.rp-scene'), cam = el.querySelector('.rp-cam'), brd = el.querySelector('.rp-board');
-  const pcs = el.querySelector('.rp-pcs'), fx = el.querySelector('.rp-fx'), hl = el.querySelector('.rp-hl');
-  const strobe = el.querySelector('.rp-strobe'), flashL = el.querySelector('.rp-flash'), top = el.querySelector('.rp-top');
-  const prog = el.querySelector('.rp-prog');
-  pcs.innerHTML = ''; fx.innerHTML = ''; hl.innerHTML = ''; top.innerHTML = ''; scene.style.filter = '';
+  const scene = el.querySelector('.rp-scene'), cam = el.querySelector('.rp-cam'), punch = el.querySelector('.rp-punch'), brd = el.querySelector('.rp-board');
+  const pcs = el.querySelector('.rp-pcs'), fx = el.querySelector('.rp-fx'), hl = el.querySelector('.rp-hl'), tone = el.querySelector('.rp-tone');
+  const top = el.querySelector('.rp-top'), prog = el.querySelector('.rp-prog');
+  pcs.innerHTML = ''; fx.innerHTML = ''; hl.innerHTML = ''; top.innerHTML = ''; scene.style.filter = ''; brd.style.filter = ''; tone.style.opacity = '0';
   const orient = board.orientation === 'b' ? 'b' : 'w', q = L.B / 8;
   const xy = sq => { const f = sq.charCodeAt(0) - 97, r = +sq[1] - 1; return orient === 'w' ? { x: f, y: 7 - r } : { x: 7 - f, y: r }; };
   const ctr = sq => { const p = xy(sq); return { x: (p.x + 0.5) * q, y: (p.y + 0.5) * q }; };
   const keyOf = ch => (ch === ch.toUpperCase() ? 'w' : 'b') + ch.toUpperCase();
-  const place = (img, sq) => { const p = xy(sq); img.style.left = p.x * 12.5 + '%'; img.style.top = p.y * 12.5 + '%'; img.dataset.sq = sq; };
+  const place = (img, sq) => { const p = xy(sq); img.style.left = p.x * 12.5 + '%'; img.style.top = p.y * 12.5 + '%'; };
   const els = {};
-  const draw = fen => { pcs.innerHTML = ''; const m = fenToMap(fen); for (const sq in m) { const i = document.createElement('img'); i.src = PIECE_URL[keyOf(m[sq])]; i.alt = ''; place(i, sq); pcs.appendChild(i); els[sq] = i; } };
-  for (const k in els) delete els[k];
-  draw(g.positions[0].fen);
-  // camera
+  { const m = fenToMap(g.positions[0].fen); for (const sq in m) { const i = document.createElement('img'); i.src = PIECE_URL[keyOf(m[sq])]; i.alt = ''; place(i, sq); pcs.appendChild(i); els[sq] = i; } }
+  // camera: never tilted, gentle zoom
   const camTo = (sq, z, dur) => {
     let tx = 0, ty = 0;
     if (sq && z > 1) {
@@ -5416,146 +5413,214 @@ async function rpPlay(tok) {
       tx = clamp(L.W / 2 - z * c.x, L.W - z * L.B, 0);
       ty = clamp(L.H / 2 - L.oy - z * c.y, -L.oy, L.H - L.oy - z * L.B);
     }
-    const t = `translate(${tx}px,${ty}px) scale(${z})`;
-    const from = RP.camT; RP.camT = t;
+    const t = `translate(${tx}px,${ty}px) scale(${z})`, from = RP.camT;
+    RP.camT = t;
     return rpRun(cam, [{ transform: from }, { transform: t }], { duration: dur, easing: 'cubic-bezier(.45,0,.25,1)' });
   };
   cam.style.transform = RP.camT = 'translate(0px,0px) scale(1)';
-  // effect helpers (in board coordinates, so they zoom with the camera)
+  // ---- drawing helpers
   const mk = (css, tag, parent) => { const e = document.createElement(tag || 'div'); Object.assign(e.style, css || {}); (parent || fx).appendChild(e); return e; };
   const box = (P, w, h) => ({ left: P.x - w / 2 + 'px', top: P.y - h / 2 + 'px', width: w + 'px', height: h + 'px' });
   const gone = (e, kf, o) => rpRun(e, kf, o).then(() => e.remove());
-  const flash = (color, a, dur) => { const f = mk({ inset: 0, background: color }, 'div', flashL); gone(f, [{ opacity: a }, { opacity: 0 }], { duration: dur, easing: 'ease-out' }); };
-  const shake = (amp, dur) => rpRun(scene, [{ transform: 'translateX(0)', filter: 'blur(0)' }, { transform: `translateX(${-amp}px)`, filter: 'blur(1.6px)' }, { transform: `translateX(${amp}px)`, filter: 'blur(1.6px)' }, { transform: `translateX(${-amp * 0.6}px)`, filter: 'blur(1px)' }, { transform: `translateX(${amp * 0.3}px)`, filter: 'blur(.5px)' }, { transform: 'translateX(0)', filter: 'blur(0)' }], { duration: dur, easing: 'ease-out', fill: 'none' });
-  const sparkles = (P, n, spread, color = '#fff') => { for (let i = 0; i < n; i++) { const sz = q * (0.04 + Math.random() * 0.07), e = mk(Object.assign(box(P, sz, sz), { borderRadius: '50%', background: color, boxShadow: `0 0 ${sz * 2}px ${color}` })); const a = Math.random() * Math.PI * 2, d = spread * (0.35 + Math.random() * 0.9); gone(e, [{ transform: 'translate(0,0) scale(1)', opacity: 1 }, { transform: `translate(${Math.cos(a) * d}px,${Math.sin(a) * d}px) scale(.3)`, opacity: 1, offset: 0.6 }, { transform: `translate(${Math.cos(a) * d * 1.1}px,${Math.sin(a) * d * 1.1}px) scale(0)`, opacity: 0 }], { duration: 700 + Math.random() * 800, easing: 'cubic-bezier(.1,.8,.3,1)' }); } };
-  const debris = (P, white, n) => { for (let i = 0; i < n; i++) { const sz = q * (0.08 + Math.random() * 0.14), e = mk(Object.assign(box(P, sz, sz * (0.6 + Math.random() * 0.6)), { background: white ? '#f6f6f6' : '#0e0e10', clipPath: 'polygon(50% 0, 100% 80%, 0 100%)', boxShadow: 'none', outline: `1px solid ${white ? '#3c3c3c' : '#e6e6e6'}`, zIndex: 3 })); const a = -Math.PI / 2 + (Math.random() - 0.5) * 3.2, v = q * (0.9 + Math.random() * 1.4); gone(e, [{ transform: 'translate(0,0) rotate(0)', opacity: 1 }, { transform: `translate(${Math.cos(a) * v * 0.7}px,${Math.sin(a) * v * 0.7}px) rotate(${(Math.random() - 0.5) * 540}deg)`, opacity: 1, offset: 0.45 }, { transform: `translate(${Math.cos(a) * v}px,${Math.sin(a) * v + q * 1.4}px) rotate(${(Math.random() - 0.5) * 900}deg)`, opacity: 0 }], { duration: 1100 + Math.random() * 500, easing: 'cubic-bezier(.2,.6,.5,1)' }); } };
-  const ring = (P, color, size, dur) => { const e = mk(Object.assign(box(P, size, size), { borderRadius: '50%', border: `${Math.max(2, q * 0.06)}px solid ${color}`, boxShadow: `0 0 ${q * 0.3}px ${color}`, zIndex: 2 })); gone(e, [{ transform: 'scale(.2)', opacity: 1 }, { transform: 'scale(1.6)', opacity: 0 }], { duration: dur, easing: 'cubic-bezier(.1,.7,.3,1)' }); };
-  const glowOrb = (P, color) => { const e = mk(Object.assign(box(P, q * 2.6, q * 2.6), { borderRadius: '50%', background: `radial-gradient(circle, #fff 0%, ${color} 22%, rgba(0,0,0,0) 68%)`, mixBlendMode: 'screen', zIndex: 2 })); gone(e, [{ transform: 'scale(.3)', opacity: 1 }, { transform: 'scale(1)', opacity: 0.9, offset: 0.2 }, { transform: 'scale(1.3)', opacity: 0 }], { duration: RP_HIT, easing: 'ease-out' }); };
-  const octagon = (P, color) => { const sz = q * 2.3, e = mk(box(P, sz, sz), 'div'); e.innerHTML = `<svg viewBox="0 0 100 100" width="100%" height="100%"><polygon points="30,4 70,4 96,30 96,70 70,96 30,96 4,70 4,30" fill="none" stroke="${color}" stroke-width="3"/></svg>`; const dir = Math.random() < 0.5 ? 1 : -1; gone(e, [{ transform: 'rotate(0) scale(.4)', opacity: 1 }, { transform: `rotate(${dir * 90}deg) scale(1.15)`, opacity: 0.8, offset: 0.5 }, { transform: `rotate(${dir * 160}deg) scale(1.5)`, opacity: 0 }], { duration: RP_HIT, easing: 'ease-out' }); };
-  const rays = P => { const sz = q * 6, e = mk(Object.assign(box(P, sz, sz), { borderRadius: '50%', background: 'repeating-conic-gradient(rgba(255,255,255,.55) 0 4deg, rgba(255,255,255,0) 4deg 22deg)', maskImage: 'radial-gradient(circle, #000 10%, transparent 68%)', WebkitMaskImage: 'radial-gradient(circle, #000 10%, transparent 68%)', mixBlendMode: 'screen', zIndex: 1 })); gone(e, [{ transform: 'rotate(0) scale(.5)', opacity: 0 }, { transform: 'rotate(25deg) scale(1)', opacity: 1, offset: 0.25 }, { transform: 'rotate(70deg) scale(1.1)', opacity: 0 }], { duration: RP_HIT + 300, easing: 'linear' }); };
-  const speedLines = P => { const sz = q * 9, e = mk(box(P, sz, sz)); let ls = ''; for (let i = 0; i < 28; i++) { const a = (i / 28) * Math.PI * 2 + Math.random() * 0.1, r0 = 14 + Math.random() * 6, r1 = 46 + Math.random() * 4; ls += `<line x1="${50 + Math.cos(a) * r0}" y1="${50 + Math.sin(a) * r0}" x2="${50 + Math.cos(a) * r1}" y2="${50 + Math.sin(a) * r1}" stroke="#fff" stroke-width="${0.3 + Math.random() * 0.6}" stroke-linecap="round"/>`; } e.innerHTML = `<svg viewBox="0 0 100 100" width="100%" height="100%">${ls}</svg>`; e.style.zIndex = 4; gone(e, [{ transform: 'scale(.6)', opacity: 0.95 }, { transform: 'scale(1.15)', opacity: 0 }], { duration: 650, easing: 'ease-out' }); };
-  const lightning = (A, K) => { const sz = 'width:100%;height:100%', e = mk({ inset: 0, zIndex: 6 }); let d = `M${A.x} ${A.y}`; const n = 7; for (let i = 1; i < n; i++) { const t = i / n, jx = (Math.random() - 0.5) * q * 0.7, jy = (Math.random() - 0.5) * q * 0.7; d += ` L${A.x + (K.x - A.x) * t + jx} ${A.y + (K.y - A.y) * t + jy}`; } d += ` L${K.x} ${K.y}`; e.innerHTML = `<svg style="${sz};overflow:visible"><path d="${d}" fill="none" stroke="#bfe6ff" stroke-width="${q * 0.07}" stroke-linejoin="round" style="filter:drop-shadow(0 0 ${q * 0.12}px #6fc3ff)"/><path d="${d}" fill="none" stroke="#fff" stroke-width="${q * 0.025}"/></svg>`; gone(e, [{ opacity: 1 }, { opacity: 0.2, offset: 0.15 }, { opacity: 1, offset: 0.3 }, { opacity: 0.1, offset: 0.5 }, { opacity: 0.9, offset: 0.6 }, { opacity: 0 }], { duration: 750, easing: 'linear' }); };
-  const ghost = (src, P) => { const e = mk(Object.assign(box(P, q, q), { zIndex: 4 }), 'img'); e.src = src; gone(e, [{ transform: 'scale(1)', opacity: 0.8, filter: 'brightness(2)' }, { transform: 'scale(2.1)', opacity: 0, filter: 'brightness(3) blur(2px)' }], { duration: 800, easing: 'ease-out' }); };
-  const drama = async () => { // dark high-contrast grade with a colour strobe on every beat
-    scene.style.filter = 'contrast(1.45) saturate(1.6) brightness(.8)';
-    const beats = Math.round(RP_DRAMA * 2);
-    for (let i = 0; i < beats; i++) {
-      if (tok !== RP.token) return;
-      strobe.style.background = RP_STROBE[i % RP_STROBE.length];
-      strobe.style.mixBlendMode = 'color';
-      rpRun(strobe, [{ opacity: 0.38 }, { opacity: 0.12 }], { duration: RP_BEAT / 2, easing: 'ease-out' });
-      try { await rpWait(RP_BEAT / 2, tok); } catch (e) { return; }
+  const NS = 'http://www.w3.org/2000/svg';
+  const svgLayer = (parent, w, h) => { const s = document.createElementNS(NS, 'svg'); s.setAttribute('viewBox', `0 0 ${w} ${h}`); s.setAttribute('width', '100%'); s.setAttribute('height', '100%'); s.style.cssText = 'position:absolute;inset:0;overflow:visible;pointer-events:none'; parent.appendChild(s); return s; };
+  const shape = (svg, tag, attrs) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); svg.appendChild(e); return e; };
+  const INK = Math.max(2.5, q * 0.075);
+  // flat fill + light core + thick black ink border (the JJK look)
+  const inkPoly = (svg, pts, fill, core) => {
+    const d = pts.map(p => p.join(',')).join(' ');
+    shape(svg, 'polygon', { points: d, fill, stroke: '#000', 'stroke-width': INK, 'stroke-linejoin': 'round' });
+    if (core) { const cx = pts.reduce((a, p) => a + p[0], 0) / pts.length, cy = pts.reduce((a, p) => a + p[1], 0) / pts.length; shape(svg, 'polygon', { points: pts.map(p => [cx + (p[0] - cx) * 0.45, cy + (p[1] - cy) * 0.45].join(',')).join(' '), fill: core }); }
+  };
+  const inkOrb = (P, r, fill, core) => { const s = svgLayer(fx, L.B, L.B); shape(s, 'circle', { cx: P.x, cy: P.y, r, fill, stroke: '#000', 'stroke-width': INK }); shape(s, 'circle', { cx: P.x - r * 0.12, cy: P.y - r * 0.12, r: r * 0.45, fill: core }); s.style.transformOrigin = `${P.x}px ${P.y}px`; return s; };
+  const slash = (P, ang, len, wid) => { const c = Math.cos(ang), s_ = Math.sin(ang), nx = -s_, ny = c; return [[P.x - c * len / 2, P.y - s_ * len / 2], [P.x + nx * wid / 2, P.y + ny * wid / 2], [P.x + c * len / 2, P.y + s_ * len / 2], [P.x - nx * wid / 2, P.y - ny * wid / 2]]; };
+  const mist = (P, n, spread) => { for (let i = 0; i < n; i++) { const sz = q * (0.5 + Math.random() * 0.9), e = mk(Object.assign(box({ x: P.x + (Math.random() - 0.5) * spread, y: P.y + (Math.random() - 0.5) * spread }, sz, sz), { borderRadius: '50%', background: 'radial-gradient(circle, rgba(220,20,40,.75), rgba(220,20,40,0) 70%)', filter: 'blur(3px)' })); gone(e, [{ transform: 'scale(.4)', opacity: 0.9 }, { transform: 'scale(1.6)', opacity: 0 }], { duration: 900 + Math.random() * 500, easing: 'ease-out' }); } };
+  // manga page: greyscale + halftone + cross-hatch on the board, coloured ink stays on top
+  const manga = on => { brd.style.filter = on ? 'grayscale(1) contrast(1.7) brightness(1.06)' : ''; rpRun(tone, [{ opacity: on ? 0 : 1 }, { opacity: on ? 1 : 0 }], { duration: on ? 80 : 350 }); };
+  const impact = n => { for (let i = 0; i < n; i++) setTimeout(() => { if (tok !== RP.token) return; scene.style.filter = 'invert(1)'; setTimeout(() => { if (tok === RP.token) scene.style.filter = ''; }, 45 / RP.speed); }, (i * 110) / RP.speed); };
+  const snapzoom = P => { punch.style.transformOrigin = `${P.x}px ${P.y}px`; rpRun(punch, [{ transform: 'scale(1)' }, { transform: 'scale(1.09)', offset: 0.18 }, { transform: 'scale(1)' }], { duration: 420, easing: 'ease-out', fill: 'none' }); };
+  const inkSpeedlines = P => { const s = svgLayer(fx, L.B, L.B); for (let i = 0; i < 34; i++) { const a = (i / 34) * Math.PI * 2 + Math.random() * 0.1, r0 = q * (2.1 + Math.random() * 0.9), r1 = q * (6 + Math.random() * 2); const w = q * (0.006 + Math.random() * 0.014); shape(s, 'polygon', { points: `${P.x + Math.cos(a) * r1},${P.y + Math.sin(a) * r1} ${P.x + Math.cos(a + w / r0 * 3) * r0},${P.y + Math.sin(a + w / r0 * 3) * r0} ${P.x + Math.cos(a - w / r0 * 3) * r0},${P.y + Math.sin(a - w / r0 * 3) * r0}`, fill: '#000' }); } gone(s, [{ opacity: 0.75 }, { opacity: 0.75, offset: 0.6 }, { opacity: 0 }], { duration: 1100 }); };
+  // ---- the JJK-style set pieces
+  const setPiece = async (kind, P, from) => {
+    manga(true); inkSpeedlines(P); impact(2); snapzoom(P); sfx('boom');
+    if (kind === 'cleave') { // red X slash
+      for (const [i, ang] of [[0, Math.PI / 4], [1, -Math.PI / 4]]) {
+        const s = svgLayer(fx, L.B, L.B); inkPoly(s, slash(P, ang, q * 3.2, q * 0.34), '#e0182e', '#ffd0d6');
+        s.style.transformOrigin = `${P.x}px ${P.y}px`;
+        rpRun(s, [{ transform: `rotate(${ang}rad) scaleX(0) rotate(${-ang}rad)`, opacity: 1 }, { transform: 'none', opacity: 1, offset: 0.25 }, { transform: 'none', opacity: 1, offset: 0.75 }, { transform: 'none', opacity: 0 }], { delay: i * 110, duration: 1200, easing: 'cubic-bezier(.2,.9,.3,1)' }).then(() => s.remove());
+        if (i === 0) sfx('slash');
+      }
+      mist(P, 7, q * 1.4);
+      await rpWait(1250, tok);
+    } else if (kind === 'dismantle') { // inked white slashes + red mist
+      sfx('slash');
+      for (let i = 0; i < 6; i++) {
+        const ang = Math.random() * Math.PI, off = { x: P.x + (Math.random() - 0.5) * q * 1.4, y: P.y + (Math.random() - 0.5) * q * 1.4 };
+        const s = svgLayer(fx, L.B, L.B); inkPoly(s, slash(off, ang, q * (2.2 + Math.random()), q * 0.2), '#fff', null);
+        rpRun(s, [{ opacity: 0 }, { opacity: 1, offset: 0.08 }, { opacity: 1, offset: 0.7 }, { opacity: 0 }], { delay: i * 70, duration: 1100 }).then(() => s.remove());
+      }
+      mist(P, 6, q * 1.6);
+      await rpWait(1250, tok);
+    } else if (kind === 'blue') { // a blue orb that pulls the debris in, then collapses
+      const orb = inkOrb(P, q * 0.62, '#36b6ff', '#e6f7ff');
+      rpRun(orb, [{ transform: 'scale(0)' }, { transform: 'scale(1.15)', offset: 0.5 }, { transform: 'scale(1)' }], { duration: 380, easing: 'ease-out' });
+      const s = svgLayer(fx, L.B, L.B);
+      for (let i = 0; i < 16; i++) { const a = Math.random() * Math.PI * 2, d = q * (2.2 + Math.random() * 1.4), x = P.x + Math.cos(a) * d, y = P.y + Math.sin(a) * d, z = q * (0.08 + Math.random() * 0.1); const t = shape(s, 'polygon', { points: `${x},${y - z} ${x + z},${y + z} ${x - z},${y + z}`, fill: '#000' }); t.animate([{ transform: 'translate(0,0) rotate(0)', opacity: 1 }, { transform: `translate(${P.x - x}px,${P.y - y}px) rotate(${Math.random() * 720}deg)`, opacity: 0.2 }], { duration: 900 + Math.random() * 300, easing: 'cubic-bezier(.55,0,.9,.5)', fill: 'forwards' }); }
+      await rpWait(1000, tok);
+      impact(1); s.remove();
+      await rpRun(orb, [{ transform: 'scale(1)' }, { transform: 'scale(1.4)', offset: 0.3 }, { transform: 'scale(0)' }], { duration: 300, easing: 'ease-in' });
+      orb.remove();
+    } else { // Hollow Purple: blue + red meet, turn purple and blast
+      const dx = from ? Math.sign(P.x - from.x) || 1 : 1, perp = { x: -(P.y - (from ? from.y : P.y + 1)), y: P.x - (from ? from.x : P.x) }, pl = Math.hypot(perp.x, perp.y) || 1;
+      const off = { x: perp.x / pl * q * 1.5, y: perp.y / pl * q * 1.5 };
+      const B = { x: P.x + off.x, y: P.y + off.y }, Rr = { x: P.x - off.x, y: P.y - off.y };
+      const bo = inkOrb(B, q * 0.42, '#36b6ff', '#e6f7ff'), ro = inkOrb(Rr, q * 0.42, '#ff2a3c', '#ffe0e3');
+      const pop = [{ transform: 'scale(0)' }, { transform: 'scale(1)' }];
+      rpRun(bo, pop, { duration: 260 }); await rpRun(ro, pop, { duration: 260 });
+      await rpWait(260, tok);
+      rpRun(bo, [{ transform: 'translate(0,0)' }, { transform: `translate(${-off.x}px,${-off.y}px)` }], { duration: 380, easing: 'cubic-bezier(.6,0,.4,1)' });
+      await rpRun(ro, [{ transform: 'translate(0,0)' }, { transform: `translate(${off.x}px,${off.y}px)` }], { duration: 380, easing: 'cubic-bezier(.6,0,.4,1)' });
+      bo.remove(); ro.remove();
+      impact(2); sfx('zap');
+      const po = inkOrb(P, q * 0.8, '#9b4dff', '#f1e4ff');
+      rpRun(po, [{ transform: 'scale(.3)' }, { transform: 'scale(1.2)', offset: 0.6 }, { transform: 'scale(1)' }], { duration: 360, easing: 'ease-out' });
+      await rpWait(380, tok);
+      const ring = svgLayer(fx, L.B, L.B); shape(ring, 'circle', { cx: P.x, cy: P.y, r: q * 0.9, fill: 'none', stroke: '#000', 'stroke-width': INK * 3.2 }); shape(ring, 'circle', { cx: P.x, cy: P.y, r: q * 0.9, fill: 'none', stroke: '#b06bff', 'stroke-width': INK * 1.6 });
+      ring.style.transformOrigin = `${P.x}px ${P.y}px`;
+      sfx('boom'); impact(1);
+      gone(ring, [{ transform: 'scale(.5)', opacity: 1 }, { transform: 'scale(4)', opacity: 0 }], { duration: 700, easing: 'cubic-bezier(.1,.7,.3,1)' });
+      await rpRun(po, [{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(2.6)', opacity: 0 }], { duration: 600, easing: 'ease-out' });
+      po.remove();
     }
-    rpRun(strobe, [{ opacity: 0.12 }, { opacity: 0 }], { duration: 300 });
-    scene.style.filter = '';
+    manga(false);
+  };
+  // ---- the checkmate kill scene: white void, gun slides in from the left, bullet through the king, he splits in half
+  const killScene = async (loser) => {
+    const W = L.W, H = L.H;
+    const v = mk({ inset: 0, background: 'radial-gradient(circle at 60% 48%, #ffffff, #e9e9e6 70%)', zIndex: 10, overflow: 'hidden' }, 'div', top);
+    v.className = 'rp-kill';
+    await rpRun(v, [{ opacity: 0 }, { opacity: 1 }], { duration: 260 });
+    const ks = W * 0.46, K = { x: W * 0.64, y: H * 0.47 };
+    const kImg = src => mk(Object.assign(box(K, ks, ks), { zIndex: 2 }), 'img', v);
+    const king = kImg(); king.src = PIECE_URL[loser + 'K'];
+    rpRun(king, [{ transform: 'scale(.92)' }, { transform: 'scale(1)' }], { duration: 500, easing: 'ease-out' });
+    const gw = W * 0.46, gh = gw * WPN.pistol.vb[1] / WPN.pistol.vb[0], G = { x: W * 0.2, y: K.y - ks * 0.02 };
+    const gun = mk(Object.assign(box(G, gw, gh), { zIndex: 3, filter: 'drop-shadow(0 8px 14px rgba(0,0,0,.35))' }), 'div', v);
+    gun.innerHTML = WPN.pistol.svg;
+    gun.firstElementChild.setAttribute('width', '100%'); gun.firstElementChild.setAttribute('height', '100%');
+    sfx('lock');
+    await rpRun(gun, [{ transform: `translateX(${-W * 0.7}px)` }, { transform: 'translateX(0)' }], { duration: 520, easing: 'cubic-bezier(.2,.8,.3,1)' });
+    await rpWait(520, tok);
+    // fire
+    const M = { x: G.x + gw / 2, y: G.y - gh / 2 + gh * 0.47 };
+    sfx('shot'); sfx('boom'); impact(2);
+    const fl = mk(Object.assign(box(M, W * 0.22, W * 0.22), { borderRadius: '50%', background: 'radial-gradient(circle, #fff 0%, #ffe066 30%, rgba(255,120,30,.85) 52%, rgba(255,60,0,0) 70%)', zIndex: 4 }), 'div', v);
+    gone(fl, [{ transform: 'scale(.3)', opacity: 1 }, { transform: 'scale(1.3)', opacity: 0 }], { duration: 220 });
+    rpRun(gun, [{ transform: 'translate(0,0) rotate(0)' }, { transform: `translate(${-W * 0.04}px,${-W * 0.03}px) rotate(-14deg)`, offset: 0.25 }, { transform: 'translate(0,0) rotate(0)' }], { duration: 480, easing: 'ease-out' });
+    const tr = mk({ left: M.x + 'px', top: M.y - 3 + 'px', width: W - M.x + 'px', height: '6px', background: 'linear-gradient(90deg, #fff6c8, #222 60%, rgba(0,0,0,0))', transformOrigin: '0 50%', zIndex: 4 }, 'div', v);
+    gone(tr, [{ transform: 'scaleX(0)', opacity: 1 }, { transform: 'scaleX(1)', opacity: 1, offset: 0.4 }, { transform: 'scaleX(1)', opacity: 0 }], { duration: 300 });
+    await rpWait(70, tok);
+    // the king splits in half along the bullet
+    const cutY = (M.y - (K.y - ks / 2)) / ks * 100;
+    const t1 = kImg(), t2 = kImg(); t1.src = t2.src = king.src;
+    t1.style.clipPath = `inset(0 0 ${100 - cutY}% 0)`; t2.style.clipPath = `inset(${cutY}% 0 0 0)`;
+    king.remove();
+    rpRun(t1, [{ transform: 'translate(0,0) rotate(0)' }, { transform: `translate(${W * 0.06}px,${-H * 0.03}px) rotate(14deg)`, offset: 0.25 }, { transform: `translate(${W * 0.16}px,${H * 0.2}px) rotate(48deg)`, opacity: 0.95 }], { duration: 1300, easing: 'cubic-bezier(.3,.4,.5,1)' });
+    rpRun(t2, [{ transform: 'translate(0,0) rotate(0)' }, { transform: `translate(${W * 0.02}px,${H * 0.015}px) rotate(-4deg)`, offset: 0.25 }, { transform: `translate(${W * 0.05}px,${H * 0.12}px) rotate(-16deg)` }], { duration: 1300, easing: 'cubic-bezier(.3,.4,.5,1)' });
+    // red splatter + grey ink, thrown the way the bullet went
+    const C = { x: K.x, y: M.y };
+    for (let i = 0; i < 46; i++) {
+      const grey = i % 4 === 3, sz = W * (0.01 + Math.random() * 0.035), a = (Math.random() - 0.5) * 2.2, d = W * (0.12 + Math.random() * 0.45);
+      const e = mk(Object.assign(box(C, sz, sz * (0.7 + Math.random() * 0.6)), { borderRadius: '50% 45% 55% 50%', background: grey ? '#6f6f73' : 'radial-gradient(circle at 35% 30%, #ff4a4a, #b10000 60%, #5c0000)', zIndex: grey ? 1 : 5 }), 'div', v);
+      rpRun(e, [{ transform: 'translate(0,0) scale(.3)' }, { transform: `translate(${Math.cos(a) * d}px,${Math.sin(a) * d + H * 0.06 * Math.random()}px) scale(1)` }], { duration: 380 + Math.random() * 260, easing: 'cubic-bezier(.1,.8,.3,1)' });
+    }
+    for (let i = 0; i < 5; i++) { const sz = W * (0.12 + Math.random() * 0.12), e = mk(Object.assign(box({ x: C.x + W * (0.08 + Math.random() * 0.3), y: C.y + (Math.random() - 0.5) * H * 0.12 }, sz, sz * 0.7), { borderRadius: '48% 52% 40% 60%', background: i % 2 ? 'rgba(170,0,10,.85)' : 'rgba(110,110,115,.55)', zIndex: 1 }), 'div', v); rpRun(e, [{ transform: 'scale(0)' }, { transform: 'scale(1)' }], { duration: 260, delay: 40 * i, easing: 'ease-out', fill: 'both' }); }
+    await rpWait(1700, tok);
+    await rpRun(v, [{ opacity: 1 }, { opacity: 0 }], { duration: 450 });
+    v.remove();
   };
   const badgeAt = (cls, sq, big) => {
-    if (!BADGE_PNG[cls]) return;
-    const p = xy(sq), sz = q * (big ? 0.72 : 0.52);
+    if (!BADGE_PNG[cls]) return null;
+    const p = xy(sq), sz = q * (big ? 0.68 : 0.52);
     const e = mk({ left: (p.x + 1) * q - sz * 0.62 + 'px', top: p.y * q - sz * 0.38 + 'px', width: sz + 'px', height: sz + 'px', zIndex: 7, filter: 'drop-shadow(0 3px 6px rgba(0,0,0,.5))' }, 'img');
     e.src = 'data:image/png;base64,' + BADGE_PNG[cls];
-    rpRun(e, [{ transform: 'scale(0) rotate(-30deg)' }, { transform: 'scale(1.25) rotate(8deg)', offset: 0.6 }, { transform: 'scale(1) rotate(0)' }], { duration: 380, easing: 'cubic-bezier(.2,.8,.3,1.3)' });
+    rpRun(e, [{ transform: 'scale(.3)' }, { transform: 'scale(1.15)', offset: 0.5 }, { transform: 'scale(1)' }], { duration: 300, easing: 'ease-out' });
     return e;
   };
-  const poster = async (title, sub, img, hold) => {
+  // Zavee-style hook title card
+  const card = async (kicker, l1, l2, hold) => {
     const e = mk({}, 'div', top);
-    e.className = 'rp-poster';
-    e.innerHTML = (img ? `<img src="${img}" alt="">` : '') + `<div class="t">${title}</div>` + (sub ? `<div class="sub">${esc(sub)}</div>` : '');
-    await rpRun(e, [{ opacity: 0 }, { opacity: 1 }], { duration: 600, easing: 'ease-out' });
+    e.className = 'rp-card';
+    e.innerHTML = (kicker ? `<div class="k">${esc(kicker)}</div>` : '') + `<div class="l1">${esc(l1)}</div><div class="l2">${esc(l2)}</div>`;
+    await rpRun(e, [{ opacity: 0, transform: 'scale(1.08)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 600, easing: 'ease-out' });
     await rpWait(hold, tok);
     await rpRun(e, [{ opacity: 1 }, { opacity: 0 }], { duration: 600, easing: 'ease-in' });
     e.remove();
   };
-  // title card
-  const h = g.headers || {}, wn = h.White || 'White', bn = h.Black || 'Black', res = h.Result && h.Result !== '*' ? h.Result : '';
-  const n = g.moves.length;
-  const last = mkChess(g.positions[n].fen), mated = last.in_checkmate();
+  const h = g.headers || {}, wn = h.White && h.White !== '?' ? h.White : 'White', bn = h.Black && h.Black !== '?' ? h.Black : 'Black';
+  const n = g.moves.length, last = mkChess(g.positions[n].fen), mated = last.in_checkmate();
+  const kick = h.Event && !/\?/.test(h.Event) ? h.Event : '';
   prog.textContent = 'Starting…';
-  await poster(`${esc(wn)}<div class="vs">vs</div>${esc(bn)}`, h.Event && !/\?/.test(h.Event) ? h.Event : '', PIECE_URL[(mated ? (last.turn() === 'w' ? 'b' : 'w') : 'w') + 'K'], 900);
-  // the moves
+  await card(kick, wn, 'vs ' + bn, 1300);
+  let setIdx = 0;
   for (let i = 0; i < n; i++) {
     const mv = g.moves[i], A = g.positions[i], Bp = g.positions[i + 1];
     const cls = g.cls && g.cls[i] ? g.cls[i].cls : null;
     const after = mkChess(Bp.fen), mate = after.in_checkmate(), check = after.in_check();
-    const big = mate || cls === 'brilliant' || cls === 'great' || mv.captured === 'q';
-    const medium = !big && (!!mv.captured || check);
+    const big = !mate && (cls === 'brilliant' || cls === 'great' || mv.captured === 'q');
     prog.textContent = `Move ${Math.ceil((i + 1) / 2)} · ${i + 1}/${n}`;
     if (mate) { // a drained, dark silence before the finale
       await rpRun(scene, [{ filter: 'grayscale(0) brightness(1)' }, { filter: 'grayscale(.9) brightness(.55)' }], { duration: 500, fill: 'none' });
       scene.style.filter = 'grayscale(.9) brightness(.55)';
       await rpWait(900, tok);
       scene.style.filter = '';
-      rpRun(scene, [{ filter: 'grayscale(.9) brightness(.55)' }, { filter: 'grayscale(0) brightness(1)' }], { duration: 250, fill: 'none' });
     }
-    // camera: White moves zoom in on the move, Black moves zoom out to the whole board
-    if (mv.color === 'w') await camTo(mv.to, big ? 1.44 : 1.2, 500); else await camTo(null, 1, 500);
-    // slide the pieces (works out castling, en passant and promotion from the two positions)
+    if (mv.color === 'w') await camTo(mv.to, big || mate ? 1.44 : 1.2, 500); else await camTo(null, 1, 500);
+    // slide (castling, en passant and promotion are worked out from the two positions)
     const pm = fenToMap(A.fen), nm = fenToMap(Bp.fen);
     const vac = Object.keys(pm).filter(sq => pm[sq] !== nm[sq]), arr = Object.keys(nm).filter(sq => nm[sq] !== pm[sq]);
-    const used = new Set(), moves = [];
+    const used = new Set(), pairs = [];
     for (const to of arr.sort((a, b) => (a === mv.to ? -1 : 0) - (b === mv.to ? -1 : 0))) {
       let fr = vac.find(sq => !used.has(sq) && pm[sq] === nm[to] && sq === mv.from) || vac.find(sq => !used.has(sq) && pm[sq] === nm[to]);
       if (!fr && mv.uci && mv.uci[4] && !used.has(mv.from)) fr = mv.from;
-      if (fr) { used.add(fr); moves.push([fr, to]); }
+      if (fr) { used.add(fr); pairs.push([fr, to]); }
     }
-    const capturedEls = vac.filter(sq => !used.has(sq)).map(sq => ({ sq, el: els[sq], white: pm[sq] === pm[sq].toUpperCase() }));
-    // pieces landing on an occupied square: the old occupant is captured
-    for (const [, to] of moves) if (els[to] && !used.has(to) && !capturedEls.some(c => c.sq === to)) capturedEls.push({ sq: to, el: els[to], white: pm[to] === pm[to].toUpperCase() });
-    const slides = moves.map(([fr, to]) => {
+    const capd = vac.filter(sq => !used.has(sq)).map(sq => els[sq]).filter(Boolean);
+    const slides = pairs.map(([fr, to]) => {
       const img = els[fr];
       if (!img) return Promise.resolve();
       const a = xy(fr), b = xy(to);
-      place(img, to);
-      img.src = PIECE_URL[keyOf(nm[to])];
-      img.style.zIndex = 3;
-      return rpRun(img, [{ transform: `translate(${(a.x - b.x) * 100}%,${(a.y - b.y) * 100}%)`, filter: 'blur(0)' }, { transform: `translate(${(a.x - b.x) * 50}%,${(a.y - b.y) * 50}%)`, filter: 'blur(1.4px)', offset: 0.5 }, { transform: 'translate(0,0)', filter: 'blur(0)' }], { duration: 420, easing: 'cubic-bezier(.65,0,.35,1)', fill: 'none' }).then(() => { img.style.zIndex = ''; });
+      place(img, to); img.src = PIECE_URL[keyOf(nm[to])]; img.style.zIndex = 3;
+      return rpRun(img, [{ transform: `translate(${(a.x - b.x) * 100}%,${(a.y - b.y) * 100}%)`, filter: 'blur(0)' }, { transform: `translate(${(a.x - b.x) * 50}%,${(a.y - b.y) * 50}%)`, filter: 'blur(1.2px)', offset: 0.5 }, { transform: 'translate(0,0)', filter: 'blur(0)' }], { duration: 420, easing: 'cubic-bezier(.65,0,.35,1)', fill: 'none' }).then(() => { img.style.zIndex = ''; });
     });
-    const newEls = {};
-    for (const sq in els) if (!used.has(sq) && !capturedEls.some(c => c.sq === sq)) newEls[sq] = els[sq];
-    for (const [fr, to] of moves) newEls[to] = els[fr];
+    const next = {};
+    for (const sq in els) if (!used.has(sq) && nm[sq] && pm[sq] === nm[sq]) next[sq] = els[sq];
+    for (const [fr, to] of pairs) next[to] = els[fr];
     await Promise.all(slides);
-    for (const c of capturedEls) if (c.el && c.el !== newEls[c.sq]) c.el.remove();
+    for (const c of capd) gone(c, [{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(1.8)', opacity: 0 }], { duration: 300, easing: 'ease-out' }); // the captured piece pops
     for (const k in els) delete els[k];
-    Object.assign(els, newEls);
-    // land
+    Object.assign(els, next);
     moveSound(mv, after);
-    hl.innerHTML = [mv.from, moves.length ? moves[0][1] : mv.to].map(sq => { const p = xy(sq); return `<i style="left:${p.x * 12.5}%;top:${p.y * 12.5}%"></i>`; }).join('');
-    const land = moves.length ? moves[0][1] : mv.to, P = ctr(land);
-    const cap = capturedEls[0];
-    if (big) {
-      sfx('boom');
-      flash('#fff', 0.9, 200);
-      setTimeout(() => { if (tok === RP.token) { scene.style.filter = 'invert(1)'; setTimeout(() => { if (tok === RP.token && scene.style.filter === 'invert(1)') scene.style.filter = ''; drama(); }, 60 / RP.speed); } }, 70 / RP.speed);
-      shake(L.W * 0.022, 450);
-      rpRun(brd, [{ filter: 'drop-shadow(0 0 0 transparent)' }, { filter: `drop-shadow(${q * 0.08}px 0 0 rgba(255,0,60,.7)) drop-shadow(${-q * 0.08}px 0 0 rgba(0,210,255,.7))`, offset: 0.2 }, { filter: 'drop-shadow(0 0 0 transparent)' }], { duration: 420, fill: 'none' });
-      rpRun(brd, [{ transform: 'scale(1)' }, { transform: 'scale(1.045)', offset: 0.2 }, { transform: 'scale(1)' }], { duration: 320, fill: 'none', easing: 'ease-out' });
-      speedLines(P); glowOrb(P, cls === 'brilliant' ? '#26c2a3' : cls === 'great' ? '#5c8bb0' : '#ff8a3c'); ring(P, '#fff', q * 2.2, 900); octagon(P, '#fff'); rays(P); sparkles(P, 26, q * 1.8);
-      if (cap) debris(P, cap.white, 18);
-      if (els[land]) ghost(els[land].src, P);
-      if (check) { const ks = Object.keys(nm).find(sq => nm[sq] === (mv.color === 'w' ? 'k' : 'K')); if (ks) lightning(P, ctr(ks)); }
-    } else if (medium) {
-      ring(P, cap ? '#ffffff' : '#ffd84a', q * 1.6, 700);
-      if (cap) { debris(P, cap.white, 9); shake(L.W * 0.008, 260); }
-      if (check) { const ks = Object.keys(nm).find(sq => nm[sq] === (mv.color === 'w' ? 'k' : 'K')); if (ks) lightning(P, ctr(ks)); }
-    }
-    const showBadge = cls && cls !== 'book' && cls !== 'forced' && cls !== 'good' && cls !== 'excellent' && (cls !== 'best' || big || medium);
-    const bdg = showBadge ? badgeAt(mate ? (cls === 'brilliant' ? 'brilliant' : 'best') : cls, land, big) : null;
+    const land = pairs.length ? pairs[0][1] : mv.to, P = ctr(land);
+    let marks = [mv.from, land].map(sq => { const p = xy(sq); return `<i style="left:${p.x * 12.5}%;top:${p.y * 12.5}%"></i>`; }).join('');
+    if (check) { const kq = Object.keys(nm).find(sq => nm[sq] === (mv.color === 'w' ? 'k' : 'K')); if (kq) { const p = xy(kq); marks += `<i class="chk" style="left:${p.x * 12.5}%;top:${p.y * 12.5}%"></i>`; } }
+    hl.innerHTML = marks;
+    const showBadge = cls && !['book', 'forced', 'good', 'excellent'].includes(cls) && (cls !== 'best' || big || mate || !!mv.captured || check);
+    const bdg = showBadge ? badgeAt(mate ? (cls === 'brilliant' ? 'brilliant' : 'best') : cls, land, big || mate) : null;
     if (mate) {
-      const slam = mk({}, 'div', top);
-      slam.className = 'rp-slam';
-      slam.textContent = 'CHECKMATE';
-      await rpRun(slam, [{ transform: 'translate(-50%,-50%) scale(3) rotate(-10deg)', opacity: 0 }, { transform: 'translate(-50%,-50%) scale(.92) rotate(-5deg)', opacity: 1, offset: 0.7 }, { transform: 'translate(-50%,-50%) scale(1) rotate(-5deg)', opacity: 1 }], { duration: 360, easing: 'cubic-bezier(.2,.8,.3,1.2)' });
-      shake(L.W * 0.03, 520); sfx('boom');
-      await rpWait(RP_BEAT * 7, tok);
-      await rpRun(slam, [{ opacity: 1 }, { opacity: 0 }], { duration: 400 });
-      slam.remove();
-    } else await rpWait(big ? RP_HIT + 300 : medium ? 650 : 380, tok);
+      await rpWait(450, tok);
+      await killScene(after.turn());
+    } else if (big) {
+      const kinds = cls === 'brilliant' ? ['purple'] : mv.captured === 'q' ? ['cleave', 'dismantle'] : ['blue', 'dismantle', 'cleave'];
+      await setPiece(kinds[setIdx++ % kinds.length], P, ctr(mv.from));
+    } else await rpWait(mv.captured || check ? 600 : 380, tok);
     if (bdg) gone(bdg, [{ opacity: 1 }, { opacity: 0 }], { duration: 250 });
   }
   await camTo(null, 1, 600);
   prog.textContent = 'Finished';
-  const resTxt = mated ? `${(last.turn() === 'w' ? bn : wn)} wins by checkmate` : res === '1-0' ? `${wn} wins` : res === '0-1' ? `${bn} wins` : res === '1/2-1/2' ? 'Draw' : '';
-  await poster(esc(resTxt || 'Game over'), res, null, 1600);
+  const res = h.Result || '';
+  const winner = mated ? (last.turn() === 'w' ? bn : wn) : res === '1-0' ? wn : res === '0-1' ? bn : '';
+  await card(res && res !== '*' ? res : '', winner || (res === '1/2-1/2' ? 'Draw' : 'Game over'), winner ? (mated ? 'wins by checkmate' : 'wins') : '', 1700);
   prog.textContent = 'Finished · ⟲ to watch again';
 }
 

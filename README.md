@@ -9,7 +9,7 @@ No install, no account, no server. Open the page and play.
 - **Play the computer.** Stockfish 19 at any rating from 300 to full strength. Hints, take-backs and a "review this game" button.
 - **Beat the NPCs.** Twelve characters with their own personalities, from Pip (300) to OMEGA, the AI Chess Master God (3200+). Beat each one to unlock the next.
 - **Friend on the same device.** Two players, one screen, with names, an auto-turning board and a chess clock (1 min up to 30 min, with increments).
-- **Replay**: in Game review, press 🎬 Replay to watch the game like a ChessGameShorts edit (camera moves, hit effects, badges, CHECKMATE slam).
+- **Replay**: in Game review, press 🎬 Replay to watch the game like a ChessGameShorts edit (gentle camera, badges, JJK-style manga set pieces on big moves, a gun kill scene on checkmate).
 - **Secret army** (Custom mode): arrange your pieces in secret, then play against an army of boxes and remember which box is which.
 - **Fischer random (Chess960)**: in Custom mode and Online. The back pieces start shuffled; castle by moving your king onto your rook.
 - **Online**: find a player near you, or make a code and send it to a friend. Runs on a small Cloudflare Worker in `online/` (see `online/README.md`).

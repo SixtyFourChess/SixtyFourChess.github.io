@@ -415,6 +415,14 @@ textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 0; }
 .bt-scope svg { display: block; width: 100%; height: 100%; }
 .bt-slash { border-radius: 50%; background: linear-gradient(90deg, rgba(255, 255, 255, 0), #fff 45%, #fff 55%, rgba(255, 255, 255, 0)); box-shadow: 0 0 10px rgba(255, 255, 255, .9); }
 
+/* ---------- Secret army ---------- */
+.secret-cover { position: absolute; inset: 0; z-index: 30; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 24px; text-align: center; background: radial-gradient(circle at 50% 40%, #2c2440, #120e1c 75%); color: #f3eefc; }
+.secret-cover[hidden] { display: none; }
+.secret-cover .sc-icon { width: 64px; height: 64px; }
+.secret-cover h3 { margin: 0; font: 800 clamp(18px, 4vw, 26px)/1.2 var(--font-display); }
+.secret-cover p { margin: 0; max-width: 32ch; opacity: .8; font-size: 14px; }
+.secret-cover .btn { margin-top: 6px; }
+
 /* ---------- checkmate finishers ---------- */
 .fin-pick { position: relative; }
 .fin-pick > span { display: none; }
@@ -629,7 +637,12 @@ textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 0; }
           <div class="coach c-banner" id="cBanner"></div>
           <div class="status" id="cStatus" role="status"></div>
           <div class="sheet" id="cMoves" data-empty="Moves will appear here."></div>
-          <div class="btn-row">
+          <div class="btn-row" id="cArrange" hidden>
+            <button class="btn" id="cShuffle" type="button">Shuffle</button>
+            <button class="btn" id="cReset" type="button">Reset</button>
+            <button class="btn primary" id="cReady" type="button">Ready</button>
+          </div>
+          <div class="btn-row" id="cPlayBtns">
             <button class="btn" id="cUndo" type="button">Take back</button>
             <button class="btn" id="cFlip" type="button">Flip</button>
             <button class="btn" id="cResign" type="button">Resign</button>
@@ -2124,7 +2137,7 @@ class Board {
     for (const sq in prev) { const k = prev[sq]; if (k[0] !== mover && (!next[sq] || next[sq][0] === mover)) caps.push({ sq, key: k }); }
     if (caps.length !== 1) return;
     const cap = caps[0], token = this.fxToken;
-    if (S.battle) {
+    if (S.battle && !(this.opts.noBattle && this.opts.noBattle())) {
       this.battle(cap, mover, prev).then(done => { if (done && this.fxToken === token) this.burst(cap, mover); }).catch(() => {});
       return;
     }
@@ -4161,6 +4174,7 @@ function startFenFor(rule, vs, userColor, opt) {
   return r.setup ? r.setup(sidesFor(r, vs, userColor), optOf(r, opt)) : START_FEN;
 }
 function powerMoves(G, from) {
+  if (G.arrange && secretOn(G)) return G.cover ? [] : secretTargets(G, from);
   const rule = ruleOf(G.rule);
   if (!rule.power || !G.chess || G.over) return [];
   if (G.frenzy && from !== G.frenzy) return [];
@@ -4172,6 +4186,7 @@ function powerMoves(G, from) {
 function customAllowStd(from) {
   const G = CUSTOM;
   if (G.phase !== 'game') return true;
+  if (G.arrange) return false;
   if (G.frenzy) return from === G.frenzy;
   const rule = ruleOf(G.rule);
   return !rule.allowStd || !G.chess || !powered(G, G.chess.turn()) || rule.allowStd(G, from);
@@ -4408,6 +4423,114 @@ const FISCHER = {
 };
 RULES.push(FISCHER);
 
+/* ---------- Custom rule: Secret army ---------- */
+// Each player arranges their 16 pieces in their own two rows, then the other side only ever sees boxes.
+const BOX_CACHE = {};
+function boxSrc(col) {
+  if (!BOX_CACHE[col]) {
+    const W = col === 'w', fill = W ? '#f3efe6' : '#24232a', edge = W ? '#9a948a' : '#000', mark = W ? '#c9c2b5' : '#3c3a45';
+    const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 45 45'><rect x='7' y='7' width='31' height='31' rx='5' fill='${fill}' stroke='${edge}' stroke-width='1.6'/><path d='M18.3 18.2a4.3 4.3 0 1 1 6.3 3.8c-1.4.8-2.1 1.6-2.1 3.2' fill='none' stroke='${mark}' stroke-width='2.4' stroke-linecap='round'/><circle cx='22.5' cy='29.6' r='1.5' fill='${mark}'/></svg>`;
+    BOX_CACHE[col] = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  }
+  return BOX_CACHE[col];
+}
+const secretOn = G => G.phase === 'game' && !!ruleOf(G.rule).secret;
+// whose pieces are shown face up right now ('all' once the game is over, null while the device is being passed)
+function secretViewer(G) {
+  if (G.over) return 'all';
+  if (G.vs === 'bot') return G.userColor;
+  if (G.cover) return null;
+  return G.arrange || (G.chess ? G.chess.turn() : 'w');
+}
+const secretRows = col => col === 'w' ? ['1', '2'] : ['8', '7'];
+// while arranging: any of your pieces can swap with any other, but the king stays on the back row
+function secretTargets(G, from) {
+  const col = G.arrange, m = fenToMap(G.chess.fen()), [back, front] = secretRows(col), out = [];
+  if (!m[from] || sideOfPiece(m[from]) !== col) return out;
+  const isK = m[from].toLowerCase() === 'k';
+  for (const r of [back, front]) for (const f of 'abcdefgh') {
+    const sq = f + r;
+    if (sq === from || !m[sq]) continue;
+    if (isK && r !== back) continue;
+    if (m[sq].toLowerCase() === 'k' && from[1] !== back) continue;
+    out.push({ to: sq, move: true });
+  }
+  return out;
+}
+// the real start is White to move; while someone arranges, the board is set to their turn so they can pick up pieces
+function secretSetMap(G, m) { G.startFen = buildFen(m, 'w', 'KQkq', '-', 0, 1); G.chess = mkChess(G.arrange ? buildFen(m, G.arrange, 'KQkq', '-', 0, 1) : G.startFen); }
+function secretShuffle(G, col) {
+  const m = fenToMap(G.chess.fen()), [back, front] = secretRows(col), sqs = [];
+  for (const r of [back, front]) for (const f of 'abcdefgh') sqs.push(f + r);
+  const pcs = sqs.map(q => m[q]), king = pcs.find(x => x.toLowerCase() === 'k'), rest = pcs.filter(x => x !== king);
+  for (let i = rest.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [rest[i], rest[j]] = [rest[j], rest[i]]; }
+  const ks = Math.floor(Math.random() * 8);
+  sqs.forEach((q, i) => { m[q] = i === ks ? king : rest.shift(); });
+  secretSetMap(G, m);
+}
+function secretReset(G, col) {
+  const m = fenToMap(G.chess.fen()), start = fenToMap(START_FEN);
+  for (const r of secretRows(col)) for (const f of 'abcdefgh') m[f + r] = start[f + r];
+  secretSetMap(G, m);
+}
+function secretReady() {
+  const G = CUSTOM;
+  if (!secretOn(G) || !G.arrange || G.cover) return;
+  if (G.vs === 'friend' && G.arrange === 'w') {
+    G.arrange = 'b'; G.cover = { side: 'b', arrange: true }; G.orientation = 'b';
+    secretSetMap(G, fenToMap(G.startFen));
+  } else {
+    G.arrange = null; G.log = []; G.lastMove = null; G.chess = mkChess(G.startFen);
+    if (G.vs === 'friend') { G.cover = { side: 'w' }; G.orientation = 'w'; }
+  }
+  saveCustom(); renderCustom(false);
+  customBot();
+}
+// shown between turns in a friend game so nobody sees the other army
+function secretCoverSync() {
+  const G = CUSTOM, board = $('#board');
+  let el = $('#secretCover');
+  const show = S.tab === 'custom' && secretOn(G) && G.vs === 'friend' && !!G.cover && !G.over;
+  if (!show) { if (el) el.hidden = true; return; }
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'secretCover'; el.className = 'secret-cover';
+    board.appendChild(el);
+    el.addEventListener('click', e => { if (e.target.closest('button')) { CUSTOM.cover = null; saveCustom(); renderCustom(false); } });
+  }
+  const side = G.cover.side, me = pName(side), other = pName(side === 'w' ? 'b' : 'w');
+  el.innerHTML = `<img class="sc-icon" src="${boxSrc(side)}" alt="">` +
+    `<h3>${G.cover.arrange ? `${esc(me)}: set up your secret army` : `${esc(me)}'s turn`}</h3>` +
+    `<p>${esc(other)}, look away! ${G.cover.arrange ? `${esc(me)} is hiding their pieces.` : 'Only the player whose turn it is should see the board.'}</p>` +
+    `<button class="btn primary" type="button">I'm ${esc(me)}. Show my pieces</button>`;
+  el.hidden = false;
+}
+// the other side's moves only show squares, never which piece moved
+function secretSan(G, e) {
+  const v = secretViewer(G);
+  if (!secretOn(G) || v === 'all' || e.color === v || /^O-O/.test(e.san)) return e.san;
+  return '■' + e.from + (e.san.includes('x') ? '×' : '–') + e.to + ((e.san.match(/[+#]$/) || [''])[0]);
+}
+const SECRET = {
+  id: 'secret', short: 'Secret army', card: 'Set up your pieces in secret. Theirs are hidden boxes', both: true, secret: true,
+  title: 'Chess, but the pieces are secret',
+  list: [
+    'Before the game, each player arranges their own pieces anywhere in their first two rows. Tap or drag one piece onto another to swap them. Your king has to stay on the back row.',
+    "Then it's normal chess, except you only ever see your opponent's pieces as boxes. Their moves in the move list only show squares, never which piece moved.",
+    'Remember how each box moves. That "pawn" that just stepped forward might be a rook.',
+    'Everything is revealed when the game ends.'
+  ],
+  text: 'Arrange your army in secret, then play normal chess against an army of boxes.',
+  setup() { return START_FEN; },
+  skin(G, sq, p, sides, inGame) {
+    if (!inGame || G.phase !== 'game') return null;
+    const v = secretViewer(G);
+    return v === 'all' || v === p.color ? null : { src: boxSrc(p.color) };
+  },
+  icon: () => `<img src="${boxSrc('b')}" alt="">`
+};
+RULES.push(SECRET);
+
 const cName = (G, col) => G.vs === 'friend' ? pName(col) : col === G.userColor ? 'You' : 'Stockfish';
 function customCheckOver(G) {
   const c = G.chess;
@@ -4434,7 +4557,7 @@ function restoreFromLog(G) {
 }
 function saveCustom() {
   const G = CUSTOM;
-  store.set('s64.custom', { rule: G.rule, vs: G.vs, elo: G.elo, opt: G.opt, userColor: G.userColor, orientation: G.orientation, startFen: G.startFen, startTags: G.startTags, log: G.log, over: G.over, phase: G.phase });
+  store.set('s64.custom', { rule: G.rule, vs: G.vs, elo: G.elo, opt: G.opt, userColor: G.userColor, orientation: G.orientation, startFen: G.startFen, startTags: G.startTags, log: G.log, over: G.over, phase: G.phase, arrange: G.arrange || null });
 }
 function restoreCustom() {
   const G = CUSTOM, d = store.get('s64.custom', null);
@@ -4443,6 +4566,10 @@ function restoreCustom() {
       Object.assign(G, { rule: ruleOf(d.rule).id, vs: d.vs === 'friend' ? 'friend' : 'bot', elo: +d.elo || 1500, opt: d.opt || '', userColor: d.userColor === 'b' ? 'b' : 'w', orientation: d.orientation === 'b' ? 'b' : 'w', startFen: d.startFen, startTags: d.startTags || {}, log: d.log, phase: d.phase === 'game' ? 'game' : 'lobby' });
       restoreFromLog(G);
       G.over = d.over || null;
+      G.arrange = d.arrange === 'w' || d.arrange === 'b' ? d.arrange : null;
+      if (G.arrange && secretOn(G)) secretSetMap(G, fenToMap(G.startFen));
+      // after a reload, a friend game hides the board until the right player taps in
+      G.cover = secretOn(G) && G.vs === 'friend' && !G.over ? { side: G.arrange || G.chess.turn(), arrange: !!G.arrange } : null;
     } catch (e) { G.phase = 'lobby'; G.log = []; }
   }
   if (!G.chess) G.chess = mkChess(G.startFen);
@@ -4450,11 +4577,21 @@ function restoreCustom() {
 function customMovable() {
   const G = CUSTOM;
   if (G.phase !== 'game' || G.over || G.thinking || G.animating || !G.chess) return null;
+  if (secretOn(G) && (G.cover || G.arrange)) return G.cover ? null : G.arrange;
   const t = G.chess.turn();
   return G.vs === 'friend' || t === G.userColor ? t : null;
 }
 function customUserMove(from, to, promo) {
   const G = CUSTOM;
+  if (secretOn(G) && G.arrange) { // setting up: swap two of your pieces
+    if (G.cover || !secretTargets(G, from).some(x => x.to === to)) return false;
+    const m = fenToMap(G.chess.fen());
+    [m[from], m[to]] = [m[to], m[from]];
+    secretSetMap(G, m);
+    sound('move');
+    saveCustom(); renderCustom(false);
+    return true;
+  }
   if (!customMovable()) return false;
   const res = customDoMove(G, from, to, promo);
   if (!res) return false;
@@ -4470,6 +4607,7 @@ function afterCustomMove(G, res, anim) {
   customShow(G, res, anim, () => {
     G.animating = false;
     if (G.vs === 'friend' && FREE.autoFlip && !G.over && G === P) G.orientation = G.chess.turn();
+    if (secretOn(G) && G.vs === 'friend' && !G.over) { G.cover = { side: G.chess.turn() }; G.orientation = G.chess.turn(); saveCustom(); }
     if (G === P && S.tab === 'custom') renderCustom(false);
     if (!G.over && G.vs === 'bot' && G.chess.turn() !== G.userColor) customBot();
   });
@@ -4573,8 +4711,19 @@ function customShow(G, res, anim, done) {
   };
   setTimeout(go, wait);
 }
+// Stockfish refuses positions with a pawn on its own back row (possible in Secret army), so it gets the
+// position without those pawns. Returns null if that would leave a king in an impossible check.
+function engineSafeFen(fen) {
+  const parts = fen.split(' '), rows = parts[0].split('/');
+  if (!/P/.test(rows[7]) && !/p/.test(rows[0])) return fen;
+  const m = fenToMap(fen);
+  for (const f of 'abcdefgh') { if (m[f + '1'] === 'P') delete m[f + '1']; if (m[f + '8'] === 'p') delete m[f + '8']; }
+  if (attacked(m, parts[1] === 'w' ? 'b' : 'w')) return null;
+  return buildFen(m, parts[1], parts[2], parts[3], parts[4], parts[5]);
+}
 async function customBot() {
   const G = CUSTOM;
+  if (G.arrange) return;
   if (G !== P || G.phase !== 'game' || G.over || G.thinking || G.animating || G.vs !== 'bot' || !G.chess || G.chess.turn() === G.userColor) return;
   if (!engine.ready && !engine.failed) { renderCustom(false); return; }
   const gen = G.gen, legal = G.chess.moves({ verbose: true });
@@ -4583,17 +4732,21 @@ async function customBot() {
   const prm = levelParams(G.elo), t0 = performance.now();
   let uci = null;
   try {
-    if (engine.failed) uci = naiveMove(G.chess);
+    const efen = engineSafeFen(G.chess.fen());
+    if (engine.failed || !efen) uci = naiveMove(G.chess);
     else if (legal.length === 1) uci = toUci(legal[0]);
     else if (Math.random() < prm.blunder) uci = toUci(pick(legal));
     else {
-      const job = engine.run(G.chess.fen(), { depth: prm.depth, movetime: prm.movetime, multipv: Math.min(prm.multipv, legal.length) });
+      const job = engine.run(efen, { depth: prm.depth, movetime: prm.movetime, multipv: Math.min(Math.max(prm.multipv, efen === G.chess.fen() ? 1 : 4), legal.length) });
       G.job = job;
       const res = await job.promise;
       G.job = null;
       if (gen !== G.gen) return;
       if (!res) { G.thinking = false; renderCustom(false); return; }
       uci = chooseFromLines(res, prm);
+      // with hidden back-row pawns its pick might not be legal for real: use its next idea instead
+      const isLegal = u => { const o = u && uciObj(u); return !!o && legal.some(x => x.from === o.from && x.to === o.to); };
+      if (!isLegal(uci)) uci = ((res.lines || []).map(l => l.pv && l.pv[0]).find(isLegal)) || naiveMove(G.chess);
     }
   } catch (e) {
     if (gen !== G.gen) return;
@@ -4622,17 +4775,25 @@ function customStart() {
   const rr = ruleOf(G.rule);
   if (rr.init) rr.init(G, poweredSides(G), G.opt);
   if (rr.started) rr.started();
+  G.arrange = null; G.cover = null;
+  if (rr.secret) {
+    G.arrange = G.vs === 'bot' ? G.userColor : 'w';
+    if (G.vs === 'bot') secretShuffle(G, G.userColor === 'w' ? 'b' : 'w'); // Stockfish hides its own army
+    else G.cover = { side: 'w', arrange: true };
+    secretSetMap(G, fenToMap(G.startFen));
+  }
   G.startTags = JSON.parse(JSON.stringify(G.tags));
   saveCustom(); renderCustom(false);
   customBot();
 }
 function customUndo() {
   const G = CUSTOM;
-  if (G.phase !== 'game' || !G.log.length || G.animating) return;
+  if (G.phase !== 'game' || !G.log.length || G.animating || G.arrange) return;
   pauseBot(G);
   G.log.pop();
   restoreFromLog(G);
   if (G.vs === 'bot' && G.chess.turn() !== G.userColor && G.log.length) { G.log.pop(); restoreFromLog(G); }
+  if (secretOn(G) && G.vs === 'friend') { G.cover = { side: G.chess.turn() }; G.orientation = G.chess.turn(); }
   saveCustom(); renderCustom(false);
   customBot();
 }
@@ -4650,7 +4811,9 @@ function customPlayers(G, vs, user) {
 }
 function customStatus(G) {
   const c = G.chess;
-  if (G.over) return { html: esc(G.over.text), over: true };
+  if (G.over) return { html: esc(G.over.text) + (secretOn(G) ? ' Both armies are revealed.' : ''), over: true };
+  if (secretOn(G) && G.cover) return { html: `Pass the device to ${esc(pName(G.cover.side))}.` };
+  if (secretOn(G) && G.arrange) return { html: `${G.vs === 'friend' ? esc(pName(G.arrange)) + ': set' : 'Set'} up your army. Tap or drag one of your pieces onto another to swap them (your king stays on the back row), then press <b>Ready</b>.` };
   if (G.frenzy) return { html: `Frenzy! ${G.vs === 'friend' ? esc(pName(c.turn())) + '\'s' : 'Your'} Overlord moves again.` };
   if (G.vs === 'bot' && c.turn() !== G.userColor) {
     if (!engine.ready && !engine.failed) return { html: 'Loading the engine…', spin: true };
@@ -4687,6 +4850,7 @@ function renderCustom(anim) {
     const resumable = G.log.length > 0 && !G.over;
     $('#cResume').hidden = !resumable;
     if (resumable) $('#cResume').textContent = `Resume: ${ruleOf(G.rule).short}`;
+    secretCoverSync();
     return;
   }
   const rule = ruleOf(G.rule), c = G.chess;
@@ -4698,8 +4862,12 @@ function renderCustom(anim) {
   $('#cBanner').innerHTML = `<span class="eyebrow">Custom rules</span><h3>${esc(rule.title)}</h3>${rule.list ? `<ul class="a51-pow">${rule.list.map(x => `<li>${x}</li>`).join('')}</ul>` : `<p class="small">${esc(rule.text)}</p>`}<span class="c-who">${esc(who)}</span>`;
   statusInto($('#cStatus'), customStatus(G));
   const sans = G.log.map(e => e.san), sheet = $('#cMoves');
-  sheet.innerHTML = sheetHTML(sans, sans.length, fenTurn(G.startFen), 1, null, false);
+  sheet.innerHTML = sheetHTML(secretOn(G) ? G.log.map(e => secretSan(G, e)) : sans, sans.length, fenTurn(G.startFen), 1, null, false);
   scrollCurrent(sheet);
+  $('#cArrange').hidden = !(secretOn(G) && G.arrange);
+  $('#cPlayBtns').hidden = secretOn(G) && !!G.arrange;
+  $('#cReady').disabled = !!G.cover;
+  secretCoverSync();
   $('#cUndo').disabled = !G.log.length || G.animating;
   $('#cResign').disabled = !!G.over || !G.log.length;
 }
@@ -5126,6 +5294,7 @@ function setTab(t) {
   $('#ladderPanel').hidden = t !== 'ladder';
   $('#customPanel').hidden = t !== 'custom';
   $('#onlinePanel').hidden = t !== 'online';
+  if (t !== 'custom') secretCoverSync();
   if (t === 'online') { ONLINE.unread = 0; renderChat(); }
   $('#reviewPanel').hidden = t !== 'review';
   hideSayPop();
@@ -5164,7 +5333,8 @@ function wire() {
     extraMoves: sq => (S.tab === 'custom' && CUSTOM.phase === 'game' && CUSTOM.chess) ? powerMoves(CUSTOM, sq) : [],
     allowStd: sq => S.tab !== 'custom' || customAllowStd(sq),
     skin: (sq, p) => S.tab === 'custom' ? customSkin(sq, p) : null,
-    finisherOk: () => S.tab !== 'review'
+    finisherOk: () => S.tab !== 'review',
+    noBattle: () => S.tab === 'custom' && secretOn(CUSTOM) && !CUSTOM.over
   });
 
   $$('.tab').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
@@ -5202,6 +5372,9 @@ function wire() {
   $('#cElo').addEventListener('click', e => { const b = e.target.closest('[data-e]'); if (!b) return; CUSTOM.sel.elo = +b.dataset.e; store.set('s64.cElo', CUSTOM.sel.elo); renderPlay(); });
   $('#cColor').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; CUSTOM.sel.color = b.dataset.c; store.set('s64.cColor', CUSTOM.sel.color); renderPlay(); });
   $('#cStart').addEventListener('click', customStart);
+  $('#cReady').addEventListener('click', secretReady);
+  $('#cShuffle').addEventListener('click', () => { const G = CUSTOM; if (!secretOn(G) || !G.arrange || G.cover) return; secretShuffle(G, G.arrange); saveCustom(); renderCustom(false); });
+  $('#cReset').addEventListener('click', () => { const G = CUSTOM; if (!secretOn(G) || !G.arrange || G.cover) return; secretReset(G, G.arrange); saveCustom(); renderCustom(false); });
   wireOnline();
   $('#cResume').addEventListener('click', () => { CUSTOM.phase = 'game'; saveCustom(); renderPlay(); customBot(); });
   $('#cUndo').addEventListener('click', customUndo);

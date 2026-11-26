@@ -10,7 +10,7 @@ No install, no account, no server. Open the page and play.
 - **Beat the NPCs.** Twelve characters with their own personalities, from Pip (300) to OMEGA, the AI Chess Master God (3200+). Beat each one to unlock the next.
 - **Friend on the same device.** Two players, one screen, with names, an auto-turning board and a chess clock (1 min up to 30 min, with increments).
 - **Animations** (Full / Light / Off, top bar): checkmate gun finisher, promotion power-up, castling shield, en passant ghost, fork lines, queen-sacrifice slow-mo, king tipping over on resign, clock shattering on time-out, frozen board on draws, NPC boss intros and victory cards, and an online VS card. Light keeps only the quick effects; online Bullet always plays as Light.
-- **Replay**: in Game review, press 🎬 Replay to watch the game like a ChessGameShorts edit (gentle camera, smooth moves, captures that lift up and drop onto their target, badges).
+- **Replay**: in Game review, press 🎬 Replay to watch the game like a ChessGameShorts edit, cut to phonk: the first real move hits the drop, moves land on the beat, captures snap to the 808s, and the music cuts out before the mate slams in. Pick a song or Auto, ♪ mutes it. Songs live in `audio/` with beat maps in `RP_SONGS`.
 - **Secret army** (Custom mode): arrange your pieces in secret, then play against an army of boxes and remember which box is which.
 - **Fischer random (Chess960)**: in Custom mode and Online. The back pieces start shuffled; castle by moving your king onto your rook.
 - **Online**: find a player near you, or make a code and send it to a friend. Runs on a small Cloudflare Worker in `online/` (see `online/README.md`).

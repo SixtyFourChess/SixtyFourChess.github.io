@@ -5156,7 +5156,7 @@ function confirmResign() {
 
 /* ============================================================
    REPLAY: watch a reviewed game like a ChessGameShorts edit
-   Straight board, no tilt; White moves zoom in gently, Black moves zoom back out. Pieces glide with a soft glow;
+   Straight board, no tilt; White moves zoom in gently, Black moves zoom back out. Pieces glide smoothly;
    a capturing piece lifts up and drops onto its target, spinning first if it comes from more than 4 squares away.
    ============================================================ */
 const RP = { el: null, token: 0, paused: false, speed: 1, anims: new Set(), camT: 'translate(0px,0px) scale(1)' };
@@ -5262,7 +5262,7 @@ async function rpPlay(tok) {
   cam.style.transform = RP.camT = 'translate(0px,0px) scale(1)';
   const mk = (css, tag, parent) => { const e = document.createElement(tag || 'div'); Object.assign(e.style, css || {}); (parent || fx).appendChild(e); return e; };
   const smooth = t => { t = Math.max(0, Math.min(1, t)); return t * t * t * (t * (t * 6 - 15) + 10); };
-  const glowF = (k, col) => k > 0.01 ? `drop-shadow(0 ${q * 0.08 * k}px ${q * 0.1 * k}px rgba(0,0,0,${0.35 * k})) drop-shadow(0 0 ${q * 0.22 * k}px ${col})` : 'none';
+  const glowF = k => k > 0.01 ? `drop-shadow(0 ${q * 0.08 * k}px ${q * 0.1 * k}px rgba(0,0,0,${0.35 * k}))` : 'none'; // just a shadow under a lifted piece, no glow
   // a soft glow that blooms on the landing square
   const bloom = (P, col, size) => { const e = mk({ left: P.x - size / 2 + 'px', top: P.y - size / 2 + 'px', width: size + 'px', height: size + 'px', borderRadius: '50%', background: `radial-gradient(circle, ${col} 0%, rgba(0,0,0,0) 65%)`, mixBlendMode: 'screen', zIndex: 1 }); rpRun(e, [{ transform: 'scale(.5)', opacity: 0.95 }, { transform: 'scale(1.2)', opacity: 0 }], { duration: 900, easing: 'ease-out' }).then(() => e.remove()); };
   // ordinary moves: one smooth glide with a gentle lift
@@ -5270,7 +5270,7 @@ async function rpPlay(tok) {
     const a = xy(fr), b = xy(to), dx = (a.x - b.x) * q, dy = (a.y - b.y) * q, dist = Math.hypot(dx, dy) / q, kf = [];
     for (let i = 0; i <= 24; i++) {
       const u = i / 24, s = smooth(u), arc = Math.sin(Math.PI * s);
-      kf.push({ offset: u, transform: `translate(${dx * (1 - s)}px,${dy * (1 - s) - q * Math.min(0.16, 0.05 + 0.03 * dist) * arc}px) scale(${1 + 0.07 * arc})`, filter: glowF(arc, 'rgba(255,214,110,.95)') });
+      kf.push({ offset: u, transform: `translate(${dx * (1 - s)}px,${dy * (1 - s) - q * Math.min(0.16, 0.05 + 0.03 * dist) * arc}px) scale(${1 + 0.07 * arc})`, filter: glowF(arc) });
     }
     return rpRun(img, kf, { duration: 520 + Math.min(220, dist * 40), easing: 'linear', fill: 'none' });
   };
@@ -5285,12 +5285,12 @@ async function rpPlay(tok) {
       if (t < T1) { const s = smooth(t / T1); x = dx; y = dy; lift = Lh * s; sc = 1 + 0.18 * s; gl = s; rot = spin * s; }
       else if (t < T2) { const s = smooth((t - T1) / (T2 - T1)); x = dx * (1 - s); y = dy * (1 - s); lift = Lh + q * 0.1 * Math.sin(Math.PI * s); sc = 1.18; gl = 1; }
       else { const s = ((t - T3) / (T - T3)) ** 2; lift = Lh * (1 - s); sc = 1.18 - 0.18 * s; gl = 1 - 0.4 * s; }
-      kf.push({ offset: Math.min(1, t / T), transform: `translate(${x}px,${y - lift}px) rotate(${rot}deg) scale(${sc})`, filter: glowF(gl, 'rgba(255,140,60,.95)') });
+      kf.push({ offset: Math.min(1, t / T), transform: `translate(${x}px,${y - lift}px) rotate(${rot}deg) scale(${sc})`, filter: glowF(gl) });
     }
     kf[kf.length - 1].offset = 1;
-    if (victim) { // the target glows red as the piece comes down on it, then shrinks away
+    if (victim) { // the target shrinks away as the piece comes down on it
       victim.style.zIndex = 1;
-      rpRun(victim, [{ transform: 'scale(1)', filter: 'none' }, { transform: 'scale(1)', filter: 'drop-shadow(0 0 8px rgba(255,60,60,.9))', offset: T2 / T }, { transform: 'scale(.6)', opacity: 0, filter: 'none' }], { duration: T, easing: 'linear', fill: 'forwards' });
+      rpRun(victim, [{ transform: 'scale(1)' }, { transform: 'scale(1)', offset: T2 / T }, { transform: 'scale(.6)', opacity: 0 }], { duration: T, easing: 'linear', fill: 'forwards' });
     }
     return rpRun(img, kf, { duration: T, easing: 'linear', fill: 'none' });
   };

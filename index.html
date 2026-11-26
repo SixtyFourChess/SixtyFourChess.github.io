@@ -421,6 +421,11 @@ textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 0; }
 @media (max-aspect-ratio: 9/17) { .rp-frame { height: auto; width: 100vw; } }
 .rp-scene { position: relative; flex: 1; overflow: hidden; background: radial-gradient(circle at 50% 45%, #26262c, #0c0c0f 72%); }
 .rp-cam { position: absolute; left: 0; width: 100%; transform-origin: 0 0; will-change: transform; }
+.rp-scene { perspective: calc(var(--rpw, 400px) * 1.7); }
+.rp-3d { position: absolute; inset: 0; transform-origin: 50% 50%; will-change: transform, filter; }
+.rp-ring { border-radius: 50%; border: calc(var(--rpw, 400px) * .008) solid #fff; pointer-events: none; z-index: 8; }
+.rp-glitch { position: absolute; inset: 0; z-index: 19; pointer-events: none; mix-blend-mode: difference; }
+.rp-vig2 { background: radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0) 30%, rgba(0,0,0,.92) 100%); z-index: 3; opacity: 0; }
 .rp-board { position: relative; width: 100%; aspect-ratio: 1 / 1; background: repeating-conic-gradient(#8f9197 0 25%, #ececec 0 50%) 0 0 / 25% 25%; box-shadow: 0 30px 80px rgba(0,0,0,.6); }
 .rp-board > div { position: absolute; inset: 0; pointer-events: none; }
 .rp-board > .rp-hl { z-index: 0; } .rp-board > .rp-pcs { z-index: 1; }
@@ -5247,6 +5252,16 @@ function rpmDuck(on) {
   if (on) { gn.setTargetAtTime(rpmVol() * 0.18, t, 0.05); f.setTargetAtTime(320, t, 0.06); }
   else { gn.setValueAtTime(rpmVol(), t); f.setValueAtTime(20000, t); }
 }
+// before the drop: the music opens up from muffled (a build) and then cuts to near silence until the drop lands
+function rpmBuild(fromT, cutT) {
+  if (!RPM.audio) return;
+  const now = rpmNow(), at = t => RPM.ctx.currentTime + Math.max(0, t - now) / RPM.rate;
+  const gn = RPM.gain.gain, f = RPM.lp.frequency, t0 = at(fromT), t1 = at(cutT);
+  gn.cancelScheduledValues(0); f.cancelScheduledValues(0);
+  f.setValueAtTime(20000, RPM.ctx.currentTime);
+  if (t1 - t0 > 0.6) { f.setValueAtTime(380, t0); f.exponentialRampToValueAtTime(14000, t1); }
+  gn.setValueAtTime(rpmVol(), RPM.ctx.currentTime); gn.setValueAtTime(rpmVol(), t1); gn.linearRampToValueAtTime(rpmVol() * 0.04, t1 + 0.04);
+}
 function rpmFade(sec) {
   if (!RPM.audio) return;
   const t = RPM.ctx.currentTime, gn = RPM.gain.gain;
@@ -5332,6 +5347,7 @@ const RP_STOP = {};
 function rpRun(el, kf, opt) {
   const a = el.animate(kf, Object.assign({ fill: 'forwards' }, opt));
   a.playbackRate = RP.speed;
+  if (RP.skip > 0) a.currentTime = RP.skip; // started late (a slow frame): jump ahead so it still lands on the beat
   if (RP.paused) a.pause();
   RP.anims.add(a);
   return a.finished.catch(() => {}).finally(() => RP.anims.delete(a));
@@ -5374,10 +5390,10 @@ function startReplay() {
   const el = document.createElement('div');
   el.className = 'rp';
   el.innerHTML = `<div class="rp-frame"><div class="rp-scene">
-      <div class="rp-cam"><div class="rp-punch"><div class="rp-board"><div class="rp-hl"></div><div class="rp-pcs"></div></div><div class="rp-fx"></div></div></div>
+      <div class="rp-3d"><div class="rp-cam"><div class="rp-punch"><div class="rp-board"><div class="rp-hl"></div><div class="rp-pcs"></div></div><div class="rp-fx"></div></div></div></div>
       <div class="rp-layer rp-top"></div>
     </div>
-    <div class="rp-bar"><button type="button" data-rp="restart" title="Restart">⟲</button><button type="button" data-rp="pause" title="Pause (space)">❚❚</button><button type="button" data-rp="speed" title="Speed">1×</button><button type="button" data-rp="music" title="Music on/off">♪</button><select class="rp-song" title="Song"><option value="auto">Auto</option>${RP_SONGS.map((s2, i) => `<option value="${i}">${esc(s2.name)}</option>`).join('')}</select><span class="rp-prog"></span><button type="button" data-rp="close" title="Close (Esc)">✕</button></div></div>`;
+    <div class="rp-bar"><button type="button" data-rp="restart" title="Restart">⟲</button><button type="button" data-rp="pause" title="Pause (space)">❚❚</button><button type="button" data-rp="speed" title="Speed">1×</button><button type="button" data-rp="music" title="Music on/off">♪</button><button type="button" data-rp="fx" title="Wild: 3D camera and effects. Calm: flat board, light effects">FX</button><select class="rp-song" title="Song"><option value="auto">Auto</option>${RP_SONGS.map((s2, i) => `<option value="${i}">${esc(s2.name)}</option>`).join('')}</select><span class="rp-prog"></span><button type="button" data-rp="close" title="Close (Esc)">✕</button></div></div>`;
   document.body.appendChild(el);
   RP.el = el;
   el.querySelector('.rp-bar').addEventListener('click', e => {
@@ -5389,6 +5405,7 @@ function startReplay() {
     else if (k === 'restart') { rpPause(false); rpStart(); }
     else if (k === 'speed') { RP.speed = RP.speed === 1 ? 1.5 : RP.speed === 1.5 ? 2 : 1; b.textContent = RP.speed + '×'; for (const a of RP.anims) a.playbackRate = RP.speed; rpmRate(RP.speed); }
     else if (k === 'music') { rpmMute(rpmMusicOn()); rpMusicBtn(); }
+    else if (k === 'fx') { store.set('s64.rpFx', rpWild() ? 'calm' : 'wild'); rpMusicBtn(); rpPause(false); rpStart(); }
   });
   const sel = el.querySelector('.rp-song');
   sel.value = String(store.get('s64.rpSong', 'auto'));
@@ -5399,9 +5416,12 @@ function startReplay() {
   document.addEventListener('keydown', rpKeys, true);
   rpStart();
 }
+const rpWild = () => store.get('s64.rpFx', 'wild') !== 'calm';
 function rpMusicBtn() {
   const b = RP.el && RP.el.querySelector('[data-rp="music"]');
   if (b) { const on = rpmMusicOn(); b.textContent = on ? '♪' : '♪̸'; b.classList.toggle('off', !on); }
+  const f = RP.el && RP.el.querySelector('[data-rp="fx"]');
+  if (f) { f.textContent = rpWild() ? 'FX: Wild' : 'FX: Calm'; f.classList.toggle('off', !rpWild()); }
 }
 function rpLayout() {
   const sc = RP.el.querySelector('.rp-scene'), W = sc.clientWidth, H = sc.clientHeight;
@@ -5428,6 +5448,7 @@ async function rpPlay(tok) {
     for (let i = 0; i < 34; i++) { const s2 = 1 + Math.random() * 2.5; d.insertAdjacentHTML('beforeend', `<i style="left:${Math.random() * 100}%;top:${Math.random() * 100}%;width:${s2}px;height:${s2}px;animation-duration:${9 + Math.random() * 12}s;animation-delay:${-Math.random() * 20}s;opacity:${0.25 + Math.random() * 0.5}"></i>`); }
     scene.appendChild(d);
     const v = document.createElement('div'); v.className = 'rp-layer rp-vig'; scene.appendChild(v);
+    const v2 = document.createElement('div'); v2.className = 'rp-layer rp-vig2'; scene.appendChild(v2);
   }
   const orient = board.orientation === 'b' ? 'b' : 'w', q = L.B / 8;
   const xy = sq => { const f = sq.charCodeAt(0) - 97, r = +sq[1] - 1; return orient === 'w' ? { x: f, y: 7 - r } : { x: 7 - f, y: r }; };
@@ -5437,17 +5458,50 @@ async function rpPlay(tok) {
   const els = {};
   { const m = fenToMap(g.positions[0].fen); for (const sq in m) { const i = document.createElement('img'); i.src = PIECE_URL[keyOf(m[sq])]; i.alt = ''; place(i, sq); pcs.appendChild(i); els[sq] = i; } }
   // camera: straight board (no tilt); still during the opening, then it punches in and follows the action
-  const camTo = (sq, z, dur) => {
+  const W3 = rpWild(), d3 = el.querySelector('.rp-3d');
+  const camTo = (sq, z, dur, ease) => {
     let tx = 0, ty = 0;
     if (sq && z > 1) {
-      const c = ctr(sq);
+      const c = typeof sq === 'string' ? ctr(sq) : sq;
       tx = clamp(L.W / 2 - z * c.x, L.W - z * L.B, 0);
       ty = clamp(L.H / 2 - L.oy - z * c.y, -L.oy, L.H - L.oy - z * L.B);
     }
     const t = `translate(${tx}px,${ty}px) scale(${z})`, from = RP.camT;
     if (t === from) return Promise.resolve();
     RP.camT = t;
-    return rpRun(cam, [{ transform: from, filter: 'blur(0)' }, { filter: 'blur(1.5px)', offset: 0.5 }, { transform: t, filter: 'blur(0)' }], { duration: dur, easing: 'cubic-bezier(.3,0,.2,1)' });
+    return rpRun(cam, [{ transform: from, filter: 'blur(0)' }, { filter: 'blur(1.5px)', offset: 0.5 }, { transform: t, filter: 'blur(0)' }], { duration: dur, easing: ease || 'cubic-bezier(.3,0,.2,1)' });
+  };
+  // Wild mode (ZaveeCHESS): the board tips back into 3D on the drop and swings Dutch angles on every hit
+  const EXPO = 'cubic-bezier(.16,1,.3,1)';
+  // clear any finished (fill-forwards) camera, tilt and vignette animations from a previous run
+  for (const e of [cam, d3, pcs, scene.querySelector('.rp-vig2'), punch, scene]) if (e && e.getAnimations) e.getAnimations().forEach(a => a.cancel());
+  RP.tilt = 'rotateX(0deg) rotateZ(0deg)'; d3.style.transform = RP.tilt; d3.style.filter = '';
+  const tiltTo = (rx, rz, dur, ease) => {
+    const t = `rotateX(${rx}deg) rotateZ(${rz}deg)`, from = RP.tilt;
+    if (t === from) return Promise.resolve();
+    RP.tilt = t;
+    return rpRun(d3, [{ transform: from }, { transform: t }], { duration: dur, easing: ease || EXPO });
+  };
+  const rgb = (px, dur) => rpRun(pcs, [{ filter: `drop-shadow(${-px}px 0 0 rgba(255,0,60,.75)) drop-shadow(${px}px 0 0 rgba(0,230,255,.75))` }, { filter: `drop-shadow(${-px * 0.4}px 0 0 rgba(255,0,60,.5)) drop-shadow(${px * 0.4}px 0 0 rgba(0,230,255,.5))`, offset: 0.4 }, { filter: 'drop-shadow(0 0 0 rgba(0,0,0,0)) drop-shadow(0 0 0 rgba(0,0,0,0))' }], { duration: dur, easing: 'ease-out', fill: 'none' });
+  const ring = (P, colr, size, dur) => { const r0 = q * 0.5; const e = mk({ left: P.x - r0 + 'px', top: P.y - r0 + 'px', width: 2 * r0 + 'px', height: 2 * r0 + 'px', borderColor: colr }); e.className = 'rp-ring'; gone(e, [{ transform: 'scale(.2)', opacity: 1 }, { transform: `scale(${size})`, opacity: 0 }], { duration: dur || 480, easing: 'cubic-bezier(.1,.7,.3,1)' }); };
+  const squash = img => img && rpRun(img, [{ transform: 'scale(1.16,.84)' }, { transform: 'scale(.95,1.06)', offset: 0.5 }, { transform: 'scale(1)' }], { duration: 170, easing: 'ease-out', fill: 'none' });
+  const glitch = (colr, dur) => {
+    const e = mk({}, 'div', top); e.className = 'rp-glitch';
+    const bars = [...Array(7)].map(() => { const y = Math.random() * 100, hh = 1 + Math.random() * 5; return `transparent ${y}%, ${colr} ${y}%, ${colr} ${y + hh}%, transparent ${y + hh}%`; });
+    e.style.background = `linear-gradient(180deg, ${bars.sort((a, b) => parseFloat(a.split(' ')[1]) - parseFloat(b.split(' ')[1])).join(', ')})`;
+    gone(e, [{ opacity: 1, transform: 'translateX(-3%)' }, { opacity: 1, transform: 'translateX(4%)', offset: 0.35 }, { opacity: 0.8, transform: 'translateX(-2%)', offset: 0.7 }, { opacity: 0, transform: 'translateX(0)' }], { duration: dur || 160, easing: 'steps(4)' });
+  };
+  let dutch = 1;
+  const hitTilt = (deg, dur) => { dutch = -dutch; return tiltTo(24, dutch * deg, dur || 220); };
+  // on beats with no move: the camera still punches and a ring fires from the last piece (his "cowbell" pulses)
+  const pulsesUntil = async (tEnd, sq, colr) => {
+    if (!W3) return;
+    const per = song.per;
+    let k = Math.floor((rpmNow() - song.t0) / per + 0.5) + 1;
+    for (; rpmBeat(song, k) < tEnd - 0.12; k++) {
+      await rpAt(rpmBeat(song, k), tok);
+      const P2 = ctr(sq); bump(P2); ring(P2, colr || 'rgba(255,255,255,.9)', 2.2, 420); shake(L.W * 0.006, 160);
+    }
   };
   cam.style.transform = RP.camT = 'translate(0px,0px) scale(1)';
   const mk = (css, tag, parent) => { const e = document.createElement(tag || 'div'); Object.assign(e.style, css || {}); (parent || fx).appendChild(e); return e; };
@@ -5554,7 +5608,12 @@ async function rpPlay(tok) {
       await camTo(mv.to, 1.7, 650);
     } else {
       await rpAt(landT - lead - 0.02, tok); // start a frame early: the landing is reported a frame late
-      if (opening) camTo(null, 1, 380); else camTo(mv.to, big ? 1.65 : 1.45, Math.max(180, lead * 1000));
+      const bad = cls === 'blunder' || cls === 'mistake' || cls === 'miss';
+      if (opening) {
+        // opening: flat top-down, a slow drift-zoom toward the action (Wild) or a still board (Calm)
+        if (W3) { const a2 = ctr(mv.from), b2 = ctr(mv.to); camTo({ x: (a2.x + b2.x) / 2, y: (a2.y + b2.y) / 2 }, 1.12, 900, 'ease-in-out'); } else camTo(null, 1, 380);
+      } else if (W3) camTo(mv.to, bad ? 2.2 : big ? 1.85 : 1.6, Math.max(160, lead * 1000), EXPO); // snap zooms
+      else camTo(mv.to, big ? 1.65 : 1.45, Math.max(180, lead * 1000));
     }
     const pm = fenToMap(A.fen), nm = fenToMap(Bp.fen);
     const vac = Object.keys(pm).filter(sq => pm[sq] !== nm[sq]), arr = Object.keys(nm).filter(sq => nm[sq] !== pm[sq]);
@@ -5566,6 +5625,7 @@ async function rpPlay(tok) {
     }
     const capSqs = vac.filter(sq => !used.has(sq)), victim = capSqs.length ? els[capSqs[0]] : null;
     const promo = !!(mv.uci && mv.uci[4]);
+    RP.skip = Math.max(0, Math.min(lead * 1000 * 0.5, (rpmNow() - (landT - lead)) * 1000));
     const anims = pairs.map(([fr, to], k) => {
       const img = els[fr];
       if (!img) return Promise.resolve();
@@ -5576,8 +5636,10 @@ async function rpPlay(tok) {
     const next = {};
     for (const sq in els) if (!used.has(sq) && nm[sq] && pm[sq] === nm[sq]) next[sq] = els[sq];
     for (const [fr, to] of pairs) next[to] = els[fr];
+    RP.skip = 0;
     await Promise.all(anims);
     if (mate) rpmDuck(false); // the music slams back in on the mate
+    else if (i === plan.ob && plan.ob < n) rpmDuck(false); // ...and on the drop
     if (RP.log) RP.log.push(rpmNow());
     for (const sq of capSqs) if (els[sq]) els[sq].remove();
     for (const k in els) delete els[k];
@@ -5601,18 +5663,32 @@ async function rpPlay(tok) {
     }
     hl.innerHTML = marks;
     // hits
-    if (cls === 'brilliant') { flash('rgba(40,220,230,.9)', 0.45, 260); shake(L.W * 0.016, 360); bump(P); }
-    else if (victim) { flash('#fff', 0.28, 120); bump(P); shake(L.W * (big ? 0.014 : 0.008), 260); }
+    const drop = i === plan.ob && plan.ob < n;
+    if (W3 && !opening) {
+      // every landing after the drop: squash, a Dutch-angle swing, a micro shake
+      squash(els[land]);
+      if (drop) { // THE DROP: the board tips into 3D, 2-frame white flash, RGB split, big ring, the vignette closes in
+        flash('#fff', 0.95, 90); rgb(L.W * 0.03, 420); ring(P, '#fff', 4.5, 620); shake(L.W * 0.02, 380); hitTilt(11, 260);
+        const v2 = scene.querySelector('.rp-vig2'); if (v2) rpRun(v2, [{ opacity: 0 }, { opacity: 1 }], { duration: 400 });
+      } else hitTilt(mate ? 14 : big ? 11 : 7, 220);
+      if (!drop) shake(L.W * (victim || big ? 0.012 : 0.006), 170);
+    }
+    if (cls === 'brilliant') { flash('rgba(40,220,230,.9)', 0.45, 260); shake(L.W * 0.016, 360); bump(P); if (W3) { rgb(L.W * 0.022, 360); ring(P, 'rgb(40,225,235)', 3.6, 560); } }
+    else if (victim) { flash('#fff', W3 ? 0.4 : 0.28, W3 ? 70 : 120); bump(P); shake(L.W * (big ? 0.014 : 0.008), 260); if (W3) { rgb(L.W * 0.012, 240); ring(P, '#fff', 2.8, 420); } }
+    if (W3 && !opening && (cls === 'blunder' || cls === 'mistake' || cls === 'miss')) { flash('rgba(255,30,40,.9)', 0.35, 260); glitch('rgba(255,40,60,.9)', 180); }
     if (check && ksq && !mate) { checkFx(P, ctr(ksq)); if (!victim) shake(L.W * 0.008, 240); }
     const showBadge = cls && cls !== 'forced';
     const bdg = showBadge ? badgeAt(mate ? (cls === 'brilliant' ? 'brilliant' : 'best') : cls, land, big) : null;
     if (mate) {
       // checkmate: flash overload, the king's square pulses red, then he falls over
       flash('#fff', 0.8, 260); setTimeout(() => flash('rgba(255,30,50,.9)', 0.4, 400), 180); shake(L.W * 0.025, 480);
+      if (W3) { rgb(L.W * 0.035, 520); ring(P, '#fff', 5, 700); if (ksq) ring(ctr(ksq), 'rgb(255,40,55)', 4, 700); glitch('rgba(255,255,255,.85)', 150); }
       if (ksq) checkFx(P, ctr(ksq));
+      if (ksq) await pulsesUntil(plan.fallT - 0.75, ksq, 'rgba(255,45,60,.95)');
       await rpAt(plan.fallT - 0.75, tok); // the king hits the floor on a beat
       const kimg = ksq && els[ksq];
       if (kimg) { kimg.style.transformOrigin = '50% 85%'; await rpRun(kimg, [{ transform: 'rotate(0)', filter: 'none' }, { transform: 'rotate(-6deg)', filter: 'sepia(1) saturate(6) hue-rotate(-40deg) brightness(1.1)', offset: 0.3 }, { transform: 'rotate(90deg)', filter: 'sepia(1) saturate(6) hue-rotate(-40deg) brightness(1.1)' }], { duration: 750, easing: 'ease-in' }); sfx('boom'); shake(L.W * 0.012, 260); }
+      if (W3) { rgb(L.W * 0.02, 300); if (ksq) ring(ctr(ksq), 'rgb(255,40,55)', 3, 500); }
       await rpWait(1100, tok);
       const black = mk({ position: 'absolute', inset: 0, background: '#000', zIndex: 15 }, 'div', top);
       await rpRun(black, [{ opacity: 0 }, { opacity: 1 }], { duration: 600 });
@@ -5621,10 +5697,18 @@ async function rpPlay(tok) {
     } else {
       // the pace comes from the beat plan; the badge fades on its own
       if (bdg) rpRun(bdg, [{ opacity: 1 }, { opacity: 0 }], { duration: 200, delay: Math.min(700, Math.max(250, ((plan.land[i + 1] || landT + 1) - landT) * 1000 - 150)) }).then(() => bdg.remove());
+      if (!opening && i + 1 < n && !(plan.card && i === plan.ob - 1)) {
+        const nmate = i + 1 === n - 1 && mated, nStart = plan.land[i + 1] - plan.lead[i + 1];
+        // before the mate the pulses stop where the music cuts out
+        await pulsesUntil(nmate ? (plan.duckT != null ? plan.duckT : nStart - 0.67) : nStart, land, cls === 'brilliant' ? 'rgb(40,225,235)' : null);
+      }
     }
     // the opening's name, once the book moves are done
+    if (i === plan.ob - 1 && plan.ob < n) rpmBuild(landT + 0.15, plan.land[plan.ob] - Math.max(song.per, 0.4) - (plan.card ? 0 : 0));
     if (plan.card && i === plan.ob - 1) await card('Opening', g.opening, '', 900, plan.cardUntil);
   }
+  tiltTo(0, 0, 500, 'ease-in-out');
+  { const v2 = scene.querySelector('.rp-vig2'); if (v2) rpRun(v2, [{ opacity: 1 }, { opacity: 0 }], { duration: 500 }); }
   await camTo(null, 1, 500);
   prog.textContent = 'Finished';
   const res = h.Result || '';

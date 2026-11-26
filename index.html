@@ -451,6 +451,11 @@ textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 0; }
 .secret-cover p { margin: 0; max-width: 32ch; opacity: .8; font-size: 14px; }
 .secret-cover .btn { margin-top: 6px; }
 
+/* ---------- update banner ---------- */
+.upd { position: fixed; left: 50%; bottom: 18px; z-index: 4000; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; padding: 8px 8px 8px 16px; border-radius: 999px; background: #17171d; color: #fff; font: 600 14px var(--font-body); box-shadow: 0 10px 30px rgba(0,0,0,.35); }
+.upd button { border: 0; border-radius: 999px; padding: 7px 14px; font: 700 13px var(--font-body); cursor: pointer; background: var(--accent); color: var(--on-accent); }
+.upd .x { background: transparent; color: #aaa; padding: 7px 8px; }
+
 /* ---------- extra animations ---------- */
 .board .sqs, .board .pcs { transition: filter .8s; }
 .board.frozen .sqs, .board.frozen .pcs, .board.frozen .hls { filter: grayscale(1) brightness(.9); }
@@ -5413,6 +5418,51 @@ function victoryCard(i) {
   setTimeout(show, 400);
 }
 
+
+/* ============================================================
+   Updates: notice when a newer version of the site is live
+   ============================================================ */
+// GitHub Pages gives every version of the page its own ETag. Check it every few minutes and when the tab comes back.
+const UPD = { tag: null, ready: false, dismissed: false, timer: null };
+function updBusy() {
+  // somewhere a reload would interrupt something
+  if (RP.el) return true;
+  if (S.tab === 'online' && ONLINE.phase === 'game' && !ONLINE.over) return true;
+  if (S.tab === 'custom' && CUSTOM.phase === 'game' && !CUSTOM.over && CUSTOM.log.length) return true;
+  if ((S.tab === 'play' || S.tab === 'ladder') && P.chess && P.chess.history().length && !P.over) return true;
+  return false;
+}
+async function updCheck() {
+  if (!/^https?:$/.test(location.protocol) || UPD.ready) return;
+  try {
+    const r = await fetch(location.pathname + '?v=' + Date.now(), { method: 'HEAD', cache: 'no-store' });
+    const tag = r.ok && (r.headers.get('etag') || r.headers.get('last-modified'));
+    if (!tag) return;
+    if (!UPD.tag) { UPD.tag = tag; return; }
+    if (tag === UPD.tag) return;
+    UPD.ready = true;
+    updOffer();
+  } catch (e) { /* offline: try again later */ }
+}
+function updOffer() {
+  // a background tab that is not in an online game just reloads; saved games come back
+  const online = ONLINE.phase === 'game' && !ONLINE.over;
+  if (document.hidden && !online) { location.reload(); return; }
+  if (!updBusy()) { location.reload(); return; }
+  if (UPD.dismissed || document.querySelector('.upd')) return;
+  const b = document.createElement('div');
+  b.className = 'upd'; b.setAttribute('role', 'status');
+  b.innerHTML = '<span>New version available</span><button type="button">Refresh</button><button type="button" class="x" aria-label="Later">✕</button>';
+  b.querySelector('button').addEventListener('click', () => { try { savePlay(); } catch (e) { /* ignore */ } location.reload(); });
+  b.querySelector('.x').addEventListener('click', () => { UPD.dismissed = true; b.remove(); });
+  document.body.appendChild(b);
+}
+function updStart() {
+  updCheck();
+  UPD.timer = setInterval(() => { if (UPD.ready) updOffer(); else updCheck(); }, 3 * 60 * 1000);
+  document.addEventListener('visibilitychange', () => { if (UPD.ready) updOffer(); else updCheck(); });
+}
+
 /* ============================================================
    Tabs, wiring, boot
    ============================================================ */
@@ -5695,6 +5745,7 @@ const EXAMPLE_PGN = `[Event "Paris Opera"]
 
 function start(data) {
   data = data || {};
+  setTimeout(updStart, 4000);
   Chess960 = makeChess960(Chess);
   buildBook();
   wire();

@@ -3,7 +3,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&family=Pirata+One&family=Grenze+Gotisch:wght@500;700&family=Montserrat:wght@800;900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&family=Montserrat:wght@800;900&display=swap">
 <style>
 /* Layout: board-first study table — the wooden board and eval bar on the left, a scoresheet/coach rail on the right; stacks on phones */
 :root {
@@ -449,8 +449,6 @@ img.ava-img { object-fit: cover; background: #0b1416; }
 .rp-frame { position: relative; height: 100vh; height: 100dvh; max-width: 100vw; aspect-ratio: 9 / 16; display: flex; flex-direction: column; }
 @media (max-aspect-ratio: 9/17) { .rp-frame { height: auto; width: 100vw; } }
 /* Replay in the ChessGameShorts edit style: straight board, gentle zoom, badges, debris, big-move drama, CHECKMATE slam */
-@font-face { font-family: 'Pirata One'; src: url('fonts/pirata-one-latin-400-normal.woff2') format('woff2'); font-display: swap; }
-@font-face { font-family: 'Grenze Gotisch'; src: url('fonts/grenze-gotisch-latin-900-normal.woff2') format('woff2'); font-weight: 900; font-display: swap; }
 .rp-scene { position: relative; flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #0c0c10; }
 .rp-cam { position: relative; width: 100%; transform-origin: 0 0; will-change: transform, filter; }
 .rp-ext { position: absolute; left: -37.5%; top: -37.5%; width: 175%; height: 175%; background: repeating-conic-gradient(#8c8c94 0 25%, #e4e4e8 0 50%) 0 0 / 14.2857% 14.2857%; opacity: .28; pointer-events: none; }
@@ -475,9 +473,9 @@ img.ava-img { object-fit: cover; background: #0b1416; }
 .rp-flash { position: absolute; inset: 0; pointer-events: none; z-index: 9; opacity: 0; }
 .rp-top { position: absolute; inset: 0; pointer-events: none; z-index: 10; }
 .rp-poster { position: absolute; inset: 0; background: rgba(4, 6, 4, .82); display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 22%; opacity: 0; }
-.rp-poster .t { font: 400 calc(var(--rpw, 400px) * .19) / 1 'Pirata One', 'Times New Roman', serif; color: var(--tc, #beff28); text-shadow: 0 0 calc(var(--rpw, 400px) * .03) var(--tc, #beff28), 0 0 calc(var(--rpw, 400px) * .008) #000; -webkit-text-stroke: calc(var(--rpw, 400px) * .004) #080c00; white-space: nowrap; text-align: center; }
-.rp-poster .s { white-space: pre !important; margin-top: 4%; font: 900 calc(var(--rpw, 400px) * .055) / 1.1 'Grenze Gotisch', 'Times New Roman', serif; color: #fff; letter-spacing: .14em; -webkit-text-stroke: calc(var(--rpw, 400px) * .005) #000; paint-order: stroke fill; white-space: nowrap; text-align: center; }
-.rp-cm { position: absolute; left: 0; right: 0; top: 25%; text-align: center; font: 400 calc(var(--rpw, 400px) * .185) / 1 'Pirata One', 'Times New Roman', serif; color: #ff2832; -webkit-text-stroke: calc(var(--rpw, 400px) * .007) #0a0000; text-shadow: 0 0 calc(var(--rpw, 400px) * .04) #ff141e; opacity: 0; }
+.rp-poster .t { font: 900 calc(var(--rpw, 400px) * .13) / 1.05 var(--font-display); color: #fff; text-shadow: 0 0 calc(var(--rpw, 400px) * .02) #fff, 0 0 calc(var(--rpw, 400px) * .05) var(--tc, #39d5ff), 0 0 calc(var(--rpw, 400px) * .1) var(--tc, #39d5ff); white-space: nowrap; text-align: center; }
+.rp-poster .s { margin-top: 4%; font: 700 calc(var(--rpw, 400px) * .05) / 1.1 var(--font-display); color: #fff; letter-spacing: .06em; text-shadow: 0 0 calc(var(--rpw, 400px) * .025) var(--tc, #39d5ff); white-space: nowrap; text-align: center; }
+.rp-cm { position: absolute; left: 0; right: 0; top: 25%; text-align: center; font: 900 calc(var(--rpw, 400px) * .13) / 1 var(--font-display); color: #fff; text-shadow: 0 0 calc(var(--rpw, 400px) * .015) #fff, 0 0 calc(var(--rpw, 400px) * .045) #ff2832, 0 0 calc(var(--rpw, 400px) * .1) #ff2832; opacity: 0; }
 .rp-gun { z-index: 4; }
 .rp-gun svg { width: 100%; height: 100%; display: block; }
 .rp-bar { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: #0d0d11; color: #ddd; font: 600 13px var(--font-body); }
@@ -5996,8 +5994,7 @@ async function rpPlay(tok) {
   const poster = async (title, sub, hold, stay) => {
     const p = mk('rp-poster', {}, top);
     p.innerHTML = `<div class="t"></div><div class="s"></div>`;
-    p.querySelector('.t').textContent = title; p.querySelector('.s').textContent = sub.toUpperCase().split(' ').map(w => w.split('').join(' ')).join('   ');
-    try { await document.fonts.load(`400 40px "Pirata One"`); await document.fonts.load(`900 20px "Grenze Gotisch"`); } catch (e) { /* fonts are optional */ }
+    p.querySelector('.t').textContent = title; p.querySelector('.s').textContent = sub.toUpperCase();
     for (const c of p.children) { let fs = parseFloat(getComputedStyle(c).fontSize); while (c.scrollWidth > p.clientWidth * 0.9 && fs > 10) { fs *= 0.92; c.style.fontSize = fs + 'px'; } }
     await rpRun(p, [{ opacity: 0 }, { opacity: 1 }], { duration: 600, easing: 'ease-in-out' });
     if (stay) return p;
@@ -6059,18 +6056,9 @@ async function rpPlay(tok) {
       if (!img) return Promise.resolve();
       const a = xy(fr), b = xy(t2), dx = (a.x - b.x) * 100, dy = (a.y - b.y) * 100;
       place(img, t2); img.style.zIndex = 3;
-      const lift = (big || mate) && k === 0 ? 18 : 0, sc = (big || mate) && k === 0 ? 1.14 : 1.04;
-      const flip = cls === 'brilliant' && k === 0; // a brilliant move tumbles through the air, blown to white
-      const kf = [0, 0.25, 0.5, 0.75, 1].map(t => {
-        const u = t * t * t * (t * (t * 6 - 15) + 10), s2 = Math.sin(u * Math.PI);
-        return { transform: `translate(${dx * (1 - u)}%, ${dy * (1 - u) - lift * s2}%) scale(${1 + (sc - 1) * s2})${flip ? ` rotateY(${360 * u}deg)` : ''}`, filter: flip ? `brightness(${1 + 2.2 * s2})` : 'none' };
-      });
-      // motion-blur trail: fading copies a step behind
-      for (const [lag, al] of [[40, 0.32], [80, 0.2], [120, 0.12]]) {
-        const gh = img.cloneNode(); gh.style.opacity = al; gh.style.zIndex = 2; pcs.appendChild(gh);
-        gone(gh, kf, { duration: slow, delay: lag, easing: 'linear' });
-      }
-      return rpRun(img, kf, { duration: slow, easing: 'linear', fill: 'none' }).then(() => { img.style.zIndex = ''; img.src = PIECE_URL[keyOf(nm[t2])]; });
+      // a plain, smooth slide
+      const kf = [{ transform: `translate(${dx}%, ${dy}%)` }, { transform: 'translate(0, 0)' }];
+      return rpRun(img, kf, { duration: slow, easing: SMOOTH, fill: 'none' }).then(() => { img.style.zIndex = ''; img.src = PIECE_URL[keyOf(nm[t2])]; });
     });
     const next = {};
     for (const sq in els) if (!used.has(sq) && nm[sq] && pm[sq] === nm[sq]) next[sq] = els[sq];

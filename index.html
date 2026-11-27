@@ -1190,6 +1190,10 @@ const NPCS = [
   { id: 'brilliant', name: 'Mr Brilliant', title: 'Sacrifices Everything', elo: 2600, eloTxt: '???', brilliant: true, av: { img: 'img/npc/mr-brilliant.jpg' },
     L: { intro: "Do you like gifts? I have so many to give you.", gift: ["Thank you for the gift. Now watch mine.", "Oh, you shouldn't have."], shock: ["Ohhh. You found the brilliant one. Delicious.", "Hm! Even I didn't see that one."], ahead: "Every sacrifice was worth it. Every single one.", behind: "Don't worry. My best gifts come at the end.", win: "Brilliant. Brilliant. BRILLIANT!", lose: "Two exclamation marks for you. You've earned them.", draw: "Half a point. Not brilliant. Not terrible.",
       sac: ["Take it. I insist.", "A gift. With a little surprise inside.", "!!", "Go on. Take it. I dare you.", "Free piece! Hehehe.", "Brilliant, isn't it?"] } },
+  { id: 'killer', name: 'Mr Killer', title: 'The Most Aggressive Bot of All Time', elo: 2500, eloTxt: '???', killer: true,
+    av: { bg: '#3a0d12', skin: '#d9b39a', hair: '#141414', style: 'short', shirt: '#141414', extra: ['beanie', 'shades', 'beard'], c1: '#9e1b24' },
+    L: { intro: "I don't defend. I don't retreat. I attack. Let's go.", gift: ["Blood in the water.", "Mine now. All of it."], shock: ["You hit back? Good. More fun.", "Lucky. Do it again, I dare you."], ahead: "This is a massacre.", behind: "Wounded animals bite harder.", win: "Destroyed. Next.", lose: "You survived Mr Killer. Nobody survives Mr Killer.", draw: "A draw? I hate draws.",
+      attack: ["Run, little king.", "Check. Get used to it.", "Nowhere to hide.", "I'm coming for your king.", "Feel that? That's pressure.", "Attack, attack, ATTACK!"] } },
   { id: 'omega', name: 'OMEGA', title: 'AI Chess Master God', elo: 3200, god: true, av: { robot: true },
     L: { intro: "I HAVE CALCULATED 4.2 BILLION FUTURES. YOU LOSE IN ALL OF THEM.", gift: ["ERROR DETECTED IN HUMAN. EXPLOITING.", "PREDICTABLE."], shock: ["UNEXPECTED. RECALCULATING.", "THAT MOVE WAS NOT IN MY DATABASE."], ahead: "RESISTANCE IS SUBOPTIMAL.", behind: "ANOMALY DETECTED. HOW.", win: "AS FORESEEN.", lose: "IMPOSSIBLE. YOU ARE THE NEW CHESS GOD.", draw: "A DRAW. ACCEPTABLE. BARELY." } }
 ];
@@ -2636,6 +2640,49 @@ function chooseBrilliant(chess, res) {
   }
   return pickL ? { uci: pickL.pv[0], sac: pickS } : { uci: lines[0].pv[0], sac: 0 };
 }
+// Mr Killer: how violent a move is. Checks, captures, sacrifices and pieces swarming the enemy king score high;
+// retreats and quiet moves away from the king score low.
+function aggression(chess, uci) {
+  const c = mkChess(chess.fen()), m = c.move(uciObj(uci));
+  if (!m) return -99;
+  const me = m.color, ksq = (() => { const b = c.board(); for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) { const p = b[r][f]; if (p && p.type === 'k' && p.color !== me) return String.fromCharCode(97 + f) + (8 - r); } return null; })();
+  const dist = sq => ksq ? Math.max(Math.abs(sq.charCodeAt(0) - ksq.charCodeAt(0)), Math.abs(+sq[1] - +ksq[1])) : 7;
+  let a = 0;
+  if (c.in_checkmate()) return 99;
+  if (c.in_check()) a += 4.5;
+  if (m.captured) a += 1 + VAL[m.captured] / 3;
+  a += sacValue(chess, uci) * 0.6;
+  if (m.piece !== 'k') {
+    const closer = dist(m.from) - dist(m.to);
+    a += closer * 0.6;
+    if (dist(m.to) <= 2) a += 1;
+  }
+  if (m.piece === 'p' && ksq && Math.abs(m.to.charCodeAt(0) - ksq.charCodeAt(0)) <= 2) a += 0.7; // pawn storm at the king
+  if (m.flags.includes('k') || m.flags.includes('q')) a -= 0.5;
+  if (m.piece === 'k') a -= 1;
+  // how many squares next to their king our pieces now hit
+  if (ksq) {
+    const zone = new Set();
+    for (let df = -1; df <= 1; df++) for (let dr = -1; dr <= 1; dr++) { const f = ksq.charCodeAt(0) + df, r = +ksq[1] + dr; if (f >= 97 && f <= 104 && r >= 1 && r <= 8) zone.add(String.fromCharCode(f) + r); }
+    const parts = c.fen().split(' '); parts[1] = me; parts[3] = '-';
+    try { const t = mkChess(parts.join(' ')); a += 0.35 * new Set(t.moves({ verbose: true }).filter(x => zone.has(x.to)).map(x => x.to)).size; } catch (e) { /* skip */ }
+  }
+  return a;
+}
+// among his engine's top moves, play the most violent one that's still good; he risks more when he's ahead
+function chooseKiller(chess, res) {
+  const lines = (res.lines || []).filter(l => l.pv && l.pv.length);
+  if (!lines.length) return { uci: res.bestmove, attack: false };
+  const best = lineCp(lines[0]), tol = best >= 600 ? 350 : best >= 200 ? 200 : 120;
+  let pickL = lines[0], pickA = aggression(chess, lines[0].pv[0]);
+  for (const l of lines.slice(1)) {
+    if (lineCp(l) < best - tol) continue;
+    const a = aggression(chess, l.pv[0]);
+    if (a > pickA + 0.2) { pickL = l; pickA = a; }
+  }
+  const c = mkChess(chess.fen()); c.move(uciObj(pickL.pv[0]));
+  return { uci: pickL.pv[0], attack: c.in_check() };
+}
 function naiveMove(chess) {
   const ms = chess.moves({ verbose: true });
   const caps = ms.filter(m => m.captured).sort((a, b) => VAL[b.captured] - VAL[a.captured]);
@@ -2735,12 +2782,22 @@ async function botMove() {
   const prm = levelParams(botElo());
   const legal = P.chess.moves({ verbose: true });
   const t0 = performance.now();
-  let uci = null, sacked = false;
+  let uci = null, sacked = false, attacked = false;
   try {
     if (engine.failed) uci = naiveMove(P.chess);
     else if (legal.length === 1) uci = toUci(legal[0]);
     else if (Math.random() < prm.blunder) uci = toUci(pick(legal));
-    else if (P.mode === 'ladder' && NPCS[P.npc].brilliant) {
+    else if (P.mode === 'ladder' && NPCS[P.npc].killer) {
+      const job = engine.run(P.chess.fen(), { depth: 14, movetime: 1400, multipv: Math.min(6, legal.length) });
+      P.job = job;
+      const res = await job.promise;
+      P.job = null;
+      if (gen !== P.gen) return;
+      if (!res) { P.thinking = false; renderPlay(); return; }
+      const ch = chooseKiller(P.chess, res);
+      uci = ch.uci; attacked = ch.attack;
+      npcReact(res);
+    } else if (P.mode === 'ladder' && NPCS[P.npc].brilliant) {
       const job = engine.run(P.chess.fen(), { depth: 14, movetime: 1600, multipv: Math.min(5, legal.length) });
       P.job = job;
       const res = await job.promise;
@@ -2778,6 +2835,8 @@ async function botMove() {
   savePlay(); renderPlay(true);
   // Mr Brilliant marks his own sacrifices
   if (sacked && m && P.mode === 'ladder') { board.badge = { sq: m.to, cls: 'brilliant' }; board.renderBadge(); if (!P.over) npcSay('sac'); }
+  // Mr Killer trash-talks his checks (not every single one)
+  if (attacked && m && !P.over && P.mode === 'ladder' && P.chess.history().length - (P.lastSayPly || -9) >= 4) npcSay('attack');
   if (!P.over && board.premove && P.chess.turn() === P.userColor) runPremove(P.chess, P.userColor, onPlayMove);
 }
 function undoPlay() {
@@ -3803,7 +3862,7 @@ function friendHead(res) {
 }
 const botElo = () => P.mode === 'ladder' ? NPCS[P.npc].elo : P.elo;
 const botName = () => P.mode === 'ladder' ? NPCS[P.npc].name : `Bot (${P.elo})`;
-const NPC_MOOD = { sac: 'smug', intro: 'happy', gift: 'smug', shock: 'shock', ahead: 'smug', behind: 'sad', win: 'happy', lose: 'sad', draw: 'neutral' };
+const NPC_MOOD = { attack: 'smug', sac: 'smug', intro: 'happy', gift: 'smug', shock: 'shock', ahead: 'smug', behind: 'sad', win: 'happy', lose: 'sad', draw: 'neutral' };
 function outcomeOf(G) {
   if (!G.over) return null;
   const r = G.over.result;

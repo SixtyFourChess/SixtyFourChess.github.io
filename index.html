@@ -1197,6 +1197,18 @@ const NPCS = [
   { id: 'omega', name: 'OMEGA', title: 'AI Chess Master God', elo: 3200, god: true, av: { robot: true },
     L: { intro: "I HAVE CALCULATED 4.2 BILLION FUTURES. YOU LOSE IN ALL OF THEM.", gift: ["ERROR DETECTED IN HUMAN. EXPLOITING.", "PREDICTABLE."], shock: ["UNEXPECTED. RECALCULATING.", "THAT MOVE WAS NOT IN MY DATABASE."], ahead: "RESISTANCE IS SUBOPTIMAL.", behind: "ANOMALY DETECTED. HOW.", win: "AS FORESEEN.", lose: "IMPOSSIBLE. YOU ARE THE NEW CHESS GOD.", draw: "A DRAW. ACCEPTABLE. BARELY." } }
 ];
+// trash talk: "taunt" lines come every few moves, "take" lines when they win one of your pieces
+const TRASH = {
+  pip: { taunt: ["My big brother says you play like a potato!", "I'm only seven and I'm winning. Probably.", "Are you even trying?", "Horsey goes jump jump on your head!", "I'm gonna tell everyone I beat a grown-up."], take: ["MINE! No take-backs!", "Yoink!", "Ha ha, got your guy!"] },
+  theo: { taunt: ["Bro, this opening is so outdated.", "Did you learn chess yesterday?", "My viewers are laughing at you right now.", "I've seen this exact blunder in a 'worst moves ever' video.", "You're about to be a thumbnail."], take: ["Clip that.", "Free content.", "Thanks for the material. Literally."] },
+  dana: { taunt: ["I've crushed better players before breakfast.", "You play like it's round one and you're still asleep.", "Keep going. I've got all day.", "I grind people like you every Saturday.", "Tick tock. You're running out of good moves."], take: ["Bank it.", "Another one for the pile.", "Point by point, piece by piece."] },
+  ines: { taunt: ["Three titles. How many do you have? Zero.", "Kneel before the champion.", "My club juniors defend better than this.", "Is that your best? Really?", "You're playing for second place."], take: ["That's what champions do.", "Captured. Like my title.", "Into the trophy case it goes."] },
+  sato: { taunt: ["Your move has been refuted since 1987.", "I wrote a footnote about that mistake.", "Statistically, you are already lost.", "My notes call this line 'hopeless for the opponent'.", "Fascinating. Wrong, but fascinating."], take: ["As documented.", "Material, collected for analysis.", "Exactly as predicted on page 312."] },
+  brilliant: { taunt: ["Every move you make, I've already sacrificed for.", "Hehehe. Do you see it yet? You will.", "I can smell a brilliant move coming.", "Don't blink. Something beautiful is about to happen.", "Your pieces look lonely. Let me fix that."], take: ["Oh, a gift for me? How sweet.", "Thank you, thank you.", "Delicious."] },
+  killer: { taunt: ["You're already dead. You just don't know it.", "Every piece I have is aimed at your king.", "Defend all you want. It won't matter.", "I eat kings for breakfast.", "Scared yet? You should be."], take: ["Another one down.", "Body count rising.", "Gone. Who's next?"] },
+  omega: { taunt: ["HUMAN BRAIN DETECTED. PROCESSING SPEED: LAUGHABLE.", "YOUR WIN PROBABILITY HAS BEEN ROUNDED TO ZERO.", "I AM RUNNING THIS GAME ON 0.01% OF MY POWER.", "HAVE YOU CONSIDERED CHECKERS?", "PREDICTING YOUR NEXT MOVE... CORRECT. AGAIN."], take: ["MATERIAL ACQUIRED.", "PIECE DELETED.", "RESOURCE ABSORBED. THANK YOU, HUMAN."] }
+};
+for (const n of NPCS) Object.assign(n.L, TRASH[n.id] || {});
 const OZZIE = { name: 'Coach Ozzie', av: { bg: '#f6cf6a', skin: '#d9a27a', hair: '#3b2a20', style: 'short', shirt: '#2f5d8a', extra: ['mustache', 'headset'] } };
 const eloTxt = n => n.eloTxt || (n.god ? '3200+' : String(n.elo));
 const firstLine = x => Array.isArray(x) ? x[0] : x;
@@ -2837,6 +2849,12 @@ async function botMove() {
   if (sacked && m && P.mode === 'ladder') { board.badge = { sq: m.to, cls: 'brilliant' }; board.renderBadge(); if (!P.over) npcSay('sac'); }
   // Mr Killer trash-talks his checks (not every single one)
   if (attacked && m && !P.over && P.mode === 'ladder' && P.chess.history().length - (P.lastSayPly || -9) >= 4) npcSay('attack');
+  // everyone trash-talks: after winning a piece, and now and then in between
+  else if (m && !P.over && !sacked && P.mode === 'ladder') {
+    const since = P.chess.history().length - (P.lastSayPly == null ? -99 : P.lastSayPly);
+    if (m.captured && VAL[m.captured] >= 3 && since >= 3) npcSay('take');
+    else if (since >= 6 && Math.random() < 0.45) npcSay('taunt');
+  }
   if (!P.over && board.premove && P.chess.turn() === P.userColor) runPremove(P.chess, P.userColor, onPlayMove);
 }
 function undoPlay() {
@@ -3862,7 +3880,7 @@ function friendHead(res) {
 }
 const botElo = () => P.mode === 'ladder' ? NPCS[P.npc].elo : P.elo;
 const botName = () => P.mode === 'ladder' ? NPCS[P.npc].name : `Bot (${P.elo})`;
-const NPC_MOOD = { attack: 'smug', sac: 'smug', intro: 'happy', gift: 'smug', shock: 'shock', ahead: 'smug', behind: 'sad', win: 'happy', lose: 'sad', draw: 'neutral' };
+const NPC_MOOD = { taunt: 'smug', take: 'smug', attack: 'smug', sac: 'smug', intro: 'happy', gift: 'smug', shock: 'shock', ahead: 'smug', behind: 'sad', win: 'happy', lose: 'sad', draw: 'neutral' };
 function outcomeOf(G) {
   if (!G.over) return null;
   const r = G.over.result;

@@ -642,7 +642,7 @@ img.ava-img { object-fit: cover; background: #0b1416; }
         <div class="panel-inner" id="ladLobby">
           <div class="block">
             <span class="sec-label">Beat the NPCs</span>
-            <h2 id="ladHead">Pick your opponent, from 300 to the AI chess god</h2>
+            <h2 id="ladHead">Pick your opponent, from 300 all the way up to ???</h2>
             <p class="tip">Pick anyone you want to play. A ✓ marks everyone you've beaten. No hints.</p>
           </div>
           <div id="ladPick"></div>
@@ -1187,6 +1187,8 @@ const NPCS = [
   { id: 'sato', name: 'Dr. Sato', title: 'Opening Theorist', elo: 2100,
     av: { bg: '#d3ecec', skin: '#f0cfa8', hair: '#15161a', style: 'slick', shirt: '#e4e7ea', extra: ['glasses'] },
     L: { intro: "I've prepared 40 moves deep in every line. Let's see yours.", gift: ["That move is refuted in my notes.", "Page 214. A known error."], shock: ["This is outside my preparation.", "Interesting. A novelty."], ahead: "Still deep in my files.", behind: "I'll need a new chapter for this.", win: "As my analysis predicted.", lose: "I must update my files. Remarkable.", draw: "A theoretical draw. As expected." } },
+  { id: 'omega', name: 'OMEGA', title: 'AI Chess Master God', elo: 3200, god: true, av: { robot: true },
+    L: { intro: "I HAVE CALCULATED 4.2 BILLION FUTURES. YOU LOSE IN ALL OF THEM.", gift: ["ERROR DETECTED IN HUMAN. EXPLOITING.", "PREDICTABLE."], shock: ["UNEXPECTED. RECALCULATING.", "THAT MOVE WAS NOT IN MY DATABASE."], ahead: "RESISTANCE IS SUBOPTIMAL.", behind: "ANOMALY DETECTED. HOW.", win: "AS FORESEEN.", lose: "IMPOSSIBLE. YOU ARE THE NEW CHESS GOD.", draw: "A DRAW. ACCEPTABLE. BARELY." } },
   { id: 'brilliant', name: 'Mr Brilliant', title: 'Sacrifices Everything', elo: 2600, eloTxt: '???', brilliant: true, av: { img: 'img/npc/mr-brilliant.jpg' },
     L: { intro: "Do you like gifts? I have so many to give you.", gift: ["Thank you for the gift. Now watch mine.", "Oh, you shouldn't have."], shock: ["Ohhh. You found the brilliant one. Delicious.", "Hm! Even I didn't see that one."], ahead: "Every sacrifice was worth it. Every single one.", behind: "Don't worry. My best gifts come at the end.", win: "Brilliant. Brilliant. BRILLIANT!", lose: "Two exclamation marks for you. You've earned them.", draw: "Half a point. Not brilliant. Not terrible.",
       sac: ["Take it. I insist.", "A gift. With a little surprise inside.", "!!", "Go on. Take it. I dare you.", "Free piece! Hehehe.", "Brilliant, isn't it?"] } },
@@ -1194,8 +1196,6 @@ const NPCS = [
     av: { bg: '#3a0d12', skin: '#d9b39a', hair: '#141414', style: 'short', shirt: '#141414', extra: ['beanie', 'shades', 'beard'], c1: '#9e1b24' },
     L: { intro: "I don't defend. I don't retreat. I attack. Let's go.", gift: ["Blood in the water.", "Mine now. All of it."], shock: ["You hit back? Good. More fun.", "Lucky. Do it again, I dare you."], ahead: "This is a massacre.", behind: "Wounded animals bite harder.", win: "Destroyed. Next.", lose: "You survived Mr Killer. Nobody survives Mr Killer.", draw: "A draw? I hate draws.",
       attack: ["Run, little king.", "Check. Get used to it.", "Nowhere to hide.", "I'm coming for your king.", "Feel that? That's pressure.", "Attack, attack, ATTACK!"] } },
-  { id: 'omega', name: 'OMEGA', title: 'AI Chess Master God', elo: 3200, god: true, av: { robot: true },
-    L: { intro: "I HAVE CALCULATED 4.2 BILLION FUTURES. YOU LOSE IN ALL OF THEM.", gift: ["ERROR DETECTED IN HUMAN. EXPLOITING.", "PREDICTABLE."], shock: ["UNEXPECTED. RECALCULATING.", "THAT MOVE WAS NOT IN MY DATABASE."], ahead: "RESISTANCE IS SUBOPTIMAL.", behind: "ANOMALY DETECTED. HOW.", win: "AS FORESEEN.", lose: "IMPOSSIBLE. YOU ARE THE NEW CHESS GOD.", draw: "A DRAW. ACCEPTABLE. BARELY." } }
 ];
 // trash talk: "taunt" lines come every few moves, "take" lines when they win one of your pieces
 const TRASH = {
@@ -2520,8 +2520,8 @@ if (!LP.v) {
   store.set('s64.ladder', LP);
 }
 LP.beaten = 0;
-LP.sel = clamp(+LP.sel || 0, 0, NPCS.length - 1);
-function saveLP() { store.set('s64.ladder', LP); }
+LP.sel = clamp(LP.selId && npcIdx(LP.selId) >= 0 ? npcIdx(LP.selId) : +LP.sel || 0, 0, NPCS.length - 1);
+function saveLP() { if (NPCS[LP.sel]) LP.selId = NPCS[LP.sel].id; store.set('s64.ladder', LP); }
 // every NPC is open to play; a character counts as beaten once you've won against them
 // (LP.beaten is the old "climbed this far" counter, kept so earlier progress still shows)
 const unlockedMax = () => NPCS.length - 1;
@@ -2800,7 +2800,7 @@ async function botMove() {
     else if (legal.length === 1) uci = toUci(legal[0]);
     else if (Math.random() < prm.blunder) uci = toUci(pick(legal));
     else if (P.mode === 'ladder' && NPCS[P.npc].killer) {
-      const job = engine.run(P.chess.fen(), { depth: 14, movetime: 1400, multipv: Math.min(6, legal.length) });
+      const job = engine.run(P.chess.fen(), { depth: 20, movetime: 2600, multipv: Math.min(6, legal.length) });
       P.job = job;
       const res = await job.promise;
       P.job = null;
@@ -2810,7 +2810,7 @@ async function botMove() {
       uci = ch.uci; attacked = ch.attack;
       npcReact(res);
     } else if (P.mode === 'ladder' && NPCS[P.npc].brilliant) {
-      const job = engine.run(P.chess.fen(), { depth: 14, movetime: 1600, multipv: Math.min(5, legal.length) });
+      const job = engine.run(P.chess.fen(), { depth: 20, movetime: 2600, multipv: Math.min(5, legal.length) });
       P.job = job;
       const res = await job.promise;
       P.job = null;
@@ -3983,7 +3983,8 @@ function ladderResultHTML() {
   const npc = NPCS[G.npc], next = NPCS[G.npc + 1], out = outcomeOf(G);
   let h, btns = '';
   if (out === 'win') {
-    if (npc.god) h = '<h3>You beat OMEGA.</h3><p>The whole ladder is yours. You are the chess god now.</p>';
+    if (npc.god) h = `<h3>You beat OMEGA.</h3><p>${next ? 'The machine is down. But something worse is waiting above it…' : 'The whole ladder is yours. You are the chess god now.'}</p>`;
+    else if (!next) h = `<h3>You beat ${esc(npc.name)}!</h3><p>Nobody is left above you. The whole ladder is yours.</p>`;
     else h = `<h3>You beat ${esc(npc.name)}!</h3>` + (next ? `<p>Next up: <b>${esc(next.name)}</b>, ${esc(next.title)} (${eloTxt(next)}). Or pick anyone from the list.</p>` : '');
     if (next) btns += `<button class="btn primary" type="button" data-lad="next">Challenge ${esc(next.name)}</button>`;
     btns += '<button class="btn" type="button" data-lad="rematch">Rematch</button>';
@@ -3997,7 +3998,7 @@ function ladderResultHTML() {
 }
 function renderLadderLobby(sel) {
   const npc = NPCS[sel], N = NPCS.length, done = beatenCount(), G = LADDER;
-  $('#ladHead').textContent = done >= N ? 'You beat every NPC' : 'Pick your opponent, from 300 to the AI chess god';
+  $('#ladHead').textContent = done >= N ? 'You beat every NPC' : 'Pick your opponent, from 300 all the way up to ???';
   const wins = LP.wins[npc.id] || 0;
   $('#ladPick').innerHTML = `<div class="npc-wrap">${npcCardHTML(sel, 'happy')}<div class="bubble">${esc(firstLine(npc.L.intro))}</div>` +
     (wins ? `<p class="small muted">You've beaten ${esc(npc.name)} ${wins === 1 ? 'once' : wins + ' times'}.</p>` : '') + '</div>';

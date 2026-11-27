@@ -448,13 +448,38 @@ img.ava-img { object-fit: cover; background: #0b1416; }
 .rp { position: fixed; inset: 0; z-index: 3000; background: #111114; display: flex; align-items: center; justify-content: center; }
 .rp-frame { position: relative; height: 100vh; height: 100dvh; max-width: 100vw; aspect-ratio: 9 / 16; display: flex; flex-direction: column; }
 @media (max-aspect-ratio: 9/17) { .rp-frame { height: auto; width: 100vw; } }
-.rp-scene { position: relative; flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-.rp-cam { position: relative; width: 100%; transform-origin: 0 0; will-change: transform; }
-.rp-board { position: relative; width: 100%; aspect-ratio: 1 / 1; background: repeating-conic-gradient(#8f9197 0 25%, #ececec 0 50%) 0 0 / 25% 25%; }
+/* Replay in the ChessGameShorts edit style: straight board, gentle zoom, badges, debris, big-move drama, CHECKMATE slam */
+@font-face { font-family: 'Pirata One'; src: url('fonts/pirata-one-latin-400-normal.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'Grenze Gotisch'; src: url('fonts/grenze-gotisch-latin-900-normal.woff2') format('woff2'); font-weight: 900; font-display: swap; }
+.rp-scene { position: relative; flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #0c0c10; }
+.rp-cam { position: relative; width: 100%; transform-origin: 0 0; will-change: transform, filter; }
+.rp-ext { position: absolute; left: -37.5%; top: -37.5%; width: 175%; height: 175%; background: repeating-conic-gradient(#8c8c94 0 25%, #e4e4e8 0 50%) 0 0 / 14.2857% 14.2857%; opacity: .28; pointer-events: none; }
+.rp-board { position: relative; width: 100%; aspect-ratio: 1 / 1; background: repeating-conic-gradient(#8c8c94 0 25%, #e4e4e8 0 50%) 0 0 / 25% 25%; }
 .rp-board > div { position: absolute; inset: 0; pointer-events: none; }
-.rp-board > .rp-hl { z-index: 0; } .rp-board > .rp-pcs { z-index: 1; }
-.rp-hl > i { position: absolute; width: 12.5%; height: 12.5%; background: rgba(255, 214, 90, .45); }
-.rp-pcs > img { position: absolute; width: 12.5%; height: 12.5%; }
+.rp-board > .rp-hl { z-index: 0; } .rp-board > .rp-pcs { z-index: 1; } .rp-board > .rp-fx { z-index: 2; overflow: visible; }
+.rp-hl > i { position: absolute; width: 12.5%; height: 12.5%; background: var(--c); opacity: .62; box-shadow: 0 0 calc(var(--rpw, 400px) * .04) calc(var(--rpw, 400px) * .012) var(--c); }
+.rp-hl > i.kchk { --c: #ff2330; animation: rpChk .42s ease-in-out infinite alternate; }
+@keyframes rpChk { from { opacity: .45; } to { opacity: .85; } }
+.rp-pcs > img { position: absolute; width: 12.5%; height: 12.5%; filter: drop-shadow(0 calc(var(--rpw, 400px) * .006) calc(var(--rpw, 400px) * .008) rgba(0,0,0,.35)); }
+.rp-fx > * { position: absolute; pointer-events: none; }
+.rp-badge { width: 6.2%; height: 6.2%; } .rp-badge img { width: 100%; height: 100%; display: block; }
+.rp-ring { border-radius: 50%; border: calc(var(--rpw, 400px) * .009) solid #fff; }
+.rp-sqr { border: calc(var(--rpw, 400px) * .006) solid #fff; }
+.rp-shard { width: calc(var(--rpw, 400px) * .022); height: calc(var(--rpw, 400px) * .022); clip-path: polygon(50% 0, 100% 100%, 0 80%); }
+.rp-tint { position: absolute; inset: 0; pointer-events: none; z-index: 3; mix-blend-mode: color; opacity: 0; }
+.rp-grade { position: absolute; inset: 0; pointer-events: none; z-index: 4; background: rgba(18, 28, 70, .13); mix-blend-mode: multiply; }
+.rp-vig { position: absolute; inset: 0; pointer-events: none; z-index: 5; background: radial-gradient(ellipse 62% 46% at 50% 48%, rgba(0,0,0,0) 45%, rgba(0,0,0,.75) 100%); }
+.rp-dust { position: absolute; inset: 0; pointer-events: none; z-index: 6; overflow: hidden; }
+.rp-dust i { position: absolute; border-radius: 50%; background: #fff; opacity: .35; animation: rpDust linear infinite; }
+@keyframes rpDust { from { transform: translateY(0); } to { transform: translateY(-110vh); } }
+.rp-flash { position: absolute; inset: 0; pointer-events: none; z-index: 9; opacity: 0; }
+.rp-top { position: absolute; inset: 0; pointer-events: none; z-index: 10; }
+.rp-poster { position: absolute; inset: 0; background: rgba(4, 6, 4, .82); display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 22%; opacity: 0; }
+.rp-poster .t { font: 400 calc(var(--rpw, 400px) * .19) / 1 'Pirata One', 'Times New Roman', serif; color: var(--tc, #beff28); text-shadow: 0 0 calc(var(--rpw, 400px) * .03) var(--tc, #beff28), 0 0 calc(var(--rpw, 400px) * .008) #000; -webkit-text-stroke: calc(var(--rpw, 400px) * .004) #080c00; white-space: nowrap; text-align: center; }
+.rp-poster .s { white-space: pre !important; margin-top: 4%; font: 900 calc(var(--rpw, 400px) * .055) / 1.1 'Grenze Gotisch', 'Times New Roman', serif; color: #fff; letter-spacing: .14em; -webkit-text-stroke: calc(var(--rpw, 400px) * .005) #000; paint-order: stroke fill; white-space: nowrap; text-align: center; }
+.rp-cm { position: absolute; left: 0; right: 0; top: 25%; text-align: center; font: 400 calc(var(--rpw, 400px) * .185) / 1 'Pirata One', 'Times New Roman', serif; color: #ff2832; -webkit-text-stroke: calc(var(--rpw, 400px) * .007) #0a0000; text-shadow: 0 0 calc(var(--rpw, 400px) * .04) #ff141e; opacity: 0; }
+.rp-gun { z-index: 4; }
+.rp-gun svg { width: 100%; height: 100%; display: block; }
 .rp-bar { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: #0d0d11; color: #ddd; font: 600 13px var(--font-body); }
 .rp-bar button { border: 1px solid #2a2a33; background: #17171d; color: #eee; border-radius: 8px; height: 34px; min-width: 38px; padding: 0 10px; font: inherit; cursor: pointer; }
 .rp-bar button:hover { background: #22222a; }
@@ -5883,7 +5908,7 @@ function startReplay() {
   RP.paused = false;
   const el = document.createElement('div');
   el.className = 'rp';
-  el.innerHTML = `<div class="rp-frame"><div class="rp-scene"><div class="rp-cam"><div class="rp-board"><div class="rp-hl"></div><div class="rp-pcs"></div></div></div></div>
+  el.innerHTML = `<div class="rp-frame"><div class="rp-scene"><div class="rp-cam"><div class="rp-ext"></div><div class="rp-board"><div class="rp-hl"></div><div class="rp-pcs"></div><div class="rp-fx"></div></div></div><div class="rp-tint"></div><div class="rp-grade"></div><div class="rp-vig"></div><div class="rp-dust"></div><div class="rp-flash"></div><div class="rp-top"></div></div>
     <div class="rp-bar"><button type="button" data-rp="restart" title="Restart">⟲</button><button type="button" data-rp="pause" title="Pause (space)">❚❚</button><button type="button" data-rp="speed" title="Speed">1×</button><span class="rp-prog"></span><button type="button" data-rp="close" title="Close (Esc)">✕</button></div></div>`;
   document.body.appendChild(el);
   RP.el = el;
@@ -5907,39 +5932,102 @@ async function rpStart() {
   try { await rpPlay(tok); } catch (e) { if (e !== RP_STOP) console.error(e); }
 }
 async function rpPlay(tok) {
-  const g = R.game, el = RP.el;
-  const pcs = el.querySelector('.rp-pcs'), hl = el.querySelector('.rp-hl'), prog = el.querySelector('.rp-prog');
-  pcs.innerHTML = ''; hl.innerHTML = '';
+  const g = R.game, el = RP.el, frame = el.querySelector('.rp-frame');
+  const scene = el.querySelector('.rp-scene'), cam = el.querySelector('.rp-cam'), pcs = el.querySelector('.rp-pcs'), hl = el.querySelector('.rp-hl');
+  const fx = el.querySelector('.rp-fx'), tint = el.querySelector('.rp-tint'), flashEl = el.querySelector('.rp-flash'), top = el.querySelector('.rp-top'), prog = el.querySelector('.rp-prog');
+  frame.style.setProperty('--rpw', frame.clientWidth + 'px');
+  for (const e of [cam, scene, tint, flashEl, pcs]) e.getAnimations().forEach(a => a.cancel());
+  pcs.innerHTML = ''; hl.innerHTML = ''; fx.innerHTML = ''; top.innerHTML = '';
+  cam.style.filter = ''; tint.style.opacity = 0;
+  const dust = el.querySelector('.rp-dust');
+  if (!dust.childElementCount) for (let i = 0; i < 26; i++) { const d = document.createElement('i'), sz = 1.5 + Math.random() * 3; Object.assign(d.style, { left: Math.random() * 100 + '%', top: 100 + Math.random() * 10 + '%', width: sz + 'px', height: sz + 'px', animationDuration: 9 + Math.random() * 10 + 's', animationDelay: -Math.random() * 18 + 's' }); dust.appendChild(d); }
   const orient = board.orientation === 'b' ? 'b' : 'w';
   const xy = sq => { const f = sq.charCodeAt(0) - 97, r = +sq[1] - 1; return orient === 'w' ? { x: f, y: 7 - r } : { x: 7 - f, y: r }; };
   const keyOf = ch => (ch === ch.toUpperCase() ? 'w' : 'b') + ch.toUpperCase();
   const place = (img, sq) => { const p = xy(sq); img.style.left = p.x * 12.5 + '%'; img.style.top = p.y * 12.5 + '%'; };
-  // camera: a still board for the opening, then it glides in to follow the action and pulls back at the end
-  const cam = el.querySelector('.rp-cam');
-  cam.getAnimations().forEach(a => a.cancel());
+  const q = () => cam.clientWidth / 8;
+  const ctr = sq => { const p = xy(sq); return { x: (p.x + 0.5) * q(), y: (p.y + 0.5) * q() }; };
+  const SMOOTH = 'cubic-bezier(.65,0,.35,1)'; // smootherstep-like glide
+  const mk = (cls, st, parent) => { const e = document.createElement('div'); if (cls) e.className = cls; Object.assign(e.style, st || {}); (parent || fx).appendChild(e); return e; };
+  const gone = (e, kf, opt) => rpRun(e, kf, Object.assign({ fill: 'none' }, opt)).then(() => e.remove());
+  // camera: straight board, zooms in gently on the hero side's moves and back out to the whole board on the other side's
   let camT = 'translate(0px,0px) scale(1)';
   cam.style.transform = camT;
-  const camTo = (pt, z, dur) => {
-    const B = cam.clientWidth;
+  const camTo = (pt, z, dur, easing) => {
+    const B = cam.clientWidth, m = q() * 0.4;
     let tx = 0, ty = 0;
-    if (pt && z > 1) {
-      const cx = (pt.x + 0.5) * B / 8, cy = (pt.y + 0.5) * B / 8;
-      tx = clamp(B / 2 - z * cx, B - z * B, 0); ty = clamp(B / 2 - z * cy, B - z * B, 0);
-    } else z = 1;
+    if (pt && z > 1) { tx = clamp(B / 2 - z * pt.x, B - z * B - m, m); ty = clamp(B / 2 - z * pt.y, B - z * B - m, m); } else z = 1;
     const t = `translate(${tx.toFixed(1)}px,${ty.toFixed(1)}px) scale(${z})`, from = camT;
     if (t === from) return Promise.resolve();
     camT = t;
-    return rpRun(cam, [{ transform: from }, { transform: t }], { duration: dur, easing: 'cubic-bezier(.45,0,.25,1)' });
+    return rpRun(cam, [{ transform: from }, { transform: t }], { duration: dur, easing: easing || SMOOTH });
   };
+  const flash = (col, a, dur) => rpRun(flashEl, [{ background: col, opacity: a }, { background: col, opacity: 0 }], { duration: dur, easing: 'ease-out', fill: 'none' });
+  const shake = (amp, dur) => rpRun(scene, [0, 1, -1, 0.8, -0.6, 0.4, -0.2, 0].map(k => ({ transform: `translateX(${k * amp}px)` })), { duration: dur, easing: 'linear', fill: 'none', composite: 'add' });
+  const bump = k => rpRun(scene, [{ transform: 'scale(1)' }, { transform: `scale(${k})`, offset: 0.25 }, { transform: 'scale(1)' }], { duration: 260, easing: 'ease-out', fill: 'none', composite: 'add' });
+  const rgbSplit = (px, dur) => rpRun(pcs, [{ filter: `drop-shadow(${-px}px 0 0 rgba(255,0,60,.8)) drop-shadow(${px}px 0 0 rgba(0,230,255,.8))` }, { filter: 'drop-shadow(0 0 0 rgba(0,0,0,0)) drop-shadow(0 0 0 rgba(0,0,0,0))' }], { duration: dur, easing: 'ease-out', fill: 'none' });
+  const glitch = () => rpRun(cam, [{ filter: 'invert(1)' }, { filter: 'hue-rotate(160deg) contrast(2)' }, { filter: 'invert(1) brightness(.6)' }, { filter: 'saturate(3) hue-rotate(80deg)' }, { filter: 'invert(.9) contrast(1.6)' }, { filter: 'none' }], { duration: 220, easing: 'steps(6, end)', fill: 'none' });
+  const ring = (P, col, size, dur, delay) => { const r0 = q() * 0.5, e = mk('rp-ring', { left: P.x - r0 + 'px', top: P.y - r0 + 'px', width: 2 * r0 + 'px', height: 2 * r0 + 'px', borderColor: col, opacity: 0 }); return gone(e, [{ transform: 'scale(.3)', opacity: 1 }, { transform: `scale(${size})`, opacity: 0 }], { duration: dur || 560, delay: delay || 0, easing: 'cubic-bezier(.1,.7,.3,1)' }); };
+  const ringCycle = (P, col, delay) => {
+    ring(P, col, 3.6, 620, delay); ring(P, '#fff', 2.1, 480, (delay || 0) + 60);
+    const s0 = q() * 0.75, sq = mk('rp-sqr', { left: P.x - s0 + 'px', top: P.y - s0 + 'px', width: 2 * s0 + 'px', height: 2 * s0 + 'px', borderColor: col, opacity: 0 });
+    gone(sq, [{ transform: 'rotate(45deg) scale(.5)', opacity: 1 }, { transform: 'rotate(90deg) scale(1.9)', opacity: 0 }], { duration: 600, delay: delay || 0, easing: 'ease-out' });
+    for (let i = 0; i < 8; i++) {
+      const a = i * Math.PI / 4 + 0.39, ln = mk('', { left: P.x + 'px', top: P.y - 1.5 + 'px', width: q() * 0.6 + 'px', height: '3px', background: col, transformOrigin: '0 50%', opacity: 0 });
+      gone(ln, [{ transform: `rotate(${a}rad) translateX(${q() * 0.5}px) scaleX(.2)`, opacity: 1 }, { transform: `rotate(${a}rad) translateX(${q() * 2}px) scaleX(1)`, opacity: 0 }], { duration: 520, delay: (delay || 0) + 40, easing: 'ease-out' });
+    }
+  };
+  // broken bits of the captured piece: white shards for a white piece, black for a black one
+  const debris = (P, white, n) => {
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * Math.PI * 2, sp = q() * (1.2 + Math.random() * 3.2), rot = (Math.random() - 0.5) * 900, s = 0.6 + Math.random() * 0.9;
+      const e = mk('rp-shard', { left: P.x + 'px', top: P.y + 'px', background: white ? '#f6f6f6' : '#0e0e10', outline: white ? '1px solid #3c3c3c' : '1px solid #e6e6e6' });
+      const kf = [0, 0.25, 0.5, 0.75, 1].map(t => ({ transform: `translate(${Math.cos(a) * sp * t * (1 - 0.35 * t)}px, ${Math.sin(a) * sp * t * (1 - 0.35 * t) + q() * 3.2 * t * t}px) rotate(${rot * t}deg) scale(${s * (1 - 0.5 * t)})`, opacity: t < 0.6 ? 1 : (1 - t) * 2.5 }));
+      gone(e, kf, { duration: 900 + Math.random() * 500, easing: 'linear' });
+    }
+  };
+  // chess-site arrow, head first, the shaft grows
+  const arrow = (fromSq, toSq, col) => {
+    const A = ctr(fromSq), K = ctr(toSq), len = Math.hypot(K.x - A.x, K.y - A.y), ang = Math.atan2(K.y - A.y, K.x - A.x), w = q() * 0.34;
+    const e = mk('', { left: A.x + 'px', top: A.y - w / 2 + 'px', width: len - q() * 0.28 + 'px', height: w + 'px', background: col, opacity: 0.85, transformOrigin: '0 50%', clipPath: `polygon(0 30%, calc(100% - ${w * 1.3}px) 30%, calc(100% - ${w * 1.3}px) 0, 100% 50%, calc(100% - ${w * 1.3}px) 100%, calc(100% - ${w * 1.3}px) 70%, 0 70%)` });
+    return gone(e, [{ transform: `rotate(${ang}rad) scaleX(0)`, opacity: 0.9 }, { transform: `rotate(${ang}rad) scaleX(1)`, opacity: 0.9, offset: 0.3 }, { transform: `rotate(${ang}rad) scaleX(1)`, opacity: 0.9, offset: 0.8 }, { transform: `rotate(${ang}rad) scaleX(1)`, opacity: 0 }], { duration: 1100, easing: 'ease-out' });
+  };
+  // title poster: gothic title + subtitle, fades in and out over about 0.6 s
+  const poster = async (title, sub, hold, stay) => {
+    const p = mk('rp-poster', {}, top);
+    p.innerHTML = `<div class="t"></div><div class="s"></div>`;
+    p.querySelector('.t').textContent = title; p.querySelector('.s').textContent = sub.toUpperCase().split(' ').map(w => w.split('').join(' ')).join('   ');
+    try { await document.fonts.load(`400 40px "Pirata One"`); await document.fonts.load(`900 20px "Grenze Gotisch"`); } catch (e) { /* fonts are optional */ }
+    for (const c of p.children) { let fs = parseFloat(getComputedStyle(c).fontSize); while (c.scrollWidth > p.clientWidth * 0.9 && fs > 10) { fs *= 0.92; c.style.fontSize = fs + 'px'; } }
+    await rpRun(p, [{ opacity: 0 }, { opacity: 1 }], { duration: 600, easing: 'ease-in-out' });
+    if (stay) return p;
+    await rpWait(hold, tok);
+    await rpRun(p, [{ opacity: 1 }, { opacity: 0 }], { duration: 650, easing: 'ease-in-out' });
+    p.remove();
+  };
+  // badge pops onto the top right of its square
+  let bdg = null;
+  const badgeAt = (sq, cls, big) => {
+    if (!BADGE_PNG[cls]) return;
+    const p = xy(sq), e = mk('rp-badge', { left: (p.x + 0.66) * 12.5 + '%', top: (p.y - 0.28) * 12.5 + '%', width: (big ? 7.2 : 6.2) + '%', height: (big ? 7.2 : 6.2) + '%' });
+    e.innerHTML = `<img src="data:image/png;base64,${BADGE_PNG[cls]}" alt="">`;
+    rpRun(e, [{ transform: 'scale(.3)' }, { transform: 'scale(1.25)', offset: 0.5 }, { transform: 'scale(1.05)' }], { duration: 300, easing: 'ease-out' });
+    bdg = e;
+  };
+  const KIND = { brilliant: '#27c2a3', great: '#749bbf', best: '#80b64b', excellent: '#80b64b', good: '#95b776', book: '#d4a47c', inaccuracy: '#f4c434', mistake: '#fca45c', miss: '#fc746c', blunder: '#fc442c', forced: '#95b776' };
   const els = {};
   { const m = fenToMap(g.positions[0].fen); for (const sq in m) { const i = document.createElement('img'); i.src = PIECE_URL[keyOf(m[sq])]; i.alt = ''; place(i, sq); pcs.appendChild(i); els[sq] = i; } }
-  const n = g.moves.length;
-  prog.textContent = 'Start';
-  await rpWait(600, tok);
+  const n = g.moves.length, H = g.headers || {}, res = H.Result || '*';
+  const lastSan = n ? g.moves[n - 1].san || '' : '', mated = /#/.test(lastSan);
+  const winner = res === '1-0' ? 'w' : res === '0-1' ? 'b' : null, wName = H.White || 'White', bName = H.Black || 'Black';
+  const clsOf = i => (g.cls && g.cls[i] && g.cls[i].cls) || null;
+  prog.textContent = 'Replay';
+  // the intro poster
+  await rpWait(150, tok);
+  await poster(winner ? (winner === 'w' ? wName : bName) : wName, winner ? `vs ${winner === 'w' ? bName : wName}` : `vs ${bName}`, 1900);
   for (let i = 0; i < n; i++) {
-    const mv = g.moves[i], A = g.positions[i], Bp = g.positions[i + 1];
+    const mv = g.moves[i], A = g.positions[i], Bp = g.positions[i + 1], cls = clsOf(i);
     prog.textContent = `Move ${Math.ceil((i + 1) / 2)} · ${i + 1}/${n}`;
-    // work out which pieces moved (castling moves two), which one was taken, and animate them
     const pm = fenToMap(A.fen), nm = fenToMap(Bp.fen);
     const vac = Object.keys(pm).filter(sq => pm[sq] !== nm[sq]), arr = Object.keys(nm).filter(sq => nm[sq] !== pm[sq]);
     const used = new Set(), pairs = [];
@@ -5949,35 +6037,149 @@ async function rpPlay(tok) {
       if (fr) { used.add(fr); pairs.push([fr, to]); }
     }
     const capSqs = vac.filter(sq => !used.has(sq));
-    {
-      const a2 = xy(mv.from), b2 = xy(mv.to), loud = capSqs.length || /[+#]/.test(mv.san || '');
-      if (i < 6) camTo(null, 1, 500);
-      else { camTo({ x: (a2.x + b2.x) / 2, y: (a2.y + b2.y) / 2 }, loud ? 1.55 : 1.35, 520); await rpWait(220, tok); }
+    const to = pairs.length ? pairs[0][1] : mv.to, mate = mated && i === n - 1;
+    const big = !mate && (cls === 'brilliant' || cls === 'great'), check = /\+/.test(mv.san || '');
+    const hero = mv.color === orient, P = ctr(to);
+    if (bdg) { const b = bdg; bdg = null; gone(b, [{ opacity: 1 }, { opacity: 0 }], { duration: 160 }); }
+    hl.innerHTML = '';
+    // the silence before the mate: colour drains, the picture darkens, a slow heartbeat
+    if (mate) {
+      await rpRun(cam, [{ filter: 'grayscale(0) brightness(1)' }, { filter: 'grayscale(.85) brightness(.58)' }], { duration: 300, fill: 'none' });
+      cam.style.filter = 'grayscale(.85) brightness(.58)';
+      for (let k = 0; k < 2; k++) { await rpRun(cam, [{ filter: 'grayscale(.85) brightness(.58)' }, { filter: 'grayscale(.85) brightness(.7)', offset: 0.2 }, { filter: 'grayscale(.85) brightness(.58)' }], { duration: 560, fill: 'none' }); }
     }
-    const anims = pairs.map(([fr, to]) => {
+    // camera
+    if (mate || big) await camTo(P, 1.65, 500);
+    else if (hero) { const a2 = ctr(mv.from); camTo({ x: a2.x * 0.3 + P.x * 0.7, y: a2.y * 0.3 + P.y * 0.7 }, 1.4, 500); await rpWait(180, tok); }
+    else { camTo(null, 1, 500); await rpWait(180, tok); }
+    if (big) await glitch(); // stutter right before the hit
+    const slow = mate ? 900 : big ? 700 : 420;
+    const anims = pairs.map(([fr, t2], k) => {
       const img = els[fr];
       if (!img) return Promise.resolve();
-      const a = xy(fr), b = xy(to);
-      place(img, to); img.style.zIndex = 2;
-      return rpRun(img, [{ transform: `translate(${(a.x - b.x) * 100}%,${(a.y - b.y) * 100}%)` }, { transform: 'translate(0,0)' }], { duration: 280, easing: 'cubic-bezier(.3,0,.2,1)', fill: 'none' })
-        .then(() => { img.style.zIndex = ''; img.src = PIECE_URL[keyOf(nm[to])]; });
+      const a = xy(fr), b = xy(t2), dx = (a.x - b.x) * 100, dy = (a.y - b.y) * 100;
+      place(img, t2); img.style.zIndex = 3;
+      const lift = (big || mate) && k === 0 ? 18 : 0, sc = (big || mate) && k === 0 ? 1.14 : 1.04;
+      const flip = cls === 'brilliant' && k === 0; // a brilliant move tumbles through the air, blown to white
+      const kf = [0, 0.25, 0.5, 0.75, 1].map(t => {
+        const u = t * t * t * (t * (t * 6 - 15) + 10), s2 = Math.sin(u * Math.PI);
+        return { transform: `translate(${dx * (1 - u)}%, ${dy * (1 - u) - lift * s2}%) scale(${1 + (sc - 1) * s2})${flip ? ` rotateY(${360 * u}deg)` : ''}`, filter: flip ? `brightness(${1 + 2.2 * s2})` : 'none' };
+      });
+      // motion-blur trail: fading copies a step behind
+      for (const [lag, al] of [[40, 0.32], [80, 0.2], [120, 0.12]]) {
+        const gh = img.cloneNode(); gh.style.opacity = al; gh.style.zIndex = 2; pcs.appendChild(gh);
+        gone(gh, kf, { duration: slow, delay: lag, easing: 'linear' });
+      }
+      return rpRun(img, kf, { duration: slow, easing: 'linear', fill: 'none' }).then(() => { img.style.zIndex = ''; img.src = PIECE_URL[keyOf(nm[t2])]; });
     });
     const next = {};
     for (const sq in els) if (!used.has(sq) && nm[sq] && pm[sq] === nm[sq]) next[sq] = els[sq];
-    for (const [fr, to] of pairs) next[to] = els[fr];
+    for (const [fr, t2] of pairs) next[t2] = els[fr];
     await Promise.all(anims);
-    for (const sq of capSqs) if (els[sq]) els[sq].remove();
+    // the captured piece pops and shatters
+    for (const sq of capSqs) {
+      const v = els[sq];
+      if (!v) continue;
+      gone(v, [{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(1.8)', opacity: 0 }], { duration: 300, easing: 'ease-out' });
+      debris(ctr(sq), pm[sq] === pm[sq].toUpperCase(), big || mate ? 46 : 22);
+    }
     for (const k in els) delete els[k];
     Object.assign(els, next);
     moveSound(mv, mkChess(Bp.fen));
-    // last-move highlight
-    hl.innerHTML = [mv.from, pairs.length ? pairs[0][1] : mv.to].map(sq => { const p = xy(sq); return `<i style="left:${p.x * 12.5}%;top:${p.y * 12.5}%"></i>`; }).join('');
-    await rpWait(750, tok);
+    // squares in the move's colour, with a soft glow
+    const col = big ? (cls === 'brilliant' ? '#33e0ff' : '#5a96ff') : KIND[cls] || '#ff963c';
+    hl.innerHTML = [mv.from, to].map(sq => { const p = xy(sq); return `<i style="left:${p.x * 12.5}%;top:${p.y * 12.5}%;--c:${col}"></i>`; }).join('');
+    let ksq = null;
+    if (check || mate) {
+      const kc = mv.color === 'w' ? 'k' : 'K';
+      ksq = Object.keys(nm).find(sq => nm[sq] === kc) || null;
+      if (ksq) { const p = xy(ksq); hl.insertAdjacentHTML('beforeend', `<i class="kchk" style="left:${p.x * 12.5}%;top:${p.y * 12.5}%"></i>`); arrow(to, ksq, 'rgba(235,50,50,.9)'); }
+    }
+    if (cls && cls !== 'forced') badgeAt(to, cls, big);
+    if (mate) {
+      // CHECKMATE: the colour slams back, white then red flash, the word slams down, then the gun
+      cam.style.filter = '';
+      flash('#fff', 0.92, 130); setTimeout(() => flash('rgba(255,30,50,1)', 0.45, 380), 130);
+      shake(q() * 0.35, 520); bump(1.08); rgbSplit(q() * 0.1, 500);
+      if (ksq) { ringCycle(ctr(ksq), '#ff2832', 0); ring(ctr(ksq), '#ff2832', 4.5, 700, 120); }
+      const cm = mk('rp-cm', {}, top); cm.textContent = 'CHECKMATE';
+      // keep the word off the king: it goes on whichever half of the screen the king isn't on
+      if (ksq) { const kr = els[ksq] ? els[ksq].getBoundingClientRect() : null, fr = top.getBoundingClientRect(); if (kr && kr.top + kr.height / 2 < fr.top + fr.height * 0.5) cm.style.top = '66%'; }
+      rpRun(cm, [{ transform: 'scale(2.4)', opacity: 0 }, { transform: 'scale(1)', opacity: 1, offset: 0.4 }, { transform: 'scale(1)', opacity: 1 }], { duration: 330, easing: 'cubic-bezier(.2,.9,.3,1)' });
+      rpRun(cm, [0, 1, -1, 0.6, -0.4, 0].map(k => ({ transform: `translateX(${k * q() * 0.12}px)` })), { duration: 500, delay: 330, fill: 'none', composite: 'add' });
+      await rpWait(900, tok);
+      if (ksq) await rpGunKill(to, ksq, els[ksq], { q, ctr, mk, gone, flash, shake, tok, fx });
+      await rpWait(900, tok);
+      rpRun(cm, [{ opacity: 1 }, { opacity: 0 }], { duration: 500 });
+    } else if (big) {
+      // the drama: dark duotone board in the move's colour, flashes, rings on every pulse, spin, then a white-out back to calm
+      const tc = cls === 'brilliant' ? '#22d6ee' : '#3d7bff';
+      flash('#fff', 0.9, 120); setTimeout(() => flash(tc, 0.45, 260), 140);
+      tint.style.background = tc;
+      rpRun(tint, [{ opacity: 0 }, { opacity: 0.55 }], { duration: 120 }); tint.style.opacity = 0.55;
+      rpRun(cam, [{ filter: 'none' }, { filter: 'brightness(.62) contrast(1.45) saturate(.5)' }], { duration: 120 }); cam.style.filter = 'brightness(.62) contrast(1.45) saturate(.5)';
+      shake(q() * 0.3, 600); rgbSplit(q() * 0.08, 420);
+      const hero2 = els[to];
+      if (hero2) rpRun(hero2, cls === 'brilliant' ? [{ transform: 'rotate(0)' }, { transform: 'rotate(360deg)' }] : [{ transform: 'rotate(30deg)' }, { transform: 'rotate(-8deg)', offset: 0.5 }, { transform: 'rotate(0)' }], { duration: cls === 'brilliant' ? 520 : 300, easing: 'cubic-bezier(.2,.8,.3,1)', fill: 'none' });
+      for (let k = 0; k < 3; k++) { ringCycle(P, tc, k * 450); setTimeout(() => { if (RP.token === tok) bump(1.05); }, k * 450); }
+      if (capSqs.length) debris(P, mv.color !== 'w', 30);
+      await rpWait(1500, tok);
+      flash('#fff', 0.55, 240);
+      rpRun(tint, [{ opacity: 0.55 }, { opacity: 0 }], { duration: 240 }); tint.style.opacity = 0;
+      rpRun(cam, [{ filter: 'brightness(.62) contrast(1.45) saturate(.5)' }, { filter: 'none' }], { duration: 240 }); cam.style.filter = '';
+      await rpWait(300, tok);
+    } else {
+      if (capSqs.length) { flash('#fff', 0.28, 110); bump(1.03); }
+      const book = cls === 'book';
+      await rpWait(book ? 320 : capSqs.length || check ? 560 : 420, tok);
+    }
+  }
+  // the end poster
+  await camTo(null, 1, 700);
+  const how = mated ? 'wins by checkmate' : winner ? 'wins' : res === '1/2-1/2' ? 'a draw' : 'game over';
+  await poster(winner ? (winner === 'w' ? wName : bName) : res === '1/2-1/2' ? 'DRAW' : 'THE END', how, 0, true);
+  prog.textContent = (res && res !== '*' ? res + ' · ' : '') + 'Finished · ⟲ to watch again';
+}
+// the gun kill: the mating piece pulls a pistol, aims at the king and fires; the king tips over
+async function rpGunKill(aSq, kSq, kingImg, h) {
+  const { q, ctr, mk, gone, flash, shake, tok, fx } = h;
+  const A = ctr(aSq), K = ctr(kSq), Q = q();
+  const gw = Q * 0.72, gh = gw * WPN.pistol.vb[1] / WPN.pistol.vb[0];
+  const GX = 0.3, GY = 0.72, MX = 1.0, MY = 0.47;
+  const ux = Math.sign(K.x - A.x) || 1;
+  const Hd = { x: A.x + ux * Q * 0.3, y: A.y + Q * 0.1 };
+  const aim = Math.atan2(K.y - Hd.y, K.x - Hd.x), left = Math.abs(aim) > Math.PI / 2, flip = left ? ' scaleY(-1)' : '';
+  const gun = mk('rp-gun', { left: Hd.x - gw * GX + 'px', top: Hd.y - gh * GY + 'px', width: gw + 'px', height: gh + 'px', transformOrigin: `${GX * 100}% ${GY * 100}%` });
+  gun.innerHTML = WPN.pistol.svg;
+  const held = `rotate(${aim}rad)${flip}`;
+  sfx('lock');
+  await rpRun(gun, [{ transform: `${held} translateY(${Q * 0.6}px) rotate(-40deg) scale(.3)`, opacity: 0 }, { transform: `${held} scale(1.12)`, opacity: 1, offset: 0.7 }, { transform: `${held} scale(1)`, opacity: 1 }], { duration: 300, easing: 'cubic-bezier(.2,.8,.3,1.2)' });
+  await rpWait(380, tok);
+  const ox = (MX - GX) * gw, oy = (MY - GY) * gh * (left ? -1 : 1);
+  const M = { x: Hd.x + Math.cos(aim) * ox - Math.sin(aim) * oy, y: Hd.y + Math.sin(aim) * ox + Math.cos(aim) * oy };
+  sfx('shot');
+  const mf = mk('', { left: M.x - Q * 0.5 + 'px', top: M.y - Q * 0.5 + 'px', width: Q + 'px', height: Q + 'px', borderRadius: '50%', background: 'radial-gradient(circle, #fff 0%, #ffe27a 30%, rgba(255,140,40,.85) 55%, rgba(255,80,0,0) 72%)' });
+  gone(mf, [{ transform: 'scale(.4)', opacity: 1 }, { transform: 'scale(1.3)', opacity: 0 }], { duration: 200 });
+  flash('#fff', 0.4, 140);
+  rpRun(gun, [{ transform: held }, { transform: `${held} rotate(${left ? 16 : -16}deg)`, offset: 0.25 }, { transform: held }], { duration: 360, easing: 'ease-out', fill: 'none' });
+  const len = Math.hypot(K.x - M.x, K.y - M.y), a2 = Math.atan2(K.y - M.y, K.x - M.x);
+  const tr = mk('', { left: M.x + 'px', top: M.y - 1.5 + 'px', width: len + 'px', height: '3px', background: 'linear-gradient(90deg, rgba(255,240,180,0), #fff6c8)', boxShadow: '0 0 10px 2px rgba(255,230,150,.8)', transformOrigin: '0 50%' });
+  gone(tr, [{ transform: `rotate(${a2}rad) scaleX(0)`, opacity: 1 }, { transform: `rotate(${a2}rad) scaleX(1)`, opacity: 1, offset: 0.4 }, { transform: `rotate(${a2}rad) scaleX(1)`, opacity: 0 }], { duration: 240 });
+  await rpWait(80, tok);
+  const burst = mk('', { left: K.x - Q * 0.7 + 'px', top: K.y - Q * 0.7 + 'px', width: Q * 1.4 + 'px', height: Q * 1.4 + 'px', borderRadius: '50%', background: 'radial-gradient(circle, #fff 0%, #ff4a3a 35%, rgba(200,0,0,0) 70%)' });
+  gone(burst, [{ transform: 'scale(.3)', opacity: 1 }, { transform: 'scale(1.4)', opacity: 0 }], { duration: 300 });
+  for (let i = 0; i < 14; i++) {
+    const a = a2 + (Math.random() - 0.5) * 1.6, sp = Q * (0.6 + Math.random() * 1.4), s = 3 + Math.random() * 5;
+    const d = mk('', { left: K.x + 'px', top: K.y + 'px', width: s + 'px', height: s + 'px', borderRadius: '50%', background: '#c8121e' });
+    gone(d, [{ transform: 'translate(0,0)', opacity: 1 }, { transform: `translate(${Math.cos(a) * sp}px, ${Math.sin(a) * sp + Q * 0.6}px)`, opacity: 0 }], { duration: 600, easing: 'cubic-bezier(.2,.6,.4,1)' });
+  }
+  shake(Q * 0.25, 400);
+  if (kingImg) {
+    kingImg.style.transformOrigin = '50% 90%';
+    rpRun(kingImg, [{ transform: 'rotate(0)', filter: 'none' }, { transform: `rotate(${(Math.cos(a2) >= 0 ? 1 : -1) * 90}deg)`, filter: 'sepia(1) saturate(6) hue-rotate(-50deg) brightness(.8)' }], { duration: 600, easing: 'cubic-bezier(.5,0,.75,0)' });
   }
   await rpWait(500, tok);
-  await camTo(null, 1, 800);
-  const res = (g.headers && g.headers.Result) || '';
-  prog.textContent = (res && res !== '*' ? res + ' · ' : '') + 'Finished · ⟲ to watch again';
+  rpRun(gun, [{ opacity: 1 }, { opacity: 0 }], { duration: 400 }).then(() => gun.remove());
 }
 /* ============================================================
    Ending and intro animations (respect the Animations setting)

@@ -319,6 +319,7 @@ textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 0; }
 
 /* ---------- NPCs & ladder ---------- */
 .ava { display: block; flex: none; border-radius: 50%; overflow: hidden; }
+img.ava-img { object-fit: cover; background: #0b1416; }
 .player .ava { width: 30px; height: 30px; }
 .btn .ava { width: 22px; height: 22px; margin: -4px 0; }
 .board-col { position: relative; }
@@ -1142,6 +1143,7 @@ function robotAvatar(mood) {
 function avatar(a, mood) {
   mood = mood || 'neutral';
   if (a.robot) return robotAvatar(mood);
+  if (a.img) return `<img class="ava ava-img" src="${a.img}" alt="" aria-hidden="true">`;
   const ex = new Set(a.extra || []), H = a.hair;
   let s = `<svg class="ava" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" fill="${a.bg}"/>`;
   if (a.style === 'long') s += `<path d="M14.5 33C14.5 19 21.5 12 32 12s17.5 7 17.5 21v19h-35z" fill="${H}"/>`;
@@ -1185,11 +1187,14 @@ const NPCS = [
   { id: 'sato', name: 'Dr. Sato', title: 'Opening Theorist', elo: 2100,
     av: { bg: '#d3ecec', skin: '#f0cfa8', hair: '#15161a', style: 'slick', shirt: '#e4e7ea', extra: ['glasses'] },
     L: { intro: "I've prepared 40 moves deep in every line. Let's see yours.", gift: ["That move is refuted in my notes.", "Page 214. A known error."], shock: ["This is outside my preparation.", "Interesting. A novelty."], ahead: "Still deep in my files.", behind: "I'll need a new chapter for this.", win: "As my analysis predicted.", lose: "I must update my files. Remarkable.", draw: "A theoretical draw. As expected." } },
+  { id: 'brilliant', name: 'Mr Brilliant', title: 'Sacrifices Everything', elo: 2600, eloTxt: '???', brilliant: true, av: { img: 'img/npc/mr-brilliant.jpg' },
+    L: { intro: "Do you like gifts? I have so many to give you.", gift: ["Thank you for the gift. Now watch mine.", "Oh, you shouldn't have."], shock: ["Ohhh. You found the brilliant one. Delicious.", "Hm! Even I didn't see that one."], ahead: "Every sacrifice was worth it. Every single one.", behind: "Don't worry. My best gifts come at the end.", win: "Brilliant. Brilliant. BRILLIANT!", lose: "Two exclamation marks for you. You've earned them.", draw: "Half a point. Not brilliant. Not terrible.",
+      sac: ["Take it. I insist.", "A gift. With a little surprise inside.", "!!", "Go on. Take it. I dare you.", "Free piece! Hehehe.", "Brilliant, isn't it?"] } },
   { id: 'omega', name: 'OMEGA', title: 'AI Chess Master God', elo: 3200, god: true, av: { robot: true },
     L: { intro: "I HAVE CALCULATED 4.2 BILLION FUTURES. YOU LOSE IN ALL OF THEM.", gift: ["ERROR DETECTED IN HUMAN. EXPLOITING.", "PREDICTABLE."], shock: ["UNEXPECTED. RECALCULATING.", "THAT MOVE WAS NOT IN MY DATABASE."], ahead: "RESISTANCE IS SUBOPTIMAL.", behind: "ANOMALY DETECTED. HOW.", win: "AS FORESEEN.", lose: "IMPOSSIBLE. YOU ARE THE NEW CHESS GOD.", draw: "A DRAW. ACCEPTABLE. BARELY." } }
 ];
 const OZZIE = { name: 'Coach Ozzie', av: { bg: '#f6cf6a', skin: '#d9a27a', hair: '#3b2a20', style: 'short', shirt: '#2f5d8a', extra: ['mustache', 'headset'] } };
-const eloTxt = n => n.god ? '3200+' : String(n.elo);
+const eloTxt = n => n.eloTxt || (n.god ? '3200+' : String(n.elo));
 const firstLine = x => Array.isArray(x) ? x[0] : x;
 const LOCK_ICON = '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" aria-label="Locked"><rect x="3.5" y="7" width="9" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg>';
 const CHECK_ICON = '<svg class="ok" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-label="Beaten"><path d="m3 8.5 3 3 7-7"/></svg>';
@@ -2604,6 +2609,33 @@ function chooseFromLines(res, prm) {
   for (let i = 0; i < ws.length; i++) { x -= ws[i]; if (x <= 0) return lines[i].pv[0]; }
   return lines[0].pv[0];
 }
+// Mr Brilliant: how much material a move really gives away (0 if it isn't a sacrifice)
+function sacValue(chess, uci) {
+  const c = mkChess(chess.fen()), m = c.move(uciObj(uci));
+  if (!m || m.piece === 'k') return 0;
+  const v = VAL[m.promotion || m.piece], got = m.captured ? VAL[m.captured] : 0;
+  const caps = c.moves({ verbose: true }).filter(x => x.to === m.to && x.captured);
+  if (!caps.length) return 0;
+  const cheap = caps.reduce((a, b) => (VAL[b.piece] < VAL[a.piece] ? b : a));
+  c.move(cheap);
+  const defended = c.moves({ verbose: true }).some(x => x.to === m.to);
+  const loss = v - got - (defended ? VAL[cheap.piece] : 0);
+  return loss >= 2 ? loss : 0;
+}
+// among his engine's top moves, play the biggest sound sacrifice; flashier the more he's winning
+function chooseBrilliant(chess, res) {
+  const lines = (res.lines || []).filter(l => l.pv && l.pv.length);
+  if (!lines.length) return { uci: res.bestmove, sac: 0 };
+  const best = lineCp(lines[0]), tol = best >= 900 ? 400 : best >= 300 ? 150 : 70;
+  let pickL = null, pickS = 0;
+  for (const l of lines) {
+    const sc = lineCp(l);
+    if (sc < best - tol) continue;
+    const sv = sacValue(chess, l.pv[0]);
+    if (sv > pickS) { pickL = l; pickS = sv; }
+  }
+  return pickL ? { uci: pickL.pv[0], sac: pickS } : { uci: lines[0].pv[0], sac: 0 };
+}
 function naiveMove(chess) {
   const ms = chess.moves({ verbose: true });
   const caps = ms.filter(m => m.captured).sort((a, b) => VAL[b.captured] - VAL[a.captured]);
@@ -2703,12 +2735,22 @@ async function botMove() {
   const prm = levelParams(botElo());
   const legal = P.chess.moves({ verbose: true });
   const t0 = performance.now();
-  let uci = null;
+  let uci = null, sacked = false;
   try {
     if (engine.failed) uci = naiveMove(P.chess);
     else if (legal.length === 1) uci = toUci(legal[0]);
     else if (Math.random() < prm.blunder) uci = toUci(pick(legal));
-    else {
+    else if (P.mode === 'ladder' && NPCS[P.npc].brilliant) {
+      const job = engine.run(P.chess.fen(), { depth: 14, movetime: 1600, multipv: Math.min(5, legal.length) });
+      P.job = job;
+      const res = await job.promise;
+      P.job = null;
+      if (gen !== P.gen) return;
+      if (!res) { P.thinking = false; renderPlay(); return; }
+      const ch = chooseBrilliant(P.chess, res);
+      uci = ch.uci; sacked = ch.sac > 0;
+      npcReact(res);
+    } else {
       const job = engine.run(P.chess.fen(), { depth: prm.depth, movetime: prm.movetime, multipv: Math.min(prm.multipv, legal.length) });
       P.job = job;
       const res = await job.promise;
@@ -2734,6 +2776,8 @@ async function botMove() {
   checkOver(true);
   if (P.over) gameEnded();
   savePlay(); renderPlay(true);
+  // Mr Brilliant marks his own sacrifices
+  if (sacked && m && P.mode === 'ladder') { board.badge = { sq: m.to, cls: 'brilliant' }; board.renderBadge(); if (!P.over) npcSay('sac'); }
   if (!P.over && board.premove && P.chess.turn() === P.userColor) runPremove(P.chess, P.userColor, onPlayMove);
 }
 function undoPlay() {
@@ -2862,7 +2906,7 @@ function reviewPlayedGame(hl) {
   const res = G.over ? G.over.result : '*';
   const head = `[Event "${ladder ? 'Ladder vs ' + npc.name : 'Sixty-Four game'}"]\n[Date "${new Date().toISOString().slice(0, 10).replace(/-/g, '.')}"]\n` +
     `[White "${G.userColor === 'w' ? 'You' : bot}"]\n[Black "${G.userColor === 'b' ? 'You' : bot}"]\n` +
-    (G.userColor === 'w' ? `[BlackElo "${botR}"]\n` : `[WhiteElo "${botR}"]\n`) + `[Result "${res}"]\n\n`;
+    (ladder && npc.eloTxt ? '' : G.userColor === 'w' ? `[BlackElo "${botR}"]\n` : `[WhiteElo "${botR}"]\n`) + `[Result "${res}"]\n\n`;
   let body = '';
   sans.forEach((s, i) => { body += (i % 2 === 0 ? `${i / 2 + 1}. ` : '') + s + ' '; });
   const pgn = (G.vs === 'friend' ? friendHead(res) : head).replace(/\n\n$/, '\n' + variantHead(G) + '\n') + body + res;
@@ -3759,7 +3803,7 @@ function friendHead(res) {
 }
 const botElo = () => P.mode === 'ladder' ? NPCS[P.npc].elo : P.elo;
 const botName = () => P.mode === 'ladder' ? NPCS[P.npc].name : `Bot (${P.elo})`;
-const NPC_MOOD = { intro: 'happy', gift: 'smug', shock: 'shock', ahead: 'smug', behind: 'sad', win: 'happy', lose: 'sad', draw: 'neutral' };
+const NPC_MOOD = { sac: 'smug', intro: 'happy', gift: 'smug', shock: 'shock', ahead: 'smug', behind: 'sad', win: 'happy', lose: 'sad', draw: 'neutral' };
 function outcomeOf(G) {
   if (!G.over) return null;
   const r = G.over.result;

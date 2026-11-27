@@ -574,6 +574,7 @@ img.ava-img { object-fit: cover; background: #0b1416; }
     <div class="top-right">
       <span class="pill" id="enginePill" data-state="loading" title="Chess engine status"><i></i><span>Loading engine…</span></span>
       <label class="battle-btn fin-pick" title="Animations: Full plays everything, Light keeps only the quick ones, Off turns them off"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 2.5c-4 0-6.5 2.6-6.5 6 0 2.2 1.1 3.6 2.5 4.4V15.5h8v-2.6c1.4-.8 2.5-2.2 2.5-4.4 0-3.4-2.5-6-6.5-6z"/><circle cx="7.5" cy="9" r="1.4" fill="currentColor"/><circle cx="12.5" cy="9" r="1.4" fill="currentColor"/><path d="M8.5 15.5v2M11.5 15.5v2"/></svg><span>Animations:</span><select id="animSel" aria-label="Animations"><option value="full">Full</option><option value="light">Light</option><option value="off">Off</option></select></label>
+      <label class="battle-btn fin-pick" title="Premoves: queue your next move during your opponent's turn"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 15.5 14 5"/><path d="M8.5 5H14v5.5"/><circle cx="4" cy="15" r="1.6" fill="currentColor"/></svg><span>Premoves:</span><select id="pmSel" aria-label="Premoves"><option value="on">On</option><option value="off">Off</option></select></label>
       <button class="icon-btn" id="soundBtn" type="button" aria-label="Sound on" title="Sound"></button>
     </div>
   </header>
@@ -2503,7 +2504,7 @@ const moveSound = (m, c) => {
 /* ============================================================
    App state
    ============================================================ */
-const S = { tab: 'play', sound: store.get('s64.sound', true), anim: ['full', 'light', 'off'].includes(store.get('s64.anim', '')) ? store.get('s64.anim', '') : 'full', fin: store.get('s64.fin', 'random') };
+const S = { tab: 'play', sound: store.get('s64.sound', true), anim: ['full', 'light', 'off'].includes(store.get('s64.anim', '')) ? store.get('s64.anim', '') : 'full', fin: store.get('s64.fin', 'random'), premove: store.get('s64.premove', true) !== false };
 const engine = new Engine();
 let board;
 
@@ -6144,6 +6145,7 @@ function wire() {
       return board.chess ? board.chess.turn() : null;
     },
     premovable: () => {
+      if (!S.premove) return null;
       if (S.tab === 'online') { const G = ONLINE; return G.phase === 'game' && !G.over && G.st && !G.watching && G.chess.turn() !== G.userColor ? G.userColor : null; }
       if (S.tab !== 'play' && S.tab !== 'ladder') return null;
       if ((S.tab === 'ladder' && P.phase !== 'game') || P.vs === 'friend' || P.over || !P.chess) return null;
@@ -6160,6 +6162,8 @@ function wire() {
   $$('.tab').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
   $('#animSel').value = S.anim;
   $('#animSel').addEventListener('change', e => { S.anim = e.target.value; store.set('s64.anim', S.anim); });
+  $('#pmSel').value = S.premove ? 'on' : 'off';
+  $('#pmSel').addEventListener('change', e => { S.premove = e.target.value === 'on'; store.set('s64.premove', S.premove); if (!S.premove) board.clearPremove(); });
   $('#soundBtn').addEventListener('click', () => { S.sound = !S.sound; store.set('s64.sound', S.sound); renderSoundBtn(); if (S.sound && !playSample('move')) sound('move'); });
 
   // play controls

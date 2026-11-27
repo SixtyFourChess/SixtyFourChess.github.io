@@ -14,7 +14,7 @@ No install, no account, no server. Open the page and play.
 - **Secret army** (Custom mode): arrange your pieces in secret, then play against an army of boxes and remember which box is which.
 - **Fischer random (Chess960)**: in Custom mode and Online. The back pieces start shuffled; castle by moving your king onto your rook.
 - **Online**: find a player near you, or make a code and send it to a friend. Runs on a small Cloudflare Worker in `online/` (see `online/README.md`).
-  - **Premoves**: on your opponent's turn, drag a piece to queue your next move; it plays the instant it's legal. Queue several in a row; each shows as a blue arrow with a faded piece where it's going. Right-click to cancel. Also works against the computer and the NPCs.
+  - **Premoves**: on your opponent's turn, drag a piece to queue your next move; it plays the instant it's legal. Queue several in a row; each shows as a blue arrow with a faded piece where it's going. Right-click to cancel. Also works against the computer and the NPCs. Turn them on or off with Premoves in the top bar.
   - **Daily games**: a fresh day for every move. Leave and come back; your daily games are listed in the Online lobby with whose move it is.
   - **Head-to-head and leaderboard**: every finished game counts. See your record against each friend (and who's on a streak) and a rating leaderboard that starts everyone at 1200.
   - **My games**: finished online games are saved automatically. Open one in Review, or share a link that opens it for anyone.

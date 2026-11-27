@@ -641,8 +641,8 @@ textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 0; }
         <div class="panel-inner" id="ladLobby">
           <div class="block">
             <span class="sec-label">Beat the NPCs</span>
-            <h2 id="ladHead">Climb from 300 to the AI chess god</h2>
-            <p class="tip">Beat each opponent to unlock the next one. No takebacks and no hints.</p>
+            <h2 id="ladHead">Pick your opponent, from 300 to the AI chess god</h2>
+            <p class="tip">Pick anyone you want to play. A ✓ marks everyone you've beaten. No hints.</p>
           </div>
           <div id="ladPick"></div>
           <div class="block">
@@ -2509,7 +2509,11 @@ LP.beaten = clamp(+LP.beaten || 0, 0, NPCS.length);
 LP.sel = clamp(+LP.sel || 0, 0, NPCS.length - 1);
 if (!LP.wins || typeof LP.wins !== 'object') LP.wins = {};
 function saveLP() { store.set('s64.ladder', LP); }
-const unlockedMax = () => Math.min(LP.beaten, NPCS.length - 1);
+// every NPC is open to play; a character counts as beaten once you've won against them
+// (LP.beaten is the old "climbed this far" counter, kept so earlier progress still shows)
+const unlockedMax = () => NPCS.length - 1;
+const npcBeaten = i => (LP.wins[NPCS[i].id] || 0) > 0 || i < LP.beaten;
+const beatenCount = () => NPCS.filter((_, i) => npcBeaten(i)).length;
 let SEQ = 10; // unique generation counter shared by both games
 const FREE = { // free play against an adjustable bot
   mode: 'free', saveKey: 's64.play', vs: store.get('s64.vs', 'bot') === 'friend' ? 'friend' : 'bot',
@@ -3777,7 +3781,6 @@ function gameEnded() {
   G.newUnlock = false;
   if (out === 'win') {
     LP.wins[npc.id] = (LP.wins[npc.id] || 0) + 1;
-    if (G.npc >= LP.beaten) { LP.beaten = G.npc + 1; G.newUnlock = !!NPCS[G.npc + 1]; }
     if (NPCS[G.npc + 1]) LP.sel = G.npc + 1;
     saveLP();
     setTimeout(() => confetti(!!npc.god), 150);
@@ -3866,11 +3869,11 @@ function ladderResultHTML() {
   let h, btns = '';
   if (out === 'win') {
     if (npc.god) h = '<h3>You beat OMEGA.</h3><p>The whole ladder is yours. You are the chess god now.</p>';
-    else h = `<h3>You beat ${esc(npc.name)}!</h3>` + (next ? `<p>${G.newUnlock ? 'Unlocked' : 'Next up'}: <b>${esc(next.name)}</b>, ${esc(next.title)} (${eloTxt(next)}).</p>` : '');
+    else h = `<h3>You beat ${esc(npc.name)}!</h3>` + (next ? `<p>Next up: <b>${esc(next.name)}</b>, ${esc(next.title)} (${eloTxt(next)}). Or pick anyone from the list.</p>` : '');
     if (next) btns += `<button class="btn primary" type="button" data-lad="next">Challenge ${esc(next.name)}</button>`;
     btns += '<button class="btn" type="button" data-lad="rematch">Rematch</button>';
   } else {
-    h = out === 'draw' ? `<h3>Draw with ${esc(npc.name)}</h3><p>Only a win unlocks the next opponent.</p>` :
+    h = out === 'draw' ? `<h3>Draw with ${esc(npc.name)}</h3><p>Only a win gets the ✓.</p>` :
       `<h3>${esc(npc.name)} wins this one</h3><p>Watch the highlights to see where it turned, then try again.</p>`;
     btns += '<button class="btn primary" type="button" data-lad="rematch">Rematch</button>';
   }
@@ -3878,8 +3881,8 @@ function ladderResultHTML() {
   return `<div class="coach lad-result">${h}<div class="coach-actions">${btns}</div></div>`;
 }
 function renderLadderLobby(sel) {
-  const npc = NPCS[sel], N = NPCS.length, done = Math.min(LP.beaten, N), G = LADDER;
-  $('#ladHead').textContent = done >= N ? 'You conquered the ladder' : 'Climb from 300 to the AI chess god';
+  const npc = NPCS[sel], N = NPCS.length, done = beatenCount(), G = LADDER;
+  $('#ladHead').textContent = done >= N ? 'You beat every NPC' : 'Pick your opponent, from 300 to the AI chess god';
   const wins = LP.wins[npc.id] || 0;
   $('#ladPick').innerHTML = `<div class="npc-wrap">${npcCardHTML(sel, 'happy')}<div class="bubble">${esc(firstLine(npc.L.intro))}</div>` +
     (wins ? `<p class="small muted">You've beaten ${esc(npc.name)} ${wins === 1 ? 'once' : wins + ' times'}.</p>` : '') + '</div>';
@@ -3891,7 +3894,7 @@ function renderLadderLobby(sel) {
   $('#ladBar').style.width = (done / N * 100) + '%';
   const list = $('#ladList');
   list.innerHTML = NPCS.map((n, i) => {
-    const locked = i > unlockedMax(), beat = i < LP.beaten;
+    const locked = false, beat = npcBeaten(i);
     return `<li><button type="button" class="rung${locked ? ' locked' : ''}${n.god ? ' god' : ''}" data-rung="${i}" aria-pressed="${i === sel}"${locked ? ' disabled' : ''}>` +
       `${avatar(n.av, locked ? 'neutral' : 'happy')}<span class="r-mid"><span class="r-n">${esc(n.name)}</span><span class="r-t">${esc(n.title)}</span></span>` +
       `<span class="r-e">${eloTxt(n)}${beat ? CHECK_ICON : locked ? LOCK_ICON : ''}</span></button></li>`;

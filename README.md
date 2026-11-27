@@ -7,7 +7,7 @@ No install, no account, no server. Open the page and play.
 ## Features
 
 - **Play the computer.** Stockfish 19 at any rating from 300 to full strength. Hints, take-backs and a "review this game" button.
-- **Beat the NPCs.** Twelve characters with their own personalities, from Pip (300) to OMEGA, the AI Chess Master God (3200+). Beat each one to unlock the next.
+- **Beat the NPCs.** Twelve characters with their own personalities, from Pip (300) to OMEGA, the AI Chess Master God (3200+). Pick any of them to play; a ✓ marks the ones you've beaten.
 - **Friend on the same device.** Two players, one screen, with names, an auto-turning board and a chess clock (1 min up to 30 min, with increments).
 - **Animations** (Full / Light / Off, top bar): checkmate gun finisher, promotion power-up, castling shield, en passant ghost, fork lines, queen-sacrifice slow-mo, king tipping over on resign, clock shattering on time-out, frozen board on draws, NPC boss intros and victory cards, and an online VS card. Light keeps only the quick effects; online Bullet always plays as Light.
 - **Replay**: in Game review, press 🎬 Replay to watch the game play itself out move by move. The camera stays still for the opening, then glides in to follow each move and pulls back at the end (pause, restart, 1× / 1.5× / 2× speed).

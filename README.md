@@ -14,7 +14,7 @@ No install, no account, no server. Open the page and play.
 - **Secret army** (Custom mode): arrange your pieces in secret, then play against an army of boxes and remember which box is which.
 - **Fischer random (Chess960)**: in Custom mode and Online. The back pieces start shuffled; castle by moving your king onto your rook.
 - **Online**: find a player near you, or make a code and send it to a friend. Runs on a small Cloudflare Worker in `online/` (see `online/README.md`).
-  - **Premoves**: on your opponent's turn, drag a piece to queue your next move; it plays the instant it's legal. Right-click to cancel. Also works against the computer and the NPCs.
+  - **Premoves**: on your opponent's turn, drag a piece to queue your next move; it plays the instant it's legal. Queue several in a row; each shows as a blue arrow with a faded piece where it's going. Right-click to cancel. Also works against the computer and the NPCs.
   - **Daily games**: a fresh day for every move. Leave and come back; your daily games are listed in the Online lobby with whose move it is.
   - **Head-to-head and leaderboard**: every finished game counts. See your record against each friend (and who's on a streak) and a rating leaderboard that starts everyone at 1200.
   - **My games**: finished online games are saved automatically. Open one in Review, or share a link that opens it for anyone.
@@ -22,6 +22,7 @@ No install, no account, no server. Open the page and play.
   - **Watch live**: see who's playing right now and watch (and chat) without playing, or watch by game code.
 - **Puzzles from your mistakes**: every blunder, mistake and missed win of yours in a reviewed game becomes a "find the move you missed" puzzle (Game review tab).
 - **Custom mode: Chess, but...** Broken-rules chess against Stockfish or a friend, starting with **the Area 51 Army**: your king plus one of every alien (a Clone, the Maw, the Watcher, the UFO and the Egg that hatches into the Overlord) against a full army.
+- **Draw on the board** (like chess.com): right-click and drag for an arrow, right-click a square to highlight it. Hold Shift for green, Ctrl for red/yellow, Alt for blue. Left-click clears.
 - **Game review.** Paste any PGN, for example from chess.com or lichess. You get accuracy, a rating estimate, move labels (Brilliant to Blunder), an eval graph, retry-the-mistake and "show engine line".
 - **Highlights with Coach Ozzie.** A narrated replay of the key moments, with optional voice.
 

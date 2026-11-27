@@ -170,6 +170,15 @@ button { cursor: pointer; }
 .arrow.best { color: #57a336; }
 .arrow.hint { color: #3c7bcc; }
 .arrow.explore { color: #e3a33d; }
+/* premove arrows, and arrows you draw yourself (right-click drag; Shift / Ctrl / Alt change the color) */
+.arrow.pre { color: #3d7be0; opacity: .78; }
+.arrow.ua-y { color: #f2a51a; opacity: .85; }
+.arrow.ua-g { color: #4fa83a; opacity: .85; }
+.arrow.ua-r { color: #e0433a; opacity: .85; }
+.arrow.ua-b { color: #3d8fe0; opacity: .85; }
+.arrows image.ghost { opacity: .5; }
+.hl.mk-y { background: rgba(242, 165, 26, .55); } .hl.mk-g { background: rgba(79, 168, 58, .55); }
+.hl.mk-r { background: rgba(224, 67, 58, .58); } .hl.mk-b { background: rgba(61, 143, 224, .55); }
 .sq-badge { position: absolute; width: 5.3%; height: 5.3%; border-radius: 50%; display: grid; place-items: center; color: #fff; font: 800 calc(var(--bsz) * .026)/1 var(--font-body); background: var(--c); box-shadow: 0 1px 3px rgba(0, 0, 0, .4); z-index: 5; letter-spacing: -.06em; }
 .sq-badge svg { width: 62%; height: 62%; }
 .sq-badge.cls-inaccuracy { color: #2a2205; }
@@ -1582,7 +1591,8 @@ class Board {
     this.el = el; this.opts = opts;
     this.orientation = 'w'; this.chess = null; this.lastMove = null; this.selected = null;
     this.arrows = []; this.badge = null; this.drag = null; this.pending = null; this.promoOpen = false;
-    this.premove = null; this.preSel = null; // a move queued for when it's your turn again
+    this.premoves = []; this.preSel = null; // moves queued for when it's your turn again (several in a row, like chess.com)
+    this.ann = { arrows: [], marks: {} }; this.annFen = null; this.rdrag = null; // your own arrows and highlighted squares
     el.innerHTML = '<div class="sqs"></div><div class="hls"></div><div class="vic"></div><div class="pcs"></div><svg class="arrows" viewBox="0 0 800 800" aria-hidden="true"></svg><div class="badges"></div><div class="fx"></div><div class="promo" hidden></div>';
     this.sqs = el.querySelector('.sqs'); this.hls = el.querySelector('.hls'); this.pcs = el.querySelector('.pcs');
     this.svg = el.querySelector('.arrows'); this.badges = el.querySelector('.badges'); this.promo = el.querySelector('.promo');
@@ -1596,7 +1606,7 @@ class Board {
     el.addEventListener('pointermove', e => this.moveDrag(e));
     el.addEventListener('pointerup', e => this.up(e));
     el.addEventListener('pointercancel', () => this.cancelDrag());
-    el.addEventListener('contextmenu', e => { if (this.premove || this.preSel) { e.preventDefault(); this.clearPremove(); } });
+    el.addEventListener('contextmenu', e => e.preventDefault()); // right-click is for drawing arrows here
     try { new ResizeObserver(() => el.style.setProperty('--bsz', el.clientWidth + 'px')).observe(el); } catch (e) { /* old browser */ }
   }
   xy(sq) {
@@ -1607,6 +1617,8 @@ class Board {
     const f = this.orientation === 'w' ? x : 7 - x, r = this.orientation === 'w' ? 7 - y : y;
     return String.fromCharCode(97 + f) + (r + 1);
   }
+  get premove() { return this.premoves[0] || null; }
+  set premove(v) { this.premoves = v ? [v] : []; }
   sqFromEvent(e) {
     const rc = this.el.getBoundingClientRect();
     const x = Math.floor((e.clientX - rc.left) / rc.width * 8), y = Math.floor((e.clientY - rc.top) / rc.height * 8);
@@ -1618,7 +1630,8 @@ class Board {
     const prevMap = this.pieceMap, dragged = this.skipAnim;
     this.chess = chess; this.lastMove = o.lastMove || null; this.arrows = o.arrows || []; this.badge = o.badge || null;
     this.selected = null; this.closePromo();
-    if ((this.premove || this.preSel) && !this.opts.movable() && !(this.opts.premovable && this.opts.premovable())) { this.premove = null; this.preSel = null; }
+    if ((this.premoves.length || this.preSel) && !this.opts.movable() && !(this.opts.premovable && this.opts.premovable())) { this.premoves = []; this.preSel = null; }
+    { const f = chess ? chess.fen() : null; if (f !== this.annFen) { this.ann = { arrows: [], marks: {} }; this.annFen = f; } } // a move wipes your drawings
     const slid = !!o.animate && !this.skipAnim;
     this.renderCoords(); this.renderPieces(slid); this.skipAnim = false;
     this.renderHL(); this.renderArrows(); this.renderBadge();
@@ -2188,7 +2201,8 @@ class Board {
         if (p && p.type === 'k' && p.color === turn) add(String.fromCharCode(97 + f) + (8 - row), 'check');
       }
     }
-    if (this.premove) { add(this.premove.from, 'pre'); add(this.premove.to, 'pre'); }
+    for (const [sq, c] of Object.entries(this.ann.marks)) add(sq, 'mk-' + c);
+    for (const pm of this.premoves) { add(pm.from, 'pre'); add(pm.to, 'pre'); }
     if (this.preSel) add(this.preSel, 'presel');
     if (this.selected) {
       add(this.selected, 'sel');
@@ -2199,7 +2213,15 @@ class Board {
   }
   renderArrows() {
     let s = '';
-    for (const a of this.arrows) {
+    const pre = this.premoves.map(pm => ({ ...pm, kind: 'pre' }));
+    const mine = this.ann.arrows.map(a => ({ from: a.from, to: a.to, kind: 'ua-' + a.c }));
+    if (this.rdrag && this.rdrag.to && this.rdrag.to !== this.rdrag.from) mine.push({ from: this.rdrag.from, to: this.rdrag.to, kind: 'ua-' + this.rdrag.c });
+    // a faded copy of each premoved piece where it's going
+    if (this.premoves.length && this.chess) {
+      const vm = this.virtualMap();
+      for (const pm of this.premoves) { const k = vm[pm.to]; if (!k) continue; const q = this.xy(pm.to); s += `<image class="ghost" href="${PIECE_URL[k]}" x="${q.x * 100}" y="${q.y * 100}" width="100" height="100"/>`; }
+    }
+    for (const a of this.arrows.concat(pre, mine)) {
       const p = this.xy(a.from), q = this.xy(a.to);
       const x1 = p.x * 100 + 50, y1 = p.y * 100 + 50, x2 = q.x * 100 + 50, y2 = q.y * 100 + 50;
       const dx = x2 - x1, dy = y2 - y1, len = Math.hypot(dx, dy) || 1, ux = dx / len, uy = dy / len;
@@ -2218,25 +2240,72 @@ class Board {
   select(sq) { this.selected = sq; this.renderHL(); }
   isTarget(from, to) { return ((!this.opts.allowStd || this.opts.allowStd(from)) && this.chess.moves({ square: from, verbose: true }).some(m => m.to === to)) || (this.opts.extraMoves ? this.opts.extraMoves(from).some(m => m.to === to) : false); }
   // premoves: while it's not your turn you can still pick up your piece and drop it; it plays as soon as it's legal
-  setPremove(from, to) { this.premove = { from, to }; this.preSel = null; this.renderHL(); }
-  clearPremove() { if (!this.premove && !this.preSel) return; this.premove = null; this.preSel = null; this.renderHL(); }
+  // the position as it will be after your queued premoves (so you can chain them)
+  virtualMap() {
+    const m = { ...this.mapOf(this.chess) };
+    for (const pm of this.premoves) { if (m[pm.from]) { m[pm.to] = m[pm.from]; delete m[pm.from]; } }
+    return m;
+  }
+  setPremove(from, to) {
+    if (this.premoves.length >= 8) return;
+    const k = this.virtualMap()[from];
+    this.premoves.push({ from, to, promo: k && k[1] === 'P' && (to[1] === '8' || to[1] === '1') ? 'q' : undefined });
+    this.preSel = null; this.renderHL(); this.renderArrows();
+  }
+  clearPremove() { if (!this.premoves.length && !this.preSel) return; this.premoves = []; this.preSel = null; this.renderHL(); this.renderArrows(); }
   preDown(e) {
     const pc = this.opts.premovable && this.opts.premovable();
     if (!pc) return;
     const sq = this.sqFromEvent(e);
     if (!sq) return;
-    const p = this.chess.get(sq), own = p && p.color === pc;
+    const vk = this.virtualMap()[sq], own = !!vk && vk[0] === pc;
     if (this.preSel && sq !== this.preSel && !own) { e.preventDefault(); this.setPremove(this.preSel, sq); return; }
     if (own) {
       e.preventDefault();
       const was = this.preSel === sq;
-      this.premove = null; this.preSel = sq; this.renderHL();
+      this.preSel = sq; this.renderHL();
       const img = this.pcs.querySelector(`[data-sq="${sq}"]`);
       this.drag = { from: sq, el: img, sx: e.clientX, sy: e.clientY, active: false, wasSelected: was, pre: true };
       try { this.el.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
     } else this.clearPremove();
   }
+  annColor(e) { return e.shiftKey ? 'g' : e.ctrlKey || e.metaKey ? 'r' : e.altKey ? 'b' : 'y'; }
+  annDown(e) {
+    const sq = this.sqFromEvent(e);
+    if (!sq) return;
+    e.preventDefault();
+    this.rdrag = { from: sq, to: sq, c: this.annColor(e) };
+    try { this.el.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+  }
+  annMove(e) {
+    const sq = this.sqFromEvent(e);
+    if (sq && sq !== this.rdrag.to) { this.rdrag.to = sq; this.renderArrows(); }
+  }
+  annUp(e) {
+    const r = this.rdrag;
+    this.rdrag = null;
+    const to = this.sqFromEvent(e) || r.to;
+    if (to === r.from) {
+      // a plain right-click cancels premoves first (like chess.com), otherwise it marks the square
+      if (this.premoves.length || this.preSel) { this.clearPremove(); return; }
+      const c = r.c === 'y' ? 'r' : r.c === 'r' ? 'y' : r.c; // squares are red by default (Ctrl gives yellow), arrows are yellow
+      if (this.ann.marks[to] === c) delete this.ann.marks[to]; else this.ann.marks[to] = c;
+      this.renderHL();
+    } else {
+      const i = this.ann.arrows.findIndex(a => a.from === r.from && a.to === to);
+      if (i >= 0 && this.ann.arrows[i].c === r.c) this.ann.arrows.splice(i, 1);
+      else if (i >= 0) this.ann.arrows[i].c = r.c;
+      else this.ann.arrows.push({ from: r.from, to, c: r.c });
+    }
+    this.renderArrows();
+  }
+  clearAnn() {
+    if (!this.ann.arrows.length && !Object.keys(this.ann.marks).length) return;
+    this.ann = { arrows: [], marks: {} }; this.renderHL(); this.renderArrows();
+  }
   down(e) {
+    if (e.button === 2 && this.chess && !this.promoOpen) { this.annDown(e); return; }
+    if (e.button === 0) this.clearAnn();
     if (!this.chess || this.promoOpen || e.button > 0 || performance.now() < (this.fxUntil || 0)) return;
     const color = this.opts.movable();
     if (!color) { this.preDown(e); return; }
@@ -2256,6 +2325,7 @@ class Board {
     }
   }
   moveDrag(e) {
+    if (this.rdrag) { this.annMove(e); return; }
     const d = this.drag;
     if (!d || !d.el) return;
     if (!d.active) {
@@ -2267,6 +2337,7 @@ class Board {
     d.el.style.top = ((e.clientY - rc.top) / rc.height * 100 - 6.25) + '%';
   }
   up(e) {
+    if (this.rdrag && e.button === 2) { this.annUp(e); return; }
     const d = this.drag;
     if (!d) return;
     this.drag = null;
@@ -2275,6 +2346,7 @@ class Board {
       if (to && to !== d.from) this.setPremove(d.from, to);
       else if (!d.active && d.wasSelected) this.clearPremove();
       if (d.active) this.renderPieces(false);
+      this.renderArrows();
       this.flushPending();
       return;
     }
@@ -5899,13 +5971,12 @@ function updStart() {
    ============================================================ */
 // play a queued premove if it's legal now (otherwise it's dropped)
 function runPremove(chess, color, exec) {
-  const pm = board.premove;
+  const pm = board.premoves[0];
   if (!pm) return false;
-  board.premove = null; board.preSel = null;
-  if (!chess || chess.turn() !== color) { board.renderHL(); return false; }
-  const ok = chess.moves({ verbose: true }).find(m => m.from === pm.from && m.to === pm.to);
-  if (!ok) { board.renderHL(); return false; }
-  return exec(pm.from, pm.to, ok.promotion ? 'q' : undefined);
+  board.premoves.shift(); board.preSel = null;
+  const ok = chess && chess.turn() === color && chess.moves({ verbose: true }).find(m => m.from === pm.from && m.to === pm.to);
+  if (!ok) { board.premoves = []; board.renderHL(); board.renderArrows(); return false; } // not legal any more: drop the whole queue
+  return exec(pm.from, pm.to, ok.promotion ? (pm.promo || 'q') : undefined);
 }
 function setTab(t) {
   if (S.tab !== t) { pauseBot(P); board.premove = null; board.preSel = null; }
